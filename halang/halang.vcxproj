@@ -146,6 +146,27 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="ast.h" />
+    <ClInclude Include="codegen.h" />
+    <ClInclude Include="halang.h" />
+    <ClInclude Include="lex.h" />
+    <ClInclude Include="object.h" />
+    <ClInclude Include="parser.h" />
+    <ClInclude Include="scanner.h" />
+    <ClInclude Include="stdafx.h" />
+    <ClInclude Include="svm.hpp" />
+    <ClInclude Include="svm_codes.h" />
+    <ClInclude Include="targetver.h" />
+    <ClInclude Include="token.h" />
+    <ClInclude Include="util.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="codegen.cpp" />
+    <ClCompile Include="halang.cpp" />
+    <ClCompile Include="lex.cpp" />
+    <ClCompile Include="object.cpp" />
+    <ClCompile Include="parser.cpp" />
+    <ClCompile Include="stdafx.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
