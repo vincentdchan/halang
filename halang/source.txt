@@ -1,12 +1,10 @@
-let b = 1
-while (b <= 100)
-{
-	b
-	let b = b * 3
-}
-let c = 4
-while (c > 0)
+let b = 3
+if (b == 3){ let b = 10}
+b
+
+let c = 1
+while (c <= 100)
 {
 	c
-	let c = c - 1
+	let c = c * 2
 }

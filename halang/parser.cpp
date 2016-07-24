@@ -55,6 +55,7 @@ namespace parser
 			match(Token::TYPE::LET) ||
 			match(Token::TYPE::OPEN_PAREN) ||
 			match(Token::TYPE::WHILE) ||
+			match(Token::TYPE::IF) ||
 			Token::isOperator(lookahead)
 			);
 
@@ -67,6 +68,8 @@ namespace parser
 			return parseLetExpr();
 		else if (match(Token::TYPE::WHILE))
 			return parseWhileStmt();
+		else if (match(Token::TYPE::IF))
+			return parseIfStmt();
 		else
 			return parseExpression();
 	}

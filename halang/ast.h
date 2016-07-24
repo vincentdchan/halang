@@ -111,16 +111,16 @@ namespace parser
 	class IfStmtNode : public Node
 	{
 	public:
-		IfStmtNode(Node* _exp = nullptr, 
+		IfStmtNode(Node* _cond = nullptr, 
 			Node* _true = nullptr, 
 			Node* _false = nullptr):
-			expression(_exp), 
+			condition(_cond), 
 			true_branch(_true), 
 			false_branch(_false)
 		{}
  		virtual IfStmtNode* asIfStmt() override { return this; }
 
-		Node* expression;
+		Node* condition;
 		Node* true_branch;
 		Node* false_branch;
 	};

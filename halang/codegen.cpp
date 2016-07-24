@@ -141,7 +141,22 @@ namespace codegen
 
 	void CodeGen::visit(IfStmtNode* _node)
 	{
-		// wait to finsih;
+		int jmp_val;
+		visit(_node->condition);
+		auto jmp_loc = pack.instructions.size();
+		pack.instructions.push_back(Instruction(VM_CODE::IFNO, 1));
+		visit(_node->true_branch);
+		auto true_finish_loc = pack.instructions.size();
+		pack.instructions.push_back(Instruction(VM_CODE::JMP, 1));
+		// if condition not ture, jmp to the right location
+		jmp_val = pack.instructions.size() - jmp_loc;
+		pack.instructions[jmp_loc] = Instruction(VM_CODE::IFNO, jmp_val); 
+		if (_node->false_branch)
+		{
+			visit(_node->false_branch);
+			jmp_val = pack.instructions.size() - true_finish_loc;
+			pack.instructions[true_finish_loc] = Instruction(VM_CODE::JMP, jmp_val);
+		}
 	}
 
 	void CodeGen::visit(WhileStmtNode* _node)
