@@ -1,4 +1,5 @@
 #include "stdafx.h"
+#include <cstring>
 #include "lex.h"
 
 namespace lex
@@ -8,6 +9,7 @@ namespace lex
 	Lexer::Lexer(istream& s): 
 		_end(false), linenumber(0), _beginpos(0), _endpos(0), ist(s)
 	{
+		loc.line = 0;
 		readline();
 	}
 
@@ -28,264 +30,269 @@ namespace lex
 		}
 	}
 
+#define PUSH_TOKEN(TK_NAME) token_q.push(Token(Token::TYPE::TK_NAME, loc))
+
 	bool Lexer::readline()
 	{
 		if (ist.eof()) return false;
-		/*
-		Token _token;
-		*/
+		bool result = true;
 
-		string line;
-		std::getline(ist, line);
-		unsigned int i = 0;
-		while (i < line.size())
+		std::getline(ist, buffer);
+		iter = 0;
+		while (iter < buffer.size() && result)
 		{
-			Location loc;
 			loc.line = linenumber;
-			loc.begin = loc.end = i;
-			switch (line[i])
+			loc.column = iter;
+
+			if (isDigit(buffer[iter]))
+			{
+				result = scanNumber();
+			}
+			else if (isAlphabet(buffer[iter]))
+			{
+				result = scanLiteral();
+			}
+			else switch (buffer[iter])
 			{
 			case '\t':
 			case '\n':
-			case ' ': ++i; break;
+			case ' ': ++iter; break;
+			case '.':
+				PUSH_TOKEN(DOT);
+				++iter; break;
+			case ',':
+				PUSH_TOKEN(COMMA);
+				++iter; break;
+			case ';':
+				PUSH_TOKEN(SEMICOLON);
+				++iter; break;
 			case '(':
-				token_q.push(Token(Token::TYPE::OPEN_PAREN, loc));
-				++i; break;
+				PUSH_TOKEN(OPEN_PAREN);
+				++iter; break;
 			case ')':
-				token_q.push(Token(Token::TYPE::CLOSE_PAREN, loc));
-				++i; break;
+				PUSH_TOKEN(CLOSE_PAREN);
+				++iter; break;
 			case '{':
-				token_q.push(Token(Token::TYPE::OPEN_BRAKET, loc));
-				++i; break;
+				PUSH_TOKEN(OPEN_BRAKET);
+				++iter; break;
 			case '}':
-				token_q.push(Token(Token::TYPE::CLOSE_BRAKET, loc));
-				++i; break;
+				PUSH_TOKEN(CLOSE_BRAKET);
+				++iter; break;
 			case '+':
-				token_q.push(Token(Token::TYPE::ADD, loc));
-				++i; break;
+				PUSH_TOKEN(ADD);
+				++iter; break;
 			case '-':
-				token_q.push(Token(Token::TYPE::SUB, loc));
-				++i; break;
+				PUSH_TOKEN(SUB);
+				++iter; break;
 			case '*':
-				if (i + 1 != line.size() && line[i + 1] != '*')
-					token_q.push(Token(Token::TYPE::MUL, loc));
-				else
+				if (swallow("**"))
 				{
-					token_q.push(Token(Token::TYPE::POW, loc));
-					++i;
+					PUSH_TOKEN(POW);
+					break;
 				}
-				++i; break;
+				else
+					PUSH_TOKEN(MUL);
+				++iter; break;
 			case '/':
-				token_q.push(Token(Token::TYPE::DIV, loc));
-				++i; break;
+				PUSH_TOKEN(DIV);
+				++iter; break;
 			case '%':
-				token_q.push(Token(Token::TYPE::MOD, loc));
-				++i; break;
+				PUSH_TOKEN(MOD);
+				++iter; break;
 			case '>':
-				if (line[i + 1] == '=')
+				if (swallow(">="))
 				{
-					token_q.push(Token(Token::TYPE::GTEQ, loc));
-					i += 2;
+					PUSH_TOKEN(GTEQ);
+					break;
 				}
 				else
-				{
-					token_q.push(Token(Token::GT, loc));
-					++i; 
-				}
-				break;
+					PUSH_TOKEN(GT);
+				++iter; break;
 			case '<':
-				if (line[i + 1] == '=')
+				if (swallow("<="))
 				{
-					token_q.push(Token(Token::TYPE::LTEQ, loc));
-					i += 2; break;
+					PUSH_TOKEN(LTEQ);
+					break;
 				}
 				else
-				{
-					token_q.push(Token(Token::LT, loc));
-					++i; break;
-				}
-			case 'l': // let
-				scanLet(line, i);
-				break;
-			case 'i': // if
-				scanIf(line, i);
-				break;
-			case 'e': // else
-				scanElse(line, i);
-			case 'w': // while
-				scanWhile(line, i);
-				break;
-			case 'd': // def
-				scanDef(line, i);
-				break;
+					PUSH_TOKEN(LT);
+				++iter; break;
 			case'=':
-				if (line[i + 1] == '=')
+				if (swallow("=="))
 				{
-					token_q.push(Token(Token::TYPE::EQ, loc));
-					i += 2; break;
+					PUSH_TOKEN(EQ);
+					break;
 				}
 				else
-				{
-					token_q.push(Token(Token::TYPE::ASSIGN, loc));
-					++i; break;
-				}
+					PUSH_TOKEN(ASSIGN);
+				++iter; break;
 			default:
-				if (isAlphabet(line[i]) || line[i] == '_')
-					scanIdentifier(line, i);
-				else if (isDigit(line[i]))
-					scanNumber(line, i);
-				else
-				{
-					ReportError(string("Lexer error: unexpected charactor: ") + line[i]);
-					i++; break;
-				}
+				ReportError(string("Lexer error: unexpected charactor: ") + buffer[iter]);
+				++iter; break;
 			}
 		}
 		++linenumber;
+		return result;
+	}
+
+	bool Lexer::swallow(const char* _str)
+	{
+		auto len = std::strlen(_str);
+		bool result = true;
+		for (std::size_t i = 0; i < len; ++i)
+		{
+			if (i + iter >= buffer.size() || _str[i] != buffer[iter + i])
+			{
+				result = false;
+				break;
+			}
+		}
+		if (result)
+			iter += len;
+		return result;
+	}
+
+	bool Lexer::scanLiteral()
+	{
+		bool match = false;
+		loc.column = iter;
+		// check reserved
+		switch (buffer[iter])
+		{
+			case 'l': // let
+				if (match = swallow("let"))
+				{
+					loc.length = 3;
+					PUSH_TOKEN(LET);
+				}
+				break;
+			case 'i': // if
+				if (match = swallow("if"))
+				{
+					loc.length = 2;
+					PUSH_TOKEN(IF);
+				}
+				break;
+			case 'e': // else
+				if (match = swallow("else"))
+				{
+					loc.length = 4;
+					PUSH_TOKEN(ELSE);
+				}
+				break;
+			case 'w': // while
+				if (match = swallow("while"))
+				{
+					loc.length = 5;
+					PUSH_TOKEN(WHILE);
+				}
+				break;
+			case 'f': // function
+				if (match = swallow("function"))
+				{
+					loc.length = 8;
+					PUSH_TOKEN(FUNCTION);
+				}
+				break;
+			case 'r': // return
+				if (match = swallow("return"))
+				{
+					loc.length = 6;
+					PUSH_TOKEN(RETURN);
+				}
+				break;
+		}
+		if (!match)
+			match = scanIdentifier();
+		return match;
+	}
+
+	bool Lexer::scanIdentifier()
+	{
+		auto ic = iter;
+
+		if (!isAlphabet(buffer[ic]))
+		{
+			return false;
+		}
+
+		Token t;
+		loc.column = iter;
+		loc.length = 0;
+		t.type = Token::TYPE::IDENTIFIER;
+		t._literal = make_literal();
+
+		while (isAlphabet(buffer[ic]) || buffer[ic] == '_')
+		{
+			loc.length++;
+			t._literal->push_back(buffer[ic++]);
+		}
+
+		// finish work
+		iter = ic;
+		t.location = loc;
+		token_q.push(t);
 		return true;
 	}
 
-	void Lexer::scanLet(string& str, unsigned int& ic)
-	{
-		if (str[ic] == 'l' && str[ic + 1] == 'e' && str[ic + 2] == 't')
-		{
-			token_q.push(Token(Token::TYPE::LET, Location(linenumber, ic, ic + 2)));
-			ic += 3;
-		}
-		else
-		{
-			ReportError("Expected \"let\".", Location(linenumber, ic, ic+2));
-		}
-	}
-
-	void Lexer::scanIf(string& str, unsigned int& ic)
-	{
-		if (str[ic] == 'i' && str[ic + 1] == 'f')
-		{
-			token_q.push(Token(Token::TYPE::IF, Location(linenumber, ic, ic + 1)));
-			ic += 2;
-		}
-		else
-		{
-			ReportError("Expected \"if\".", Location(linenumber, ic, ic + 1));
-		}
-	}
-
-	void Lexer::scanElse(string& str, unsigned int& ic)
-	{
-		if (str[ic] == 'e' &&
-			str[ic + 1] == 'l' &&
-			str[ic + 2] == 's' &&
-			str[ic + 3] == 'e')
-		{
-			token_q.push(Token(Token::TYPE::ELSE, Location(linenumber, ic, ic + 3)));
-			ic += 4;
-		}
-		else
-		{
-			ReportError("Expect \"else\".");
-		}
-	}
-
-	void Lexer::scanWhile(string& str, unsigned int &ic)
-	{
-		if (str[ic] == 'w' &&
-			str[ic + 1] == 'h' &&
-			str[ic + 2] == 'i' &&
-			str[ic + 3] == 'l' &&
-			str[ic + 4] == 'e')
-		{
-			token_q.push(Token(Token::WHILE, Location(linenumber, ic, ic + 4)));
-			ic += 5;
-		}
-		else
-		{
-			ReportError("Expect \"while\".");
-		}
-	}
-
-	void Lexer::scanDef(string& str, unsigned int& ic)
-	{
-		if (str[ic] == 'd' && str[ic + 1] == 'e' && str[ic + 2] == 'f') 
-		{
-			token_q.push(Token(Token::DEF, Location(linenumber, ic, ic + 2)));
-			ic += 3;
-		}
-		else
-		{
-			ReportError("Expect \"def\".");
-		}
-	}
-
-	void Lexer::scanIdentifier(string& str, unsigned int& ic)
-	{
-		if (isAlphabet(str[ic]) || str[ic] == '_')
-		{
-			const unsigned int _begin = ic;
-			Token _t(Token::TYPE::IDENTIFIER, Location(linenumber, _begin, ic-1));
-			_t._literal = make_literal();
-			_t._literal->push_back(str[ic]);
-			ic++;
-			while (isDigit(str[ic]) || isAlphabet(str[ic]) || str[ic] == '_')
-			{
-				_t._literal->push_back(str[ic]);
-				ic++;
-			}
-			token_q.push(_t);
-		}
-		else
-		{
-			ReportError("Not a valid identifier.", Location(linenumber, ic, ic));
-		}
-	}
-
-	void Lexer::scanNumber(string& str, unsigned int& ic)
+	bool Lexer::scanNumber()
 	{
 		Token t;
-		Location &loc = t.location;
-		loc.begin = loc.end = ic;
-		loc.line = linenumber;
+
+		// prepare works
+		bool match = true;
+		auto ic = iter;
+		loc.column = iter;
 
 		string num;
-		if (isDigit(str[ic]))
+		if (isDigit(buffer[ic]))
 		{
 			t.type = Token::TYPE::NUMBER;
 			// t.pLiteral.reset(new string());
-			num.push_back(str[ic++]);
-			while (isDigit(str[ic]) || str[ic] == '.')
+			num.push_back(buffer[ic++]);
+			while (isDigit(buffer[ic]) || buffer[ic] == '.')
 			{
-				if (str[ic] == '.')
+				if (buffer[ic] == '.')
 				{
 					t.maybeInt = false;
-					num.push_back(str[ic++]);
-					if (isDigit(str[ic]))
+					num.push_back(buffer[ic++]);
+					if (isDigit(buffer[ic]))
 					{
-						while (isDigit(str[ic]))
-							num.push_back(str[ic++]);
-						loc.end = ic - 1;
+						while (isDigit(buffer[ic])) {
+							num.push_back(buffer[ic++]);
+							++loc.length;
+						}
 						t._double = std::stod(num);
 						token_q.push(t);
-						return;
+
+						if (match)
+							iter = ic; // watch out
+						return match;
 					}
 					else
 					{
 						ReportError("Not a valid Number", Location(linenumber, ic, ic));
+						match = false;
 					}
 				}
 				else // digit
 				{
-					num.push_back(str[ic++]);
+					num.push_back(buffer[ic++]);
+					loc.length++;
 				}
 			}
-			loc.end = ic - 1;
 			t.maybeInt = true;
 			t._double = std::stod(num);
 			token_q.push(t);
 		}
 		else
 		{
+			match = false;
 			ReportError("Not a valid number", Location(linenumber, ic, ic));
 		}
+		if (match) // success
+			iter = ic;
+		return match;
 	}
 
 	void Lexer::finish()

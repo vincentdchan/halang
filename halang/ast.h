@@ -12,7 +12,8 @@
 	V(BlockExpr) \
 	V(IfStmt) \
 	V(WhileStmt) \
-	V(DefStmt) \
+	V(FunctionStmt) \
+	V(FunctionParameters) \
 
 namespace parser
 {
@@ -34,7 +35,8 @@ namespace parser
 		virtual BinaryExprNode* asBinaryExpression() { return nullptr; }
 		virtual IfStmtNode* asIfStmt() { return nullptr; }
 		virtual WhileStmtNode* asWhileStmt() { return nullptr; }
-		virtual DefStmtNode* asDefStmt() { return nullptr; }
+		virtual FunctionStmtNode* asFunctionStmt() { return nullptr; }
+		virtual FunctionParametersNode* asFunctionParameters() { return nullptr; }
 		virtual ~Node() {}
 	};
 
@@ -138,13 +140,21 @@ namespace parser
 		Node* child;
 	};
 
-	class DefStmtNode : public Node
+	class FunctionStmtNode : public Node
 	{
 	public:
-		DefStmtNode() {}
-	private:
-		std::string _name;
-		Node* _content;
+		FunctionStmtNode() {}
+		virtual FunctionStmtNode* asFunctionStmt() override { return this; }
+		std::string name;
+		FunctionParametersNode* parameters;
+		BlockExprNode* block;
+	};
+
+	class FunctionParametersNode : public Node
+	{
+	public:
+		virtual FunctionParametersNode* asFunctionParameters() override { return this; }
+		std::vector<std::string> identifiers;
 	};
 
 }

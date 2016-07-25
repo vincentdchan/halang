@@ -148,6 +148,7 @@
   <ItemGroup>
     <ClInclude Include="ast.h" />
     <ClInclude Include="codegen.h" />
+    <ClInclude Include="function.h" />
     <ClInclude Include="halang.h" />
     <ClInclude Include="lex.h" />
     <ClInclude Include="object.h" />

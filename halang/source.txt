@@ -1,10 +1,7 @@
-let b = 3
-if (b == 3){ let b = 10}
-b
+let a = 0
 
-let c = 1
-while (c <= 100)
+while (a <= 100)
 {
-	c
-	let c = c * 2
+	a
+	let a = a + 3
 }

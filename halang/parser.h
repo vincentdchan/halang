@@ -45,7 +45,8 @@ namespace parser
 		Node* parseIfStmt();
 		Node* parseElseStmt();
 		Node* parseWhileStmt();
-		// Node* parseDefStmt();
+		Node* parseFunctionStmt();
+		Node* parseFunctionParameters();
 		Parser() = delete;
 		Parser(const Parser&) = delete;
 		Parser& operator=(const Parser&) = delete;

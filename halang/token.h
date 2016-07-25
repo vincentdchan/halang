@@ -11,10 +11,10 @@ namespace lex
 
 	struct Location
 	{
-		Location(int _line = -1, int _begin = -1, int _end = -1): 
-			line(_line), begin(_begin), end(_end) {}
+		Location(int _line = -1, int _col = -1, int _len = -1): 
+			line(_line), column(_col), length(_len) {}
 		int line;
-		int begin, end;
+		int column, length;
 	};
 
 	struct Token

@@ -11,7 +11,7 @@ namespace lex
 {
 	using namespace std;
 
-	class Lexer final: utils::_MessageContainer
+	class Lexer final: public utils::_MessageContainer
 	{
 	public:
 		typedef shared_ptr<string> pString;
@@ -36,19 +36,32 @@ namespace lex
 	private:
 		Lexer();
 		bool readline();
-		void scanNumber(string&, unsigned int&);
+		// void scanNumber(string&, unsigned int&);
+		/*
 		void scanLet(string&, unsigned int&);
 		void scanIf(string&, unsigned int&);
 		void scanElse(string&, unsigned int&);
 		void scanWhile(string&, unsigned int&);
-		void scanDef(string&, unsigned int&);
+		void scanFunction(string&, unsigned int&);
+		void scanReturn(string&, unsigned int&);
 		void scanIdentifier(string&, unsigned int&);
+		*/
+
+		bool scanLiteral();
+		bool scanIdentifier();
+		bool scanNumber();
+		bool swallow(const char* _str);
+
 		queue<Token> token_q;
 		// queue<string> literal_q;
 		bool _end;
 		unsigned int linenumber, _beginpos, _endpos;
 		// stream
 		istream &ist;
+
+		string buffer;
+		std::size_t iter;
+		Location loc;
 
 		std::list<std::string*> _literal_list;
 

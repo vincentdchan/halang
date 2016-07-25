@@ -56,6 +56,7 @@ namespace parser
 			match(Token::TYPE::OPEN_PAREN) ||
 			match(Token::TYPE::WHILE) ||
 			match(Token::TYPE::IF) ||
+			match(Token::TYPE::FUNCTION) ||
 			Token::isOperator(lookahead)
 			);
 
@@ -70,6 +71,8 @@ namespace parser
 			return parseWhileStmt();
 		else if (match(Token::TYPE::IF))
 			return parseIfStmt();
+		else if (match(Token::TYPE::FUNCTION))
+			return parseFunctionStmt();
 		else
 			return parseExpression();
 	}
@@ -249,6 +252,43 @@ namespace parser
 		auto _block = parseBlock();
 		expect(nextToken(), Token::TYPE::CLOSE_BRAKET);
 		return make_node<WhileStmtNode>(_condition, _block);
+	}
+
+	Node* Parser::parseFunctionStmt()
+	{
+		// def new function
+		auto _func = make_node<FunctionStmtNode>();
+		expect(nextToken(), Token::TYPE::FUNCTION);
+		expect(Token::TYPE::IDENTIFIER);
+		_func->name = *nextToken()._literal;
+		expect(nextToken(), Token::TYPE::OPEN_PAREN);
+		_func->parameters = dynamic_cast<FunctionParametersNode*>(parseFunctionParameters());
+		expect(nextToken(), Token::TYPE::CLOSE_PAREN);
+		expect(nextToken(), Token::TYPE::OPEN_BRAKET);
+		_func->block = dynamic_cast<BlockExprNode*>(parseBlock());
+		expect(nextToken(), Token::TYPE::CLOSE_BRAKET);
+		return _func;
+	}
+
+	Node* Parser::parseFunctionParameters()
+	{
+		auto _params = make_node<FunctionParametersNode>();
+		expect(Token::TYPE::IDENTIFIER);
+		while (match(Token::TYPE::IDENTIFIER))
+		{
+			Token t = nextToken();
+			_params->identifiers.push_back(*t._literal);
+			if (match(Token::TYPE::CLOSE_PAREN))
+				break;
+			else if (match(Token::COMMA))
+				nextToken();
+			else
+			{
+				ReportError("Unexpected token.");
+				break;
+			}
+		}
+		return _params;
 	}
 
 	Parser::~Parser()

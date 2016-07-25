@@ -32,6 +32,14 @@ int main(int argc, char** argv)
 	fs.open(filename, fstream::in);
 	Lexer* lexer = new Lexer(fs);
 
+	if (lexer->hasError())
+	{
+		for (auto i = lexer->getMessages().begin(); i != lexer->getMessages().end(); ++i)
+		{
+			std::cout << *i;
+		}
+	}
+
 	Parser parser(*lexer);
 	parser.parse();
 

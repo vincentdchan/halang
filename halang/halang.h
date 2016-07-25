@@ -23,12 +23,14 @@ typedef bool TBool;
 	V(ILLEGAL_OP, "", 0)
 
 #define TOKEN_LIST(V) \
+	V(DOT) \
+	V(COMMA) \
+	V(SEMICOLON) \
 	V(ILLEGAL) \
 	V(LET) \
 	V(IF) \
 	V(ELSE) \
 	V(WHILE) \
-	V(DEF) \
 	V(ASSIGN) \
 	V(IDENTIFIER) \
 	V(OPEN_PAREN) \
@@ -37,6 +39,7 @@ typedef bool TBool;
 	V(CLOSE_BRAKET) \
 	V(NUMBER) \
 	V(FUNCTION) \
+	V(RETURN) \
 	V(ENDFILE) 
 
 

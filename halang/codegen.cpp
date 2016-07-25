@@ -35,8 +35,8 @@ namespace codegen
 			visit(_node->asIfStmt());
 		else if (_node->asWhileStmt())
 			visit(_node->asWhileStmt());
-		else if (_node->asDefStmt())
-			visit(_node->asDefStmt());
+		else if (_node->asFunctionStmt())
+			visit(_node->asFunctionStmt());
 	}
 
 	void CodeGen::visit(BlockExprNode* _node)
@@ -170,7 +170,7 @@ namespace codegen
 		pack.instructions[_condition_loc] = Instruction(VM_CODE::IFNO, pack.instructions.size() - _condition_loc);
 	}
 
-	void CodeGen::visit(DefStmtNode* _node)
+	void CodeGen::visit(FunctionStmtNode* _node)
 	{
 		// wait to finish
 	}

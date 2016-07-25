@@ -78,8 +78,8 @@ namespace utils
 		if (_location.line > -1)
 		{
 			_os << "line " << _location.line;
-			if (_location.begin > -1)
-				_os << " Col " << _location.begin << " : ";
+			if (_location.column > -1)
+				_os << " Col " << _location.column << " : ";
 		}
 		_os << _msg_content << std::endl;
 		return _os;
