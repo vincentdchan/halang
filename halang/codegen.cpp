@@ -7,24 +7,56 @@ namespace codegen
 
 	using namespace parser;
 
+	int Environment::findLocalVariable(std::string _name, bool created)
+	{
+		if (var_id.find(_name) == var_id.end()) // not found
+		{
+			if (created)
+			{
+				auto id = var_id.size();
+				var_id[_name] = id;
+				return id;
+			}
+			else
+				return -1;
+		}
+		else
+			return var_id[_name];
+	}
+
 	CodeGen::CodeGen(Parser& _p) : _parser(_p)
 	{ }
 
 	void CodeGen::generate()
 	{
+		env = new Environment;
+
 		visit(_parser.getRoot());
-		pack.instructions.push_back(Instruction(VM_CODE::STOP, 0));
-		pack.variablesSize = var_id.size();
+
+		env->instructions.push_back(Instruction(VM_CODE::STOP, 0));
+		env->var_size = env->var_id.size();
+
+		// clear Environment
+		Environment* envPtr = env;
+		while (envPtr)
+		{
+			auto _parent = envPtr->parent;
+			delete envPtr;
+			envPtr = _parent;
+		}
+		envPtr = nullptr;
 	}
 
 	void CodeGen::visit(Node* _node)
 	{
-		if (_node->asIdentifier())
+		if (_node == nullptr)
+			return;
+		else if (_node->asIdentifier())
 			visit(_node->asIdentifier());
-		else if (_node->asAssignment())
-			visit(_node->asAssignment());
 		else if (_node->asNumber())
 			visit(_node->asNumber());
+		else if (_node->asAssignment())
+			visit(_node->asAssignment());
 		else if (_node->asBinaryExpression())
 			visit(_node->asBinaryExpression());
 		else if (_node->asUnaryExpression())
@@ -35,8 +67,12 @@ namespace codegen
 			visit(_node->asIfStmt());
 		else if (_node->asWhileStmt())
 			visit(_node->asWhileStmt());
-		else if (_node->asFunctionStmt())
-			visit(_node->asFunctionStmt());
+		else if (_node->asBreakStmt())
+			visit(_node->asBreakStmt());
+		else if (_node->asReturnStmt())
+			visit(_node->asReturnStmt());
+		else if (_node->asFuncDef())
+			visit(_node->asFuncDef());
 	}
 
 	void CodeGen::visit(BlockExprNode* _node)
@@ -48,7 +84,7 @@ namespace codegen
 				(*i)->asBinaryExpression() || 
 				(*i)->asIdentifier() || 
 				(*i)->asNumber())
-				pack.instructions.push_back(Instruction(VM_CODE::OUT, 0));
+				env->instructions.push_back(Instruction(VM_CODE::OUT, 0));
 		}
 	}
 
@@ -64,113 +100,126 @@ namespace codegen
 		switch (_node->op)
 		{
 		case OperatorType::ADD:
-			pack.instructions.push_back(Instruction(VM_CODE::ADD, 0));
+			env->instructions.push_back(Instruction(VM_CODE::ADD, 0));
 			break;
 		case OperatorType::SUB:
-			pack.instructions.push_back(Instruction(VM_CODE::SUB, 0));
+			env->instructions.push_back(Instruction(VM_CODE::SUB, 0));
 			break;
 		case OperatorType::MUL:
-			pack.instructions.push_back(Instruction(VM_CODE::MUL, 0));
+			env->instructions.push_back(Instruction(VM_CODE::MUL, 0));
 			break;
 		case OperatorType::DIV:
-			pack.instructions.push_back(Instruction(VM_CODE::DIV, 0));
+			env->instructions.push_back(Instruction(VM_CODE::DIV, 0));
 			break;
 		case OperatorType::MOD:
-			pack.instructions.push_back(Instruction(VM_CODE::MOD, 0));
+			env->instructions.push_back(Instruction(VM_CODE::MOD, 0));
 			break;
 		case OperatorType::POW:
-			pack.instructions.push_back(Instruction(VM_CODE::POW, 0));
+			env->instructions.push_back(Instruction(VM_CODE::POW, 0));
 			break;
 		case OperatorType::GT:
-			pack.instructions.push_back(Instruction(VM_CODE::GT, 0));
+			env->instructions.push_back(Instruction(VM_CODE::GT, 0));
 			break;
 		case OperatorType::LT:
-			pack.instructions.push_back(Instruction(VM_CODE::LT, 0));
+			env->instructions.push_back(Instruction(VM_CODE::LT, 0));
 			break;
 		case OperatorType::GTEQ:
-			pack.instructions.push_back(Instruction(VM_CODE::GTEQ, 0));
+			env->instructions.push_back(Instruction(VM_CODE::GTEQ, 0));
 			break;
 		case OperatorType::LTEQ:
-			pack.instructions.push_back(Instruction(VM_CODE::LTEQ, 0));
+			env->instructions.push_back(Instruction(VM_CODE::LTEQ, 0));
 			break;
 		case OperatorType::EQ:
-			pack.instructions.push_back(Instruction(VM_CODE::EQ, 0));
+			env->instructions.push_back(Instruction(VM_CODE::EQ, 0));
 			break;
 		default:
 			// runtime error
-			pack.instructions.push_back(Instruction(VM_CODE::POP, 0));
+			env->instructions.push_back(Instruction(VM_CODE::POP, 0));
 			// pack.instructions.push_back(Instruction(VM_CODE::POP, 0));
 		}
 	}
 
 	void CodeGen::visit(NumberNode* _node)
 	{
-		auto index = pack.constant.size();
+		auto index = env->constant.size();
+
 		if (_node->maybeInt)
-			pack.constant.push_back(Object(static_cast<int>(_node->value)));
-		else
-			pack.constant.push_back(Object(_node->value));
-		pack.instructions.push_back(Instruction(VM_CODE::LOAD_C, index));
+			env->constant.push_back(Object(static_cast<int>(_node->number)));
+		env->constant.push_back(Object(_node->number));
+
+		env->instructions.push_back(Instruction(VM_CODE::LOAD_C, index));
 	}
 
 	void CodeGen::visit(IdentifierNode* _node)
 	{
 		// read the value of the memory
 		// and push to the top of the stack
-		auto index = var_id[_node->name];
-		pack.instructions.push_back(Instruction(VM_CODE::LOAD_V, index));
+
+		auto index = env->findLocalVariable(_node->name, true);
+		env->instructions.push_back(Instruction(VM_CODE::LOAD_V, index));
 	}
 
 	void CodeGen::visit(AssignmentNode* _node)
 	{
 		// find if the var is exisits
 		// if not exisits add a possition for it
-		auto _name = _node->identifier;
+		auto _id = dynamic_cast<IdentifierNode*>(_node->identifier);
 		unsigned int _index;
-		if (var_id.find(_name) == var_id.end()) // not find
+		if (env->var_id.find(_id->name) == env->var_id.end()) // not find
 		{
-			_index = var_id.size();
-			var_id[_name] = _index;
+			_index = env->var_id.size();
+			env->var_id[_id->name] = _index;
+			env->var_names[_index] = _id->name;	// record the name
 		}
 		else
-			_index = var_id[_name];
+			_index = env->var_id[_id->name];
 
 		visit(_node->expression);
-		pack.instructions.push_back(Instruction(VM_CODE::STORE_V, _index));
+		env->instructions.push_back(Instruction(VM_CODE::STORE_V, _index));
 	}
 
 	void CodeGen::visit(IfStmtNode* _node)
 	{
 		int jmp_val;
 		visit(_node->condition);
-		auto jmp_loc = pack.instructions.size();
-		pack.instructions.push_back(Instruction(VM_CODE::IFNO, 1));
+		auto jmp_loc = env->instructions.size();
+		env->instructions.push_back(Instruction(VM_CODE::IFNO, 1));
 		visit(_node->true_branch);
-		auto true_finish_loc = pack.instructions.size();
-		pack.instructions.push_back(Instruction(VM_CODE::JMP, 1));
+		auto true_finish_loc = env->instructions.size();
+		env->instructions.push_back(Instruction(VM_CODE::JMP, 1));
 		// if condition not ture, jmp to the right location
-		jmp_val = pack.instructions.size() - jmp_loc;
-		pack.instructions[jmp_loc] = Instruction(VM_CODE::IFNO, jmp_val); 
+		jmp_val = env->instructions.size() - jmp_loc;
+		env->instructions[jmp_loc] = Instruction(VM_CODE::IFNO, jmp_val); 
 		if (_node->false_branch)
 		{
 			visit(_node->false_branch);
-			jmp_val = pack.instructions.size() - true_finish_loc;
-			pack.instructions[true_finish_loc] = Instruction(VM_CODE::JMP, jmp_val);
+			jmp_val = env->instructions.size() - true_finish_loc;
+			env->instructions[true_finish_loc] = Instruction(VM_CODE::JMP, jmp_val);
 		}
 	}
 
 	void CodeGen::visit(WhileStmtNode* _node)
 	{
-		auto _begin_loc = pack.instructions.size();
+		auto _begin_loc = env->instructions.size();
 		visit(_node->condition);
-		auto _condition_loc = pack.instructions.size();
-		pack.instructions.push_back(Instruction(VM_CODE::IFNO, 0));
+		auto _condition_loc = env->instructions.size();
+		env->instructions.push_back(Instruction(VM_CODE::IFNO, 0));
 		visit(_node->child);
-		pack.instructions.push_back(Instruction(VM_CODE::JMP, -1 * (pack.instructions.size() - _begin_loc)));
-		pack.instructions[_condition_loc] = Instruction(VM_CODE::IFNO, pack.instructions.size() - _condition_loc);
+		env->instructions.push_back(Instruction(VM_CODE::JMP, -1 * (env->instructions.size() - _begin_loc)));
+		env->instructions[_condition_loc] = Instruction(VM_CODE::IFNO, env->instructions.size() - _condition_loc);
 	}
 
-	void CodeGen::visit(FunctionStmtNode* _node)
+	void CodeGen::visit(BreakStmtNode* _node)
+	{
+
+	}
+
+	void CodeGen::visit(ReturnStmtNode* _node)
+	{
+
+	}
+
+	void CodeGen::visit(FuncDefNode* _node)
 	{
 		// wait to finish
 	}

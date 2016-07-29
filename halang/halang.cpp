@@ -52,10 +52,12 @@ int main(int argc, char** argv)
 		codegen::CodeGen cg(parser);
 		cg.generate();
 
+		/*
 		auto state = make_unique<State>(cg.pack.variablesSize, cg.pack.constant);
 		auto nvm = make_unique<StackVM<vector<Instruction>::iterator> >(cg.pack.instructions.begin());
 		nvm->setState(state.get());
 		nvm->execute();
+		*/
 	}
 	else
 	{

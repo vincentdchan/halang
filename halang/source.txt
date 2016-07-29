@@ -1,7 +1,6 @@
-let a = 0
-
-while (a <= 100)
+var a = 0
+a(3, a)
+while ( a <= 3)
 {
-	a
-	let a = a + 3
+	a = a + 1
 }

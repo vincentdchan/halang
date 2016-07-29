@@ -3,6 +3,7 @@
 #include <tuple>
 #include <list>
 #include <utility>
+#include <string>
 #include "token.h"
 
 namespace utils

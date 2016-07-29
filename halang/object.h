@@ -100,10 +100,12 @@ namespace runtime
 		}
 
 #define GETVALUE(OBJ) (OBJ.isSmallInt() ? OBJ.value.si : toNumber(OBJ))
-		Object applyOperator(OperatorType op, Object that) const
+		Object applyOperator(OperatorType op, Object that = Object()) const
 		{
 			switch (op)
 			{
+			case OperatorType::NOT:
+				return Object(!static_cast<bool>(*this));
 			case OperatorType::ADD:
 				return Object(GETVALUE((*this)) + GETVALUE(that));
 			case OperatorType::SUB:

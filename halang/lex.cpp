@@ -57,6 +57,9 @@ namespace lex
 			case '\t':
 			case '\n':
 			case ' ': ++iter; break;
+			case '!':
+				PUSH_TOKEN(NOT);
+				++iter; break;
 			case '.':
 				PUSH_TOKEN(DOT);
 				++iter; break;
@@ -159,11 +162,11 @@ namespace lex
 		// check reserved
 		switch (buffer[iter])
 		{
-			case 'l': // let
-				if (match = swallow("let"))
+			case 'v': //  var
+				if (match = swallow("var"))
 				{
 					loc.length = 3;
-					PUSH_TOKEN(LET);
+					PUSH_TOKEN(VAR);
 				}
 				break;
 			case 'i': // if
@@ -187,11 +190,11 @@ namespace lex
 					PUSH_TOKEN(WHILE);
 				}
 				break;
-			case 'f': // function
-				if (match = swallow("function"))
+			case 'f': // func
+				if (match = swallow("func"))
 				{
-					loc.length = 8;
-					PUSH_TOKEN(FUNCTION);
+					loc.length = 4;
+					PUSH_TOKEN(FUNC);
 				}
 				break;
 			case 'r': // return

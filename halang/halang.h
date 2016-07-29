@@ -15,6 +15,7 @@ typedef bool TBool;
 	V(DIV, "/", 11) \
 	V(MOD, "%", 12) \
 	V(POW, "**", 13) \
+	V(NOT, "!", 15) \
 	V(EQ, "==", 8) \
 	V(GT, ">", 8) \
 	V(LT, "<", 8) \
@@ -27,10 +28,10 @@ typedef bool TBool;
 	V(COMMA) \
 	V(SEMICOLON) \
 	V(ILLEGAL) \
-	V(LET) \
 	V(IF) \
 	V(ELSE) \
 	V(WHILE) \
+	V(BREAK) \
 	V(ASSIGN) \
 	V(IDENTIFIER) \
 	V(OPEN_PAREN) \
@@ -38,7 +39,8 @@ typedef bool TBool;
 	V(OPEN_BRAKET) \
 	V(CLOSE_BRAKET) \
 	V(NUMBER) \
-	V(FUNCTION) \
+	V(VAR) \
+	V(FUNC) \
 	V(RETURN) \
 	V(ENDFILE) 
 

@@ -3,6 +3,8 @@
 #include "parser.h"
 #include "ast.h"
 
+#define CHECK_NULL(PTR) if ((PTR) == nullptr) return nullptr;
+
 namespace parser
 {
 
@@ -49,14 +51,18 @@ namespace parser
 		
 		do
 		{
-			_block->children.push_back(parseStatement());
+			if (match(Token::TYPE::SEMICOLON))
+				nextToken();
+			else
+				_block->children.push_back(parseStatement());
 		} while (match(Token::TYPE::IDENTIFIER) ||
 			match(Token::TYPE::NUMBER) ||
-			match(Token::TYPE::LET) ||
+			match(Token::TYPE::VAR) ||
 			match(Token::TYPE::OPEN_PAREN) ||
 			match(Token::TYPE::WHILE) ||
 			match(Token::TYPE::IF) ||
-			match(Token::TYPE::FUNCTION) ||
+			match(Token::TYPE::FUNC) ||
+			match(Token::TYPE::SEMICOLON) ||
 			Token::isOperator(lookahead)
 			);
 
@@ -65,155 +71,210 @@ namespace parser
 
 	Node* Parser::parseStatement()
 	{
-		if (match(Token::TYPE::LET))
-			return parseLetExpr();
+		if (match(Token::TYPE::SEMICOLON))
+		{
+			nextToken();
+			return nullptr;
+		}
+		else if (match(Token::TYPE::VAR))
+			return parseVarStmt();
 		else if (match(Token::TYPE::WHILE))
 			return parseWhileStmt();
+		else if (match(Token::TYPE::BREAK))
+		{
+			nextToken();
+			return make_node<BreakStmtNode>();
+		}
 		else if (match(Token::TYPE::IF))
 			return parseIfStmt();
-		else if (match(Token::TYPE::FUNCTION))
-			return parseFunctionStmt();
+		else if (match(Token::TYPE::FUNC))
+			return parseFuncDef();
+		else if (match(Token::TYPE::RETURN))
+			return parseReturnStmt();
+		else if (match(Token::TYPE::OPEN_BRAKET))
+		{
+			expect(nextToken(), Token::TYPE::OPEN_BRAKET);
+			auto _node = parseBlock();
+			expect(nextToken(), Token::TYPE::CLOSE_BRAKET);
+			return _node;
+		}
 		else
 			return parseExpression();
 	}
 
-	Node* Parser::parseExpression()
+	// varStmt ::= VAR ID '=' exp [ , ID '=' EXP ]
+	Node* Parser::parseVarStmt()
 	{
-		return parseBinaryExpr();
+		expect(nextToken(), Token::TYPE::VAR);
+		Node *exp = nullptr;
+		AssignmentNode* _assign = nullptr;
+		auto _var = make_node<VarStmtNode>();
+		if (match(Token::TYPE::IDENTIFIER))
+		{
+			Token _tk = nextToken();
+			expect(nextToken(), Token::TYPE::ASSIGN);
+			exp = parseStatement();
+
+			auto _assign = make_node<AssignmentNode>(make_node<IdentifierNode>(*_tk._literal), exp);
+
+			_var->children.push_back(_assign);
+
+			while (match(Token::TYPE::COMMA))
+			{
+				nextToken();
+				expect(Token::TYPE::IDENTIFIER);
+				Token _tk = nextToken();
+				expect(nextToken(), Token::TYPE::ASSIGN);
+				exp = parseStatement();
+
+				_assign = make_node<AssignmentNode>(make_node<IdentifierNode>(*_tk._literal), exp);
+				_var->children.push_back(_assign);
+			}
+		}
+		else
+		{
+			ReportError("<Var stmt> expected identifier");
+		}
+		return _var;
 	}
 
-	Node* Parser::parseLetExpr()
+	Node* Parser::parseExpression()
 	{
-		expect(Token::TYPE::LET);
+		// Expression ::=
+		//		Assignment | BinaryExpr
+		// 
+		// Assignment ::= Variable '=' Expression
+		//
+		// BinaryExpr :: BinaryExpr OP BinaryExpr | UnaryExpr
+		//
+		// Variable ::= ID ( '[' Expression ']' )?
+		//
+		// UnaryExpr ::= ('+' | '-' | '!') UnaryExpr | '(' Expression ')' | FuncCall
+		//
+		// FuncCall ::= ID '(' FuncCallArgs ')'
+		if (match(Token::TYPE::IDENTIFIER))
+		{
+			Token _tk = nextToken();
+			auto _id = make_node<IdentifierNode>(*_tk._literal);
+			if (match(Token::TYPE::OPEN_PAREN))
+			{
+				auto _func = parseFuncCall(_id);
+				if (Token::isOperator(lookahead))
+				{
+					auto _op = nextToken();
+					return parseBinaryExpr(_func, _op);
+				}
+				else
+					return _func;
+			}
+			else if (match(Token::TYPE::ASSIGN))
+				return parseAssignment(_id);
+			else if (Token::isOperator(lookahead))
+			{
+				auto _tk = nextToken();
+				return parseBinaryExpr(_id, _tk);
+			}
+			else return _id;
+		}
+		else
+			return parseBinaryExpr();
+	}
+
+	Node* Parser::parseVarExpr()
+	{
+		expect(Token::TYPE::VAR);
 		nextToken();
 		return parseAssignment();
 	}
 
-	Node* Parser::parseAssignment()
+	Node* Parser::parseAssignment(IdentifierNode* _id)
 	{
-		expect(Token::TYPE::IDENTIFIER);
+		// current version:
+		// Assignment ::=
+		//		VAR '=' Expression
+		//
+		// future version:
+		// Assignment ::=
+		//		VAR { ',' VAR } = Expression { ',' Expression }
+		//
+		if (!_id)
+		{
+			expect(Token::TYPE::IDENTIFIER);
+			string _str = *lookahead._literal;
+			nextToken();
+			_id = make_node<IdentifierNode>(_str);
+		}
 
-		string _id = *lookahead._literal;
-		nextToken();
-		expect(Token::TYPE::ASSIGN);
-		nextToken();
-		Node* _exp = parseBinaryExpr();
+		expect(nextToken(), Token::TYPE::ASSIGN);
+		Node* _exp = parseExpression();
 		return make_node<AssignmentNode>(_id, _exp);
 	}
 
-	Node* Parser::parseUnaryExpr()
+	Node* Parser::parseUnaryExpr(OperatorType _op)
 	{
-		// UnaryExpr: ( + | - )? Int
-		if (match(Token::TYPE::ADD))
+		// UnaryExpr ::= 
+		//	( '+' | '-' | '!' ) UnaryExpr | Number | VAR | FUNCTIONCALL
+		Node* _node = nullptr;
+		if (match(Token::TYPE::ADD) || match(Token::TYPE::SUB) || match(Token::TYPE::NOT))
 		{
-			nextToken();
-			if (match(Token::TYPE::NUMBER))
-			{
-				double _data = lookahead._double;
-				auto numberNode = make_node<NumberNode>(_data, lookahead.maybeInt);
-				nextToken();
-				return numberNode;
-			}
-			else if (match(Token::TYPE::IDENTIFIER))
-			{
-				string s = *lookahead._literal;
-				nextToken();
-				return make_node<IdentifierNode>(s);
-			}
-			else
-			{
-				ReportError("Expected number.");
-				return nullptr;
-			}
-		}
-		else if (match(Token::TYPE::SUB))
-		{
-			nextToken();
-			if (match(Token::Token::NUMBER))
-			{
-				double _data = lookahead._double;
-				auto _node = make_node<NumberNode>(_data, lookahead.maybeInt);
-				nextToken();
-				return _node;
-			}
-			else if (match(Token::TYPE::IDENTIFIER))
-			{
-				Token _t = nextToken();
-				auto _node = make_node<IdentifierNode>(*_t._literal);
-				return make_node<UnaryExprNode>(OperatorType::SUB, _node);
-			}
-			else
-			{
-				ReportError("Expected number or identifier");
-				return nullptr;
-			}
+			Token _op = nextToken();
+			_node = make_node<UnaryExprNode>(Token::toOperator(_op), parseUnaryExpr());
 		}
 		else if (match(Token::TYPE::NUMBER))
 		{
-			Token _t = nextToken();
-			return make_node<NumberNode>(_t._double, _t.maybeInt);
+			_node = make_node<NumberNode>(lookahead._double, lookahead.maybeInt);
+			nextToken();
 		}
-		else if (match(Token::TYPE::IDENTIFIER))
+		else if (match(Token::TYPE::IDENTIFIER)) // maybe a variable or functioncall
 		{
-			Token _t = nextToken();
-			return make_node<IdentifierNode>(*_t._literal);
-		}
+			std::string _id_name = *nextToken()._literal;
+			_node = make_node<IdentifierNode>(_id_name);
+
+			if (match(Token::TYPE::OPEN_PAREN))
+				_node = parseFuncCall(_node);
+		} 
 		else if (match(Token::TYPE::OPEN_PAREN))
 		{
 			nextToken();
-			auto _node = parseBinaryExpr();
-			expect(Token::TYPE::CLOSE_PAREN);
-			nextToken();
-			return _node;
+			auto exp = parseExpression();
+			expect(nextToken(), Token::TYPE::CLOSE_PAREN);
+			if (match(Token::TYPE::OPEN_PAREN))
+				exp = parseFuncCall(exp);
+			return exp;
 		}
-		else
-		{
-			ReportError("Unexpected token, expected +, - or Integer.");
-			return nullptr;
-		}
+		return _node;
 	}
 
-	Node* Parser::parseBinaryExpr()
+	Node* Parser::parseBinaryExpr(Node* left_exp, Token left_tk)
 	{
-		// BinaryExpr: Unary { OP Unary }
-		stack<OperatorType> opStack;
-		stack<Node*> nodeStack;
-		auto _begin = parseUnaryExpr();
-		if (_begin == nullptr)
-			return nullptr;
-		nodeStack.push(_begin);
-
-		while (Token::isOperator(lookahead))
+		Node* exp = parseUnaryExpr();
+		CHECK_NULL(exp);
+		OperatorType left_op = Token::toOperator(left_tk);
+		while (true)
 		{
-			int prec = getPrecedence(Token::toOperator(lookahead));
-			if (opStack.empty() || prec > getPrecedence(opStack.top()))
+			Token right_tk = lookahead;
+			OperatorType right_op = Token::toOperator(right_tk);
+			if (getPrecedence(left_op) < getPrecedence(right_op))
 			{
-				opStack.push(Token::toOperator(lookahead));
 				nextToken();
-				auto l = parseUnaryExpr();
-				nodeStack.push(l);
+				exp = parseBinaryExpr(exp, right_tk);
 			}
-			else
+			else if (getPrecedence(left_op) == getPrecedence(right_op))
 			{
-				while (!opStack.empty() && prec <= getPrecedence(opStack.top()))
-				{
-					Node *l1, *l2;
-					l1 = nodeStack.top(); nodeStack.pop();
-					l2 = nodeStack.top(); nodeStack.pop();
-					nodeStack.push(make_node<BinaryExprNode>(opStack.top(), l2, l1));
-					opStack.pop();
-				}
+				if (getPrecedence(left_op) == 0)
+					return exp;
+				CHECK_NULL(left_exp);
+				exp = make_node<BinaryExprNode>(left_op, left_exp, exp);
+				nextToken();
+				return parseBinaryExpr(exp, right_tk);
+			}
+			else // left_op > right_op
+			{
+				if (left_exp)
+					exp = make_node<BinaryExprNode>(left_op, left_exp, exp);
+				return exp;
 			}
 		}
-		while (!opStack.empty())
-		{
-			Node *l1, *l2;
-			l1 = nodeStack.top(); nodeStack.pop();
-			l2 = nodeStack.top(); nodeStack.pop();
-			nodeStack.push(make_node<BinaryExprNode>(opStack.top(), l2, l1));
-			opStack.pop();
-		}
-		return nodeStack.top();
 	}
 
 	Node* Parser::parseIfStmt()
@@ -254,15 +315,15 @@ namespace parser
 		return make_node<WhileStmtNode>(_condition, _block);
 	}
 
-	Node* Parser::parseFunctionStmt()
+	Node* Parser::parseFuncDef()
 	{
 		// def new function
-		auto _func = make_node<FunctionStmtNode>();
-		expect(nextToken(), Token::TYPE::FUNCTION);
+		auto _func = make_node<FuncDefNode>();
+		expect(nextToken(), Token::TYPE::FUNC);
 		expect(Token::TYPE::IDENTIFIER);
 		_func->name = *nextToken()._literal;
 		expect(nextToken(), Token::TYPE::OPEN_PAREN);
-		_func->parameters = dynamic_cast<FunctionParametersNode*>(parseFunctionParameters());
+		_func->parameters = dynamic_cast<FuncDefParamsNode*>(parseFuncDefParams());
 		expect(nextToken(), Token::TYPE::CLOSE_PAREN);
 		expect(nextToken(), Token::TYPE::OPEN_BRAKET);
 		_func->block = dynamic_cast<BlockExprNode*>(parseBlock());
@@ -270,9 +331,9 @@ namespace parser
 		return _func;
 	}
 
-	Node* Parser::parseFunctionParameters()
+	Node* Parser::parseFuncDefParams()
 	{
-		auto _params = make_node<FunctionParametersNode>();
+		auto _params = make_node<FuncDefParamsNode>();
 		expect(Token::TYPE::IDENTIFIER);
 		while (match(Token::TYPE::IDENTIFIER))
 		{
@@ -289,6 +350,47 @@ namespace parser
 			}
 		}
 		return _params;
+	}
+
+	Node* Parser::parseFuncCall(Node* exp)
+	{
+		FuncCallNode* _node = nullptr;
+		Node * _params = nullptr;
+		expect(nextToken(), Token::TYPE::OPEN_PAREN);
+		_params = parseFuncCallParams();
+		CHECK_NULL(_params);
+		expect(nextToken(), Token::TYPE::CLOSE_PAREN);
+		_node = make_node<FuncCallNode>(exp, dynamic_cast<FuncCallParamsNode*>(_params));
+		while (match(Token::TYPE::OPEN_PAREN))
+		{
+			nextToken();
+			_params = parseFuncCallParams();
+			expect(nextToken(), Token::TYPE::CLOSE_PAREN);
+			_node = make_node<FuncCallNode>(_node, dynamic_cast<FuncCallParamsNode*>(_params));
+		}
+		return _node;
+	}
+
+	Node* Parser::parseFuncCallParams()
+	{
+		auto _params = make_node<FuncCallParamsNode>();
+		if (!match(Token::TYPE::CLOSE_PAREN))
+		{
+			auto _exp = parseExpression();
+			_params->children.push_back(_exp);
+			while (match(Token::TYPE::COMMA))
+			{
+				nextToken();
+				_exp = parseExpression();
+				_params->children.push_back(_exp);
+			}
+		}
+		return _params;
+	}
+
+	Node* Parser::parseReturnStmt()
+	{
+		return nullptr;
 	}
 
 	Parser::~Parser()

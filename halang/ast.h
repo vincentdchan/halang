@@ -4,16 +4,21 @@
 #include "token.h"
 
 #define NODE_LIST(V) \
-	V(Identifier) \
 	V(Assignment) \
 	V(Number) \
+	V(Identifier) \
 	V(BinaryExpr) \
 	V(UnaryExpr) \
 	V(BlockExpr) \
+	V(VarStmt) \
 	V(IfStmt) \
 	V(WhileStmt) \
-	V(FunctionStmt) \
-	V(FunctionParameters) \
+	V(BreakStmt) \
+	V(ReturnStmt) \
+	V(FuncDef) \
+	V(FuncDefParams) \
+	V(FuncCall) \
+	V(FuncCallParams) \
 
 namespace parser
 {
@@ -27,17 +32,33 @@ namespace parser
 	{
 	public:
 		Node() {}
-		virtual NumberNode* asNumber() { return nullptr; }
 		virtual IdentifierNode* asIdentifier() { return nullptr; }
+		virtual NumberNode* asNumber() { return nullptr; }
 		virtual AssignmentNode* asAssignment() { return nullptr; }
 		virtual UnaryExprNode* asUnaryExpression() { return nullptr; }
 		virtual BlockExprNode* asBlockExpression() { return nullptr; }
 		virtual BinaryExprNode* asBinaryExpression() { return nullptr; }
+		virtual VarStmtNode* asVarStmt() { return nullptr; }
 		virtual IfStmtNode* asIfStmt() { return nullptr; }
 		virtual WhileStmtNode* asWhileStmt() { return nullptr; }
-		virtual FunctionStmtNode* asFunctionStmt() { return nullptr; }
-		virtual FunctionParametersNode* asFunctionParameters() { return nullptr; }
-		virtual ~Node() {}
+		virtual BreakStmtNode* asBreakStmt() { return nullptr; }
+		virtual ReturnStmtNode* asReturnStmt() { return nullptr; }
+		virtual FuncDefNode* asFuncDef() { return nullptr; }
+		virtual FuncDefParamsNode* asFuncDefParams() { return nullptr; }
+		virtual FuncCallNode* asFuncCall() { return nullptr; }
+		virtual FuncCallParamsNode* asFuncCallParams() { return nullptr; }
+		// virtual ~Node() {}
+	};
+
+	class NumberNode : public Node
+	{
+	public:
+		NumberNode(double _num = 0, bool _mi = false) :
+			number(_num), maybeInt(_mi)
+		{}
+		virtual NumberNode* asNumber() override { return nullptr; }
+		double number;
+		bool maybeInt;
 	};
 
 	class IdentifierNode : public Node
@@ -54,12 +75,12 @@ namespace parser
 	{
 	public:
 		AssignmentNode() {}
-		AssignmentNode(const std::string& _id, Node* _exp = nullptr):
+		AssignmentNode(IdentifierNode* _id, Node* _exp = nullptr):
 			identifier(_id), expression(_exp)
 		{}
 		virtual AssignmentNode* asAssignment() override { return this; }
 
-		std::string identifier;
+		IdentifierNode* identifier;
 		Node* expression;
 	};
 
@@ -98,16 +119,12 @@ namespace parser
 		Node* right;
 	};
 
-	class NumberNode : public Node
+
+	class VarStmtNode : public Node
 	{
 	public:
-		NumberNode(double _decimal = 0.0, bool _mi = false):
-			value(_decimal), maybeInt(_mi)
-		{}
-		virtual NumberNode* asNumber() override { return this; }
-
-		double value;
-		bool maybeInt;
+		virtual VarStmtNode* asVarStmt() override { return this; }
+		std::vector<Node*> children;
 	};
 
 	class IfStmtNode : public Node
@@ -140,21 +157,51 @@ namespace parser
 		Node* child;
 	};
 
-	class FunctionStmtNode : public Node
+	class BreakStmtNode : public Node
 	{
 	public:
-		FunctionStmtNode() {}
-		virtual FunctionStmtNode* asFunctionStmt() override { return this; }
+		virtual BreakStmtNode* asBreakStmt() override { return this; }
+	};
+
+	class ReturnStmtNode : public Node
+	{
+	public:
+		virtual ReturnStmtNode* asReturnStmt() override { return this; }
+	};
+
+	class FuncDefNode : public Node
+	{
+	public:
+		FuncDefNode() {}
+		virtual FuncDefNode* asFuncDef() override { return this; }
 		std::string name;
-		FunctionParametersNode* parameters;
+		FuncDefParamsNode* parameters;
 		BlockExprNode* block;
 	};
 
-	class FunctionParametersNode : public Node
+	class FuncDefParamsNode : public Node
 	{
 	public:
-		virtual FunctionParametersNode* asFunctionParameters() override { return this; }
+		virtual FuncDefParamsNode* asFuncDefParams() override { return this; }
 		std::vector<std::string> identifiers;
+	};
+
+	class FuncCallNode : public Node
+	{
+	public:
+		FuncCallNode(Node* _exp = nullptr, FuncCallParamsNode* _params = nullptr):
+			exp(_exp), params(_params)
+		{}
+		virtual FuncCallNode* asFuncCall() override { return this; }
+		Node* exp; // maybe identifier, maybe another func  foo(a) foo(a)(b)(b)
+		FuncCallParamsNode* params;
+	};
+
+	class FuncCallParamsNode : public Node
+	{
+	public:
+		virtual FuncCallParamsNode* asFuncCallParams() override { return this; }
+		std::vector<Node*> children;
 	};
 
 }

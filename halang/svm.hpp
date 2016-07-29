@@ -5,8 +5,10 @@
 
 #include <vector>
 #include <cinttypes>
+#include <map>
 #include "svm_codes.h"
 #include "object.h"
+#include "upvalue.h"
 
 #define PRE(POINTER) ((POINTER) - 1)
 
@@ -15,6 +17,61 @@ namespace runtime
 	namespace StackVM
 	{
 
+
+		class GlobalState;
+		class FunctionState;
+
+		class GlobalState
+		{
+			std::size_t var_size;
+			std::map<std::size_t, std::string> var_names;
+			Object* variables;
+
+			GCObject* gc_objects;
+
+			void add_gc(GCObject* _obj)
+			{
+				// make linked list
+				_obj->next = this->gc_objects;
+				this->gc_objects = _obj;
+			}
+
+		public:
+			template<typename T> friend class StackVM;
+			~GlobalState()
+			{
+				delete[] variables;
+			}
+
+			//fuck all
+		};
+
+		class FunctionState
+		{
+			GlobalState* globalstate;
+			FunctionState* parent;
+			std::size_t var_size;
+			std::size_t upvalues_size;
+			Object* stack;
+
+			Object* objStackBase_;
+			Object* objStack;
+
+			Object* variables;
+			Object* upvalues;
+
+			std::map<std::size_t, std::string> var_names;
+			std::vector<std::size_t> up_variables; // when the funciton finish close the upvalue
+
+		public:
+			template<typename InstIter> friend class StackVM;
+			~FunctionState()
+			{
+				delete[] objStackBase_;
+				delete[] variables;
+				delete[] upvalues;
+			}
+		};
 
 		class State final
 		{
@@ -129,6 +186,8 @@ namespace runtime
 					if (!*(--objStack))
 						inst += current->getParam() - 1;
 					break;
+				case VM_CODE::NOT:
+					*PRE(objStack) = PRE(objStack)->applyOperator(OperatorType::NOT);
 				case VM_CODE::ADD:
 					--objStack;
 					*PRE(objStack) = PRE(objStack)->applyOperator(OperatorType::ADD, *objStack);
