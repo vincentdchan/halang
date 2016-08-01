@@ -163,6 +163,7 @@
     <ClInclude Include="util.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="ast.cpp" />
     <ClCompile Include="codegen.cpp" />
     <ClCompile Include="halang.cpp" />
     <ClCompile Include="lex.cpp" />

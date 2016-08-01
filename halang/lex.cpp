@@ -2,7 +2,7 @@
 #include <cstring>
 #include "lex.h"
 
-namespace lex
+namespace halang
 {
 	using namespace std;
 

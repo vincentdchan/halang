@@ -1,7 +1,7 @@
 #pragma once
 #include "object.h"
 
-namespace runtime
+namespace halang
 {
 	class UpValue : GCObject
 	{

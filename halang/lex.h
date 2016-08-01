@@ -7,7 +7,7 @@
 #include "token.h"
 #include "util.h"
 
-namespace lex
+namespace halang
 {
 	using namespace std;
 

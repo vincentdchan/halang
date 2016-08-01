@@ -1,30 +1,46 @@
 #pragma once
 #include <vector>
 #include <map>
+#include "svm.hpp"
 #include "object.h"
 #include "svm_codes.h"
 
-namespace runtime
+namespace halang
 {
-	namespace StackVM
+
+	//
+	// A codepack is a package of codes
+	//
+	// Including :
+	//		instruction bytes
+	//		variables names to the id
+	//
+	class CodePack : public GCObject
 	{
+	public:
+		CodePack() :
+			prev(nullptr), param_size(0), var_size(0), isGlobal(false)
+		{}
+		friend class CodeGen;
+	private:
+		CodePack* prev;
+		std::size_t param_size;
+		std::size_t var_size;
+		std::vector<Object> constant;
+		std::vector<Instruction> instructions;
+		std::map<std::size_t, std::string> var_names;
+		bool isGlobal;
+	};
 
-		class Function : public GCObject
-		{
-		public:
-			inline const std::vector<Object>& getConstTable() const { return _const_table;  }
-			inline const std::vector<VM_CODE>& getVmCodes() const { return _codes; }
-			inline unsigned int getVariableSize() const { return _var_size; }
-			inline void setVariableSize(unsigned int _size) { _var_size = _size; }
-		private:
-			unsigned int _var_size;
-			std::map<std::size_t, std::string> _var_names;
+	class Function : public GCObject
+	{
+	public:
+		Function(CodePack* cp, unsigned int _ps = 0) :
+			codepack(cp), paramsSize(_ps)
+		{}
+	private:
+		CodePack* codepack;
+		unsigned int paramsSize;
+	};
 
-			std::vector<VM_CODE> _codes;
-			std::vector<Object> _const_table;
-			std::vector<std::size_t> _upvalue_from;
-			std::vector<std::size_t> _upvalue_table;
-		};
-
-	}
-}
+};

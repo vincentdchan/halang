@@ -4,7 +4,7 @@
 #include "halang.h"
 
 
-namespace lex
+namespace halang
 {
 
 	using namespace std;

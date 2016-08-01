@@ -18,9 +18,7 @@ const char* DEFAULT_FILENAME = "source.txt";
 
 int main(int argc, char** argv)
 {
-	using namespace lex;
-	using namespace parser;
-	using namespace runtime::StackVM;
+	using namespace halang;
 
 	char *filename;
 	if (argc > 1)
@@ -49,7 +47,7 @@ int main(int argc, char** argv)
 
 	if (!parser.hasError())
 	{
-		codegen::CodeGen cg(parser);
+		CodeGen cg(parser);
 		cg.generate();
 
 		/*

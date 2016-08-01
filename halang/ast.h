@@ -3,6 +3,9 @@
 #include <vector>
 #include "token.h"
 
+namespace halang
+{
+
 #define NODE_LIST(V) \
 	V(Assignment) \
 	V(Number) \
@@ -20,8 +23,9 @@
 	V(FuncCall) \
 	V(FuncCallParams) \
 
-namespace parser
-{
+	class CodePack;
+	class CodeGen;
+
 	class Node;
 #define E(Name) class Name##Node;
 	NODE_LIST(E)
@@ -47,7 +51,13 @@ namespace parser
 		virtual FuncDefParamsNode* asFuncDefParams() { return nullptr; }
 		virtual FuncCallNode* asFuncCall() { return nullptr; }
 		virtual FuncCallParamsNode* asFuncCallParams() { return nullptr; }
-		// virtual ~Node() {}
+
+		void visit(CodeGen *cg, CodePack* cp);
+			/*
+		{
+			cg->visit(cp, this);
+		}
+		*/
 	};
 
 	class NumberNode : public Node
@@ -75,7 +85,7 @@ namespace parser
 	{
 	public:
 		AssignmentNode() {}
-		AssignmentNode(IdentifierNode* _id, Node* _exp = nullptr):
+		AssignmentNode(IdentifierNode* _id, Node* _exp = nullptr) :
 			identifier(_id), expression(_exp)
 		{}
 		virtual AssignmentNode* asAssignment() override { return this; }
@@ -95,8 +105,8 @@ namespace parser
 	class UnaryExprNode : public Node
 	{
 	public:
-		UnaryExprNode(OperatorType _op = OperatorType::ILLEGAL_OP, 
-			Node* _after = nullptr):
+		UnaryExprNode(OperatorType _op = OperatorType::ILLEGAL_OP,
+			Node* _after = nullptr) :
 			op(_op), child(_after)
 		{}
 		virtual UnaryExprNode* asUnaryExpression() override { return this; }
@@ -107,9 +117,9 @@ namespace parser
 	class BinaryExprNode : public Node
 	{
 	public:
-		BinaryExprNode(OperatorType _op = OperatorType::ILLEGAL_OP, 
-			Node* _left = nullptr, 
-			Node* _right = nullptr):
+		BinaryExprNode(OperatorType _op = OperatorType::ILLEGAL_OP,
+			Node* _left = nullptr,
+			Node* _right = nullptr) :
 			op(_op), left(_left), right(_right)
 		{}
 		virtual BinaryExprNode* asBinaryExpression() override { return this; }
@@ -130,14 +140,14 @@ namespace parser
 	class IfStmtNode : public Node
 	{
 	public:
-		IfStmtNode(Node* _cond = nullptr, 
-			Node* _true = nullptr, 
-			Node* _false = nullptr):
-			condition(_cond), 
-			true_branch(_true), 
+		IfStmtNode(Node* _cond = nullptr,
+			Node* _true = nullptr,
+			Node* _false = nullptr) :
+			condition(_cond),
+			true_branch(_true),
 			false_branch(_false)
 		{}
- 		virtual IfStmtNode* asIfStmt() override { return this; }
+		virtual IfStmtNode* asIfStmt() override { return this; }
 
 		Node* condition;
 		Node* true_branch;
@@ -147,11 +157,11 @@ namespace parser
 	class WhileStmtNode : public Node
 	{
 	public:
-		WhileStmtNode(Node* _con = nullptr, 
+		WhileStmtNode(Node* _con = nullptr,
 			Node* _cont = nullptr) :
 			condition(_con), child(_cont)
 		{}
- 		virtual WhileStmtNode* asWhileStmt() override { return this; }
+		virtual WhileStmtNode* asWhileStmt() override { return this; }
 
 		Node* condition;
 		Node* child;
@@ -189,7 +199,7 @@ namespace parser
 	class FuncCallNode : public Node
 	{
 	public:
-		FuncCallNode(Node* _exp = nullptr, FuncCallParamsNode* _params = nullptr):
+		FuncCallNode(Node* _exp = nullptr, FuncCallParamsNode* _params = nullptr) :
 			exp(_exp), params(_params)
 		{}
 		virtual FuncCallNode* asFuncCall() override { return this; }
@@ -204,4 +214,4 @@ namespace parser
 		std::vector<Node*> children;
 	};
 
-}
+};

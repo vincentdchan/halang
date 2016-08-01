@@ -8,9 +8,8 @@
 #include "ast.h"
 #include "util.h"
 
-namespace parser
+namespace halang
 {
-	using namespace lex;
 
 	class Parser final : public utils::_MessageContainer
 	{
@@ -92,4 +91,4 @@ namespace parser
 
 	};
 
-}
+};

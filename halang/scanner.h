@@ -2,7 +2,7 @@
 #include <iostream>
 #include <sstream>
 
-namespace lex
+namespace halang
 {
 	using namespace std;
 	class Scanner

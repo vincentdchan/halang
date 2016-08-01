@@ -1,12 +1,14 @@
 #pragma once
 #include <cinttypes>
 
-typedef int32_t uc32;
+namespace halang
+{
+	typedef int32_t uc32;
 
-// runtime definition
-typedef double TNumber;
-typedef int TSmallInt;
-typedef bool TBool;
+	// runtime definition
+	typedef double TNumber;
+	typedef int TSmallInt;
+	typedef bool TBool;
 
 #define OPERATOR_LIST(V) \
 	V(ADD, "+", 10) \
@@ -55,7 +57,7 @@ typedef bool TBool;
 
 
 #define E(NAME, STR, PRE) PRE,
-	const int OpreatorPrecedence[OperatorType::OP_NUM] = 
+	const int OpreatorPrecedence[OperatorType::OP_NUM] =
 	{
 		OPERATOR_LIST(E)
 	};
@@ -71,8 +73,10 @@ typedef bool TBool;
 #undef E
 #undef ET
 
-inline int getPrecedence(OperatorType ot)
-{
-	if (ot >= OperatorType::OP_NUM || ot < 0) return 0;
-	return OpreatorPrecedence[ot];
-}
+	inline int getPrecedence(OperatorType ot)
+	{
+		if (ot >= OperatorType::OP_NUM || ot < 0) return 0;
+		return OpreatorPrecedence[ot];
+	}
+
+};

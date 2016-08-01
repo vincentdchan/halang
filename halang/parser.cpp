@@ -5,7 +5,7 @@
 
 #define CHECK_NULL(PTR) if ((PTR) == nullptr) return nullptr;
 
-namespace parser
+namespace halang
 {
 
 	Parser::Parser(Lexer& _lex) : 
@@ -71,35 +71,34 @@ namespace parser
 
 	Node* Parser::parseStatement()
 	{
-		if (match(Token::TYPE::SEMICOLON))
+		Node* _node;
+		switch (lookahead.type)
 		{
+		case Token::TYPE::SEMICOLON:
 			nextToken();
 			return nullptr;
-		}
-		else if (match(Token::TYPE::VAR))
+		case Token::TYPE::VAR:
 			return parseVarStmt();
-		else if (match(Token::TYPE::WHILE))
+		case Token::TYPE::WHILE:
 			return parseWhileStmt();
-		else if (match(Token::TYPE::BREAK))
-		{
+		case Token::TYPE::BREAK:
 			nextToken();
 			return make_node<BreakStmtNode>();
-		}
-		else if (match(Token::TYPE::IF))
+		case Token::TYPE::IF:
 			return parseIfStmt();
-		else if (match(Token::TYPE::FUNC))
+		case Token::TYPE::FUNC:
 			return parseFuncDef();
-		else if (match(Token::TYPE::RETURN))
+		case Token::TYPE::RETURN:
 			return parseReturnStmt();
-		else if (match(Token::TYPE::OPEN_BRAKET))
-		{
+		case Token::TYPE::OPEN_BRAKET:
 			expect(nextToken(), Token::TYPE::OPEN_BRAKET);
-			auto _node = parseBlock();
+			_node = parseBlock();
 			expect(nextToken(), Token::TYPE::CLOSE_BRAKET);
 			return _node;
-		}
-		else
+		default:
 			return parseExpression();
+		}
+
 	}
 
 	// varStmt ::= VAR ID '=' exp [ , ID '=' EXP ]
@@ -283,13 +282,14 @@ namespace parser
 		expect(nextToken(), Token::TYPE::OPEN_PAREN);
 		auto _condition = parseBinaryExpr();
 		expect(nextToken(), Token::TYPE::CLOSE_PAREN);
-		expect(nextToken(), Token::TYPE::OPEN_BRAKET);
-		auto _block = parseBlock();
-		expect(nextToken(), Token::TYPE::CLOSE_BRAKET);
+
+		auto _stmt = parseStatement();
+		CHECK_NULL(_stmt)
+
 		Node* _else = nullptr;
 		if (match(Token::TYPE::ELSE))
 			_else = parseElseStmt();
-		return make_node<IfStmtNode>(_condition, _block, _else);
+		return make_node<IfStmtNode>(_condition, _stmt, _else);
 	}
 
 	Node* Parser::parseElseStmt()
@@ -297,10 +297,9 @@ namespace parser
 		expect(nextToken(), Token::TYPE::ELSE);
 		if (match(Token::TYPE::IF))
 			return parseIfStmt();
-		expect(nextToken(), Token::TYPE::OPEN_BRAKET);
-		auto _block = parseBlock();
-		expect(nextToken(), Token::TYPE::CLOSE_BRAKET);
-		return _block;
+
+		auto _stmt = parseStatement();
+		return _stmt;
 	}
 
 	Node* Parser::parseWhileStmt()
@@ -309,10 +308,8 @@ namespace parser
 		expect(nextToken(), Token::TYPE::OPEN_PAREN); // (
 		auto _condition = parseBinaryExpr();
 		expect(nextToken(), Token::TYPE::CLOSE_PAREN);
-		expect(nextToken(), Token::TYPE::OPEN_BRAKET);
-		auto _block = parseBlock();
-		expect(nextToken(), Token::TYPE::CLOSE_BRAKET);
-		return make_node<WhileStmtNode>(_condition, _block);
+		auto _stmt = parseStatement();
+		return make_node<WhileStmtNode>(_condition, _stmt);
 	}
 
 	Node* Parser::parseFuncDef()

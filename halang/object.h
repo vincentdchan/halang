@@ -5,6 +5,10 @@
 #include <string>
 #include "halang.h"
 
+
+namespace halang
+{
+
 #define OBJ_LIST(V) \
 	V(NUL) \
 	V(GC) \
@@ -12,10 +16,6 @@
 	V(SMALL_INT) \
 	V(NUMBER) \
 	V(BOOL)
-
-
-namespace runtime
-{
 
 	class Object;
 
