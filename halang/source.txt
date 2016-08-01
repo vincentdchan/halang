@@ -1,12 +1,4 @@
-var a = 0
-a(3, a)
-if (a < 3)
+func (a, b)
 {
-	a = 1
-}
-if ( a ==3 )
-a = 0
-while ( a <= 30)
-{
-	a = a + 1
+	a + b
 }

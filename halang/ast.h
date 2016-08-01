@@ -31,6 +31,8 @@ namespace halang
 	NODE_LIST(E)
 #undef E
 
+#define VISIT_OVERRIDE virtual void visit(CodeGen *cg, CodePack* cp) override;
+
 
 	class Node
 	{
@@ -52,7 +54,7 @@ namespace halang
 		virtual FuncCallNode* asFuncCall() { return nullptr; }
 		virtual FuncCallParamsNode* asFuncCallParams() { return nullptr; }
 
-		void visit(CodeGen *cg, CodePack* cp);
+		virtual void visit(CodeGen *cg, CodePack* cp) = 0;
 			/*
 		{
 			cg->visit(cp, this);
@@ -69,6 +71,8 @@ namespace halang
 		virtual NumberNode* asNumber() override { return nullptr; }
 		double number;
 		bool maybeInt;
+
+		VISIT_OVERRIDE
 	};
 
 	class IdentifierNode : public Node
@@ -79,6 +83,8 @@ namespace halang
 		virtual IdentifierNode* asIdentifier() override { return this; }
 
 		std::string name;
+
+		VISIT_OVERRIDE
 	};
 
 	class AssignmentNode : public Node
@@ -92,6 +98,8 @@ namespace halang
 
 		IdentifierNode* identifier;
 		Node* expression;
+
+		VISIT_OVERRIDE
 	};
 
 	class BlockExprNode : public Node
@@ -100,6 +108,8 @@ namespace halang
 		BlockExprNode() {}
 		std::vector<Node*> children;
 		virtual BlockExprNode* asBlockExpression() override { return this; }
+
+		VISIT_OVERRIDE
 	};
 
 	class UnaryExprNode : public Node
@@ -112,6 +122,8 @@ namespace halang
 		virtual UnaryExprNode* asUnaryExpression() override { return this; }
 		OperatorType op;
 		Node* child;
+
+		VISIT_OVERRIDE
 	};
 
 	class BinaryExprNode : public Node
@@ -127,6 +139,8 @@ namespace halang
 		OperatorType op;
 		Node* left;
 		Node* right;
+
+		VISIT_OVERRIDE
 	};
 
 
@@ -135,6 +149,8 @@ namespace halang
 	public:
 		virtual VarStmtNode* asVarStmt() override { return this; }
 		std::vector<Node*> children;
+
+		VISIT_OVERRIDE
 	};
 
 	class IfStmtNode : public Node
@@ -152,6 +168,8 @@ namespace halang
 		Node* condition;
 		Node* true_branch;
 		Node* false_branch;
+
+		VISIT_OVERRIDE
 	};
 
 	class WhileStmtNode : public Node
@@ -165,18 +183,24 @@ namespace halang
 
 		Node* condition;
 		Node* child;
+
+		VISIT_OVERRIDE
 	};
 
 	class BreakStmtNode : public Node
 	{
 	public:
 		virtual BreakStmtNode* asBreakStmt() override { return this; }
+
+		VISIT_OVERRIDE
 	};
 
 	class ReturnStmtNode : public Node
 	{
 	public:
 		virtual ReturnStmtNode* asReturnStmt() override { return this; }
+
+		VISIT_OVERRIDE
 	};
 
 	class FuncDefNode : public Node
@@ -184,9 +208,11 @@ namespace halang
 	public:
 		FuncDefNode() {}
 		virtual FuncDefNode* asFuncDef() override { return this; }
-		std::string name;
+		IdentifierNode* name;
 		FuncDefParamsNode* parameters;
 		BlockExprNode* block;
+
+		VISIT_OVERRIDE
 	};
 
 	class FuncDefParamsNode : public Node
@@ -194,6 +220,8 @@ namespace halang
 	public:
 		virtual FuncDefParamsNode* asFuncDefParams() override { return this; }
 		std::vector<std::string> identifiers;
+
+		VISIT_OVERRIDE
 	};
 
 	class FuncCallNode : public Node
@@ -205,6 +233,8 @@ namespace halang
 		virtual FuncCallNode* asFuncCall() override { return this; }
 		Node* exp; // maybe identifier, maybe another func  foo(a) foo(a)(b)(b)
 		FuncCallParamsNode* params;
+
+		VISIT_OVERRIDE
 	};
 
 	class FuncCallParamsNode : public Node
@@ -212,6 +242,8 @@ namespace halang
 	public:
 		virtual FuncCallParamsNode* asFuncCallParams() override { return this; }
 		std::vector<Node*> children;
+
+		VISIT_OVERRIDE
 	};
 
 };

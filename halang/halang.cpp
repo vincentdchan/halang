@@ -11,7 +11,7 @@
 #include "ast.h"
 #include "parser.h"
 #include "svm_codes.h"
-#include "svm.hpp"
+#include "svm.h"
 #include "codegen.h"
 
 const char* DEFAULT_FILENAME = "source.txt";
@@ -19,6 +19,8 @@ const char* DEFAULT_FILENAME = "source.txt";
 int main(int argc, char** argv)
 {
 	using namespace halang;
+
+	auto nvm = new StackVM();
 
 	char *filename;
 	if (argc > 1)
@@ -38,33 +40,33 @@ int main(int argc, char** argv)
 		}
 	}
 
-	Parser parser(*lexer);
-	parser.parse();
+	auto parser = new Parser(*lexer);
+	parser->parse();
 
 	fs.close();
-	delete lexer; // release lexer after parsing
+
+	delete lexer; // release lexer resources after parsing
 	lexer = nullptr;
 
-	if (!parser.hasError())
+	if (!parser->hasError())
 	{
-		CodeGen cg(parser);
-		cg.generate();
+		CodeGen cg(nvm);
+		cg.generate(parser);
+		delete parser;
+		cg.load();
 
-		/*
-		auto state = make_unique<State>(cg.pack.variablesSize, cg.pack.constant);
-		auto nvm = make_unique<StackVM<vector<Instruction>::iterator> >(cg.pack.instructions.begin());
-		nvm->setState(state.get());
 		nvm->execute();
-		*/
 	}
 	else
 	{
-		for (auto i = parser.getMessages().begin(); i != parser.getMessages().end(); ++i)
+		for (auto i = parser->getMessages().begin(); i != parser->getMessages().end(); ++i)
 		{
 			std::cout << *i;
 		}
 	}
 
+	delete nvm;
+	nvm = nullptr;
 	string ch;
 	cin >> ch;
     return 0;

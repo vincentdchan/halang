@@ -5,21 +5,23 @@
 namespace halang
 {
 
-	CodeGen::CodeGen(Parser& _p) : _parser(_p)
+	CodeGen::CodeGen(StackVM* _vm) : 
+		vm(_vm), parser(nullptr)
 	{ 
-		top_cp = global_cp = new CodePack();
+		top_cp = global_cp = vm->make_gcobject<CodePack>();
 	}
 
-	void CodeGen::generate()
+	void CodeGen::generate(Parser* p)
 	{
-		generate(global_cp);
+		parser = p;
 
+		generate(global_cp);
 		global_cp->instructions.push_back(Instruction(VM_CODE::STOP, 0));
 	}
 
 	void CodeGen::generate(CodePack* cp)
 	{
-		visit(cp, _parser.getRoot());
+		visit(cp, parser->getRoot());
 	}
 
 	void CodeGen::visit(CodePack* cp, Node* _node)
@@ -145,34 +147,34 @@ namespace halang
 		// read the value of the memory
 		// and push to the top of the stack
 
-		for (auto i = cp->var_names.begin(); i != cp->var_names.end(); ++i)
-			if (i->second == _node->name)
-			{
-				cp->instructions.push_back(Instruction(VM_CODE::LOAD_V, i->first));
-				return;
-			}
-		// codegen error;
+		int id = cp->findVarId(_node->name);
+
+		if (id > 0)
+			cp->instructions.push_back(Instruction(VM_CODE::LOAD_V, id));
+		// else codegen error;
 	}
 
 	void CodeGen::visit(CodePack* cp, AssignmentNode* _node)
 	{
 		// find if the var is exisits
 		// if not exisits add a possition for it
-		auto _id = dynamic_cast<IdentifierNode*>(_node->identifier);
+		auto _id_node = dynamic_cast<IdentifierNode*>(_node->identifier);
 
-		bool found = false;
-		for (auto i = cp->var_names.begin(); i != cp->var_names.end(); ++i)
+		int _id = cp->findVarId(_id_node->name);
+
+		if (_id < 0)
 		{
-			if (i->second == _id->name)
-			{
-				found = true;
-				visit(cp, _node->expression);
-				cp->instructions.push_back(Instruction(VM_CODE::STORE_V, i->first));
-				return;
-			}
+			_id = cp->var_size++;
+			cp->var_names.push_back(_id_node->name);
 		}
 
-		// TODO: codegen error
+		cp->instructions.push_back(Instruction(VM_CODE::STORE_V, _id));
+	}
+
+	void CodeGen::visit(CodePack* cp, VarStmtNode* _node)
+	{
+		for (auto i = _node->children.begin(); i != _node->children.end(); ++i)
+			visit(cp, *i);
 	}
 
 	void CodeGen::visit(CodePack* cp, IfStmtNode* _node)
@@ -218,9 +220,51 @@ namespace halang
 
 	void CodeGen::visit(CodePack* cp, FuncDefNode* _node)
 	{
-		auto new_pack = new CodePack();
+		auto new_pack = vm->make_gcobject<CodePack>();
 		new_pack->prev = top_cp;
+		top_cp = new_pack;
+
+		visit(new_pack, _node->parameters);
 		visit(new_pack, _node->block);
+
+		top_cp = new_pack->prev;
+		int _id = cp->constant.size();
+		cp->constant.push_back(Object(new_pack));
+		cp->instructions.push_back(Instruction(VM_CODE::LOAD_C, _id));
+
+		if (_node->name)
+		{
+			int var_id = cp->findVarId(_node->name->name);
+			if (var_id < 0)
+			{
+				var_id = cp->var_size++;
+				cp->var_names.push_back(_node->name->name);
+			}
+
+			cp->instructions.push_back(Instruction(VM_CODE::STORE_V, var_id));
+		}
 	}
+
+	void CodeGen::visit(CodePack* cp, FuncDefParamsNode* _node)
+	{
+		int index;
+		for (auto i = _node->identifiers.begin();
+			i != _node->identifiers.end(); ++i)
+		{
+			index = cp->var_size++;
+			cp->var_names.push_back(*i);
+		}
+	}
+
+	void CodeGen::visit(CodePack* cp, FuncCallNode* _node)
+	{
+	}
+
+	void CodeGen::visit(CodePack* cp, FuncCallParamsNode* _node)
+	{
+	}
+
+	void CodeGen::load()
+	{}
 
 }

@@ -213,34 +213,38 @@ namespace halang
 	{
 		// UnaryExpr ::= 
 		//	( '+' | '-' | '!' ) UnaryExpr | Number | VAR | FUNCTIONCALL
-		Node* _node = nullptr;
-		if (match(Token::TYPE::ADD) || match(Token::TYPE::SUB) || match(Token::TYPE::NOT))
+		Node *_node = nullptr,
+			*exp = nullptr;
+		Token _tk;
+		std::string _id_name;
+		switch (lookahead.type)
 		{
-			Token _op = nextToken();
-			_node = make_node<UnaryExprNode>(Token::toOperator(_op), parseUnaryExpr());
-		}
-		else if (match(Token::TYPE::NUMBER))
-		{
+		case Token::TYPE::ADD:
+		case Token::TYPE::SUB:
+		case Token::TYPE::NOT:
+			_tk = nextToken();
+			_node = make_node<UnaryExprNode>(Token::toOperator(_tk), parseUnaryExpr());
+			break;
+		case Token::TYPE::NUMBER:
 			_node = make_node<NumberNode>(lookahead._double, lookahead.maybeInt);
 			nextToken();
-		}
-		else if (match(Token::TYPE::IDENTIFIER)) // maybe a variable or functioncall
-		{
-			std::string _id_name = *nextToken()._literal;
+			break;
+		case Token::TYPE::IDENTIFIER:
+			_id_name = *nextToken()._literal;
 			_node = make_node<IdentifierNode>(_id_name);
 
 			if (match(Token::TYPE::OPEN_PAREN))
 				_node = parseFuncCall(_node);
-		} 
-		else if (match(Token::TYPE::OPEN_PAREN))
-		{
+			break;
+		case Token::TYPE::OPEN_PAREN:
 			nextToken();
-			auto exp = parseExpression();
+			exp = parseExpression();
 			expect(nextToken(), Token::TYPE::CLOSE_PAREN);
 			if (match(Token::TYPE::OPEN_PAREN))
 				exp = parseFuncCall(exp);
 			return exp;
 		}
+
 		return _node;
 	}
 
@@ -317,8 +321,10 @@ namespace halang
 		// def new function
 		auto _func = make_node<FuncDefNode>();
 		expect(nextToken(), Token::TYPE::FUNC);
-		expect(Token::TYPE::IDENTIFIER);
-		_func->name = *nextToken()._literal;
+		if (match(Token::TYPE::IDENTIFIER))
+			_func->name = make_node<IdentifierNode>(*nextToken()._literal);
+		else
+			_func->name = nullptr;
 		expect(nextToken(), Token::TYPE::OPEN_PAREN);
 		_func->parameters = dynamic_cast<FuncDefParamsNode*>(parseFuncDefParams());
 		expect(nextToken(), Token::TYPE::CLOSE_PAREN);

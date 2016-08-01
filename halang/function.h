@@ -1,7 +1,7 @@
 #pragma once
 #include <vector>
 #include <map>
-#include "svm.hpp"
+#include "svm.h"
 #include "object.h"
 #include "svm_codes.h"
 
@@ -21,6 +21,16 @@ namespace halang
 		CodePack() :
 			prev(nullptr), param_size(0), var_size(0), isGlobal(false)
 		{}
+
+		int findVarId(const std::string& _name)
+		{
+			int _size = static_cast<int>(var_names.size());
+			for (int i = 0; i < _size; ++i)
+				if (var_names[i] == _name)
+					return i;
+			return -1;
+		}
+
 		friend class CodeGen;
 	private:
 		CodePack* prev;
@@ -28,7 +38,7 @@ namespace halang
 		std::size_t var_size;
 		std::vector<Object> constant;
 		std::vector<Instruction> instructions;
-		std::map<std::size_t, std::string> var_names;
+		std::vector<std::string> var_names;
 		bool isGlobal;
 	};
 
