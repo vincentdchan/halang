@@ -149,7 +149,7 @@ namespace halang
 
 		int id = cp->findVarId(_node->name);
 
-		if (id > 0)
+		if (id >= 0)
 			cp->instructions.push_back(Instruction(VM_CODE::LOAD_V, id));
 		// else codegen error;
 	}
@@ -168,6 +168,7 @@ namespace halang
 			cp->var_names.push_back(_id_node->name);
 		}
 
+		visit(cp, _node->expression);
 		cp->instructions.push_back(Instruction(VM_CODE::STORE_V, _id));
 	}
 
@@ -210,17 +211,17 @@ namespace halang
 
 	void CodeGen::visit(CodePack* cp, BreakStmtNode* _node)
 	{
-
 	}
 
 	void CodeGen::visit(CodePack* cp, ReturnStmtNode* _node)
 	{
-
+		cp->instructions.push_back(Instruction(VM_CODE::RETURN, 0));
 	}
 
 	void CodeGen::visit(CodePack* cp, FuncDefNode* _node)
 	{
 		auto new_pack = vm->make_gcobject<CodePack>();
+		auto new_func = vm->make_gcobject<Function>(new_pack, _node->parameters->identifiers.size());
 		new_pack->prev = top_cp;
 		top_cp = new_pack;
 
@@ -228,9 +229,12 @@ namespace halang
 		visit(new_pack, _node->block);
 
 		top_cp = new_pack->prev;
+
+		new_func->codepack = new_pack;
 		int _id = cp->constant.size();
-		cp->constant.push_back(Object(new_pack));
+		cp->constant.push_back(Object(new_func, Object::TYPE::CODE_PACK));
 		cp->instructions.push_back(Instruction(VM_CODE::LOAD_C, _id));
+		cp->instructions.push_back(Instruction(VM_CODE::CLOSURE, 0));
 
 		if (_node->name)
 		{
@@ -264,7 +268,15 @@ namespace halang
 	{
 	}
 
+	void CodeGen::visit(CodePack* cp, PrintStmtNode* _node)
+	{
+		visit(cp, _node->expression);
+		cp->instructions.push_back(Instruction(VM_CODE::OUT, 0));
+	}
+
 	void CodeGen::load()
-	{}
+	{
+		vm->createEnvironment(global_cp);
+	}
 
 }

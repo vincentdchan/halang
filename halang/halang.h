@@ -44,6 +44,7 @@ namespace halang
 	V(VAR) \
 	V(FUNC) \
 	V(RETURN) \
+	V(PRINT) \
 	V(ENDFILE) 
 
 

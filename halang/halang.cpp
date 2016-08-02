@@ -71,4 +71,3 @@ int main(int argc, char** argv)
 	cin >> ch;
     return 0;
 }
-

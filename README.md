@@ -11,53 +11,73 @@ By default, the program read the file named "source.txt" in the same location wi
 
 # Language
 
-This language is similar to javascript, but it has differences because this project is not completely finished.
+This language is similar to JavaScript, but it has differences because this project is not completely finished.
 
 ## Expression
 
-A single line of expression will cause a ouput.
+Similar to JavaScript.
 
 ```
-2 * (3 + 4) // output: 14
+2 * (3 + 4) // 14
+```
+
+## Print Statement
+
+You can print a expression.
+
+```javascript
+print 1 + 1 // output : 2
+
+var a = 3
+print a			// output: 3
+print a + 1		// output: 4
 ```
 
 ## Assignment
 
-All the assignment should use *let* expression.
+You can define a variable by using *var* statement.
 
-```
-let a = 1 + 1  // a == 2
-let b = a + 1  // b == 3
+and you can do assign operation everywhere.
+
+```javascript
+var a = 1 + 1  // a == 2
+var b = a + 1  // b == 3
+
+a = a + 1 // a ==3
 ```
 
 ## Branches
 
-You can use the *if* and *else* expression. But there is a little differences from Javascript. You must add the brackets after the *if* expression whether there is only one expression.
+You can use the *if* and *else* expression. But there is a little differences from JavaScript. 
 
-```
-let a = 100
+```javascript
+var a = 100
 if (a > 0)
-	a            // Error! no brackets
+	print a            // ! no brackets
 	
-if (a > 0) { a } else { a + 100 } // Correct! output: 100
+if (a > 0) { print a } else { a + 100 } // Correct! output: 100
 ```
 
 This situation is due to the implementation of parser. I just implemented it in a very early stage. There will be a enhancement in the future to improve this situation.
 
 ## Loop
 
-You can use *while* expression to loop. The usage of *while* are similar to *if* statement. You **must** add the brackets.
+You can use *while* expression to loop. The usage of *while* are similar to *if* statement. 
 
-```
-let a = 0
+```javascript
+var a = 0
 while (a <= 50)
 {
-  a
-  let a = a + 1
+  print a
+  a = a + 1
 }
 ```
 
 The code above will output 0 - 50.
+
+## Function
+
+function is coming soon.
 
 # Future
 

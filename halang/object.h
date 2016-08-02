@@ -13,6 +13,8 @@ namespace halang
 	V(NUL) \
 	V(GC) \
 	V(STRING) \
+	V(CODE_PACK) \
+	V(FUNCTION) \
 	V(SMALL_INT) \
 	V(NUMBER) \
 	V(BOOL)
@@ -55,7 +57,7 @@ namespace halang
 		TYPE type;
 
 		explicit Object() : type(TYPE::NUL) { value.gc = nullptr; }
-		explicit Object(GCObject* _object) : type(TYPE::GC) { value.gc = _object; }
+		explicit Object(GCObject* _object, TYPE _t) : type(_t) { value.gc = _object; }
 		explicit Object(TSmallInt _int) : type(TYPE::SMALL_INT) { value.si = _int; }
 		explicit Object(TNumber _num) : type(TYPE::NUMBER) { value.number = _num; }
 		explicit Object(TBool _bl) : type(TYPE::BOOL) { value.bl = _bl; }

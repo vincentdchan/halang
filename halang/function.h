@@ -32,6 +32,8 @@ namespace halang
 		}
 
 		friend class CodeGen;
+		friend class StackVM;
+		friend struct Environment;
 	private:
 		CodePack* prev;
 		std::size_t param_size;
@@ -48,6 +50,9 @@ namespace halang
 		Function(CodePack* cp, unsigned int _ps = 0) :
 			codepack(cp), paramsSize(_ps)
 		{}
+		friend class CodeGen;
+		friend struct Environment;
+		friend class StackVM;
 	private:
 		CodePack* codepack;
 		unsigned int paramsSize;

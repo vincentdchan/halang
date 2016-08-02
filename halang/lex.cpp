@@ -204,6 +204,13 @@ namespace halang
 					PUSH_TOKEN(RETURN);
 				}
 				break;
+			case 'p': //print
+				if (match = swallow("print"))
+				{
+					loc.length = 5;
+					PUSH_TOKEN(PRINT);
+				}
+				break;
 		}
 		if (!match)
 			match = scanIdentifier();

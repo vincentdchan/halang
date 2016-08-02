@@ -12,80 +12,27 @@
 
 namespace halang
 {
-	class GlobalState;
-	class FunctionState;
+	class CodePack;
 
-	class GlobalState
+	struct Environment
 	{
-		std::size_t var_size;
-		std::map<std::size_t, std::string> var_names;
-		Object* variables;
+		const static unsigned int STACK_SIZE = 255;
 
-		GCObject* gc_objects;
-
-		void add_gc(GCObject* _obj)
-		{
-			// make linked list
-			_obj->next = this->gc_objects;
-			this->gc_objects = _obj;
-		}
-
-	public:
-		friend class StackVM;
-		~GlobalState()
-		{
-			delete[] variables;
-		}
-
-		//fuck all
-	};
-
-	class FunctionState
-	{
-		GlobalState* globalstate;
-		FunctionState* parent;
-		std::size_t var_size;
-		std::size_t upvalues_size;
+		Environment(CodePack* cp);
+		Environment* prev;
 		Object* stack;
-
-		Object* objStackBase_;
-		Object* objStack;
+		Object* sptr;
 
 		Object* variables;
-		Object* upvalues;
-
-		std::map<std::size_t, std::string> var_names;
-		std::vector<std::size_t> up_variables; // when the funciton finish close the upvalue
-
-	public:
-		friend class StackVM;
-		~FunctionState()
-		{
-			delete[] objStackBase_;
-			delete[] variables;
-			delete[] upvalues;
-		}
-	};
-
-	class State final
-	{
-	public:
-		State(std::size_t _var_size, const std::vector<Object>& _const) :
-			var_size(_var_size), constant(_const)
-		{
-			variables = new Object[_var_size];
-		}
-		State(const State&) = delete;
-		State& operator=(const State&) = delete;
-		~State()
-		{
-			delete variables;
-		}
-		friend class StackVM;
-	private:
-		std::size_t var_size;
-		Object* variables;
-		std::vector<Object> constant;
+		CodePack* codepack;
+		unsigned int index;
+		inline Object* top(int i = 0);
+		inline Object* pop();
+		inline void push(Object&& obj);
+		inline Object* getVar(unsigned int i);
+		inline void setVar(unsigned int i, Object&& obj);
+		inline Object getConstant(unsigned int i);
+		~Environment();
 	};
 
 	struct Instruction
@@ -108,16 +55,13 @@ namespace halang
 	class StackVM final
 	{
 	public:
-		const static unsigned int VAR_STACK_SIZE = 255;
+		const static unsigned int ENV_MAX = 255;
 		typedef std::vector<Instruction>::iterator InstIter;
 
-		StackVM()
+		StackVM() : env(nullptr)
 		{}
 
-		StackVM(InstIter _inst) : inst(_inst)
-		{
-			objStack = objStackBase_ = new Object[VAR_STACK_SIZE];
-		}
+		/*
 		StackVM(StackVM&& _svm)
 		{
 			this->objStackBase_ = _svm.objStackBase_;
@@ -127,10 +71,12 @@ namespace halang
 			this->objStack = nullptr;
 			this->objStackBase_ = nullptr;
 		}
+		*/
 		StackVM(const StackVM&) = delete;
 		StackVM& operator=(const StackVM&) = delete;
-		void setState(State* st) { state = st; }
 		void execute();
+		Environment* createEnvironment(CodePack *);
+		void quitEnvironment();
 
 		template<typename _Type, typename... _AT>
 		_Type* make_gcobject(_AT&&... args)
@@ -143,14 +89,15 @@ namespace halang
 
 		~StackVM()
 		{
-			delete objStackBase_;
+			delete env;
 		}
 	private:
 		InstIter inst;
-		Object* objStackBase_;
-		Object* objStack;
+		Object* ptr;
 		GCObject* gcobj_list;
-		State* state;
+
+		Environment* env;
+		// State* state;
 	};
 
 }

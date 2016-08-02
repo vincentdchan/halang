@@ -1,4 +1,7 @@
-func (a, b)
+var a = 100
+while (a > 0)
 {
-	a + b
+	print a;
+	a = a-1
 }
+	

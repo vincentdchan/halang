@@ -18,10 +18,11 @@ namespace halang
 	V(WhileStmt) \
 	V(BreakStmt) \
 	V(ReturnStmt) \
+	V(PrintStmt) \
 	V(FuncDef) \
 	V(FuncDefParams) \
 	V(FuncCall) \
-	V(FuncCallParams) \
+	V(FuncCallParams)
 
 	class CodePack;
 	class CodeGen;
@@ -53,6 +54,7 @@ namespace halang
 		virtual FuncDefParamsNode* asFuncDefParams() { return nullptr; }
 		virtual FuncCallNode* asFuncCall() { return nullptr; }
 		virtual FuncCallParamsNode* asFuncCallParams() { return nullptr; }
+		virtual PrintStmtNode* asPrintStmt() { return nullptr; }
 
 		virtual void visit(CodeGen *cg, CodePack* cp) = 0;
 			/*
@@ -198,7 +200,10 @@ namespace halang
 	class ReturnStmtNode : public Node
 	{
 	public:
+		ReturnStmtNode(Node * exp = nullptr) : expression(exp)
+		{}
 		virtual ReturnStmtNode* asReturnStmt() override { return this; }
+		Node* expression;
 
 		VISIT_OVERRIDE
 	};
@@ -242,6 +247,17 @@ namespace halang
 	public:
 		virtual FuncCallParamsNode* asFuncCallParams() override { return this; }
 		std::vector<Node*> children;
+
+		VISIT_OVERRIDE
+	};
+
+	class PrintStmtNode : public Node
+	{
+	public:
+		PrintStmtNode(Node * exp = nullptr) : expression(exp)
+		{}
+		virtual PrintStmtNode* asPrintStmt() override { return this; }
+		Node* expression;
 
 		VISIT_OVERRIDE
 	};

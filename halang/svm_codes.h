@@ -13,7 +13,10 @@ namespace halang
 		STORE_UPVAL,			// A - store to the upvalue table
 		PUSH_INT,				// A - load A
 		PUSH_BOOL,				// A - load A
-		POP,					// Pop
+		POP,					// A - Pop A
+		CLOSURE,				// A - linked Function's upvalue to current env
+		CALL,					// (A, B, C...) call function(A, B, C...)
+		RETURN,					// return
 		IFNO,					// if not true, jump to the location.
 		JMP,
 		NOT,
