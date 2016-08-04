@@ -52,6 +52,8 @@ namespace halang
 			{
 				result = scanLiteral();
 			}
+			else if (buffer[iter] == '"')
+				result = scanString();
 			else switch (buffer[iter])
 			{
 			case '\t':
@@ -153,6 +155,44 @@ namespace halang
 		if (result)
 			iter += len;
 		return result;
+	}
+
+	bool Lexer::scanString()
+	{
+		auto ic = iter;
+		if (buffer[ic++] != '"') return false;
+		std::string str;
+		while (ic < buffer.size() && buffer[ic] != '"')
+		{
+			if (buffer[ic] == '\\')
+			{
+				if (ic + 1 < buffer.size() && buffer[ic + 1] == '"')
+				{
+					str.push_back('"');
+					ic += 2;
+					continue;
+				}
+				else
+					str.push_back(buffer[ic]);
+			}
+			else
+				str.push_back(buffer[ic]);
+			ic++;
+		}
+		if (buffer[ic++] == '"')
+		{
+			Token t;
+			t.location = loc;
+			t.type = Token::TYPE::STRING;
+			t._literal = make_literal();
+			*t._literal = str;
+			token_q.push(t);
+
+			iter = ic;
+			return true;
+		}
+		else
+			return false;
 	}
 
 	bool Lexer::scanLiteral()

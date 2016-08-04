@@ -116,6 +116,14 @@ namespace halang
 		cp->instructions.push_back(Instruction(VM_CODE::LOAD_C, index));
 	}
 
+	void CodeGen::visit(CodePack* cp, StringNode* _node)
+	{
+		auto index = cp->constant.size();
+		cp->constant.push_back(Object(_node->content));
+
+		cp->instructions.push_back(Instruction(VM_CODE::LOAD_C, index));
+	}
+
 	void CodeGen::visit(CodePack* cp, IdentifierNode* _node)
 	{
 		// read the value of the memory

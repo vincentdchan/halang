@@ -10,6 +10,7 @@
 #include "scanner.h"
 #include "ast.h"
 #include "parser.h"
+#include "string.h"
 #include "svm_codes.h"
 #include "svm.h"
 #include "codegen.h"

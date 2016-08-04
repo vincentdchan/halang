@@ -36,17 +36,8 @@ namespace halang
 	private:
 		Lexer();
 		bool readline();
-		// void scanNumber(string&, unsigned int&);
-		/*
-		void scanLet(string&, unsigned int&);
-		void scanIf(string&, unsigned int&);
-		void scanElse(string&, unsigned int&);
-		void scanWhile(string&, unsigned int&);
-		void scanFunction(string&, unsigned int&);
-		void scanReturn(string&, unsigned int&);
-		void scanIdentifier(string&, unsigned int&);
-		*/
 
+		bool scanString();
 		bool scanLiteral();
 		bool scanIdentifier();
 		bool scanNumber();

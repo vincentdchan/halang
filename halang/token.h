@@ -51,7 +51,7 @@ namespace halang
 
 			if (type == TYPE::NUMBER)
 				_double = _target._double;
-			else if (type == TYPE::IDENTIFIER)
+			else if (type == TYPE::IDENTIFIER || type == TYPE::STRING)
 				_literal = _target._literal;
 		}
 
@@ -70,7 +70,7 @@ namespace halang
 
 			if (type == TYPE::NUMBER)
 				_double = _target._double;
-			else if (type == TYPE::IDENTIFIER)
+			else if (type == TYPE::IDENTIFIER || type == TYPE::STRING)
 				_literal = _target._literal;
 		}
 
@@ -95,7 +95,7 @@ namespace halang
 
 			if (type == TYPE::NUMBER)
 				_double = _target._double;
-			else if (type == TYPE::IDENTIFIER)
+			else if (type == TYPE::IDENTIFIER || type == TYPE::STRING)
 				_literal = _target._literal;
 
 			return *this;
@@ -109,7 +109,7 @@ namespace halang
 
 			if (type == TYPE::NUMBER)
 				_double = _target._double;
-			else if (type == TYPE::IDENTIFIER)
+			else if (type == TYPE::IDENTIFIER || type == TYPE::STRING)
 				_literal = _target._literal;
 
 			return *this;

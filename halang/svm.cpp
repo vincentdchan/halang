@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "svm.h"
 #include "function.h"
+#include "string.h"
 
 namespace halang
 {

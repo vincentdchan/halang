@@ -4,6 +4,60 @@
 namespace halang
 {
 
+	Object::Object(const Object& _obj)
+	{
+		type = _obj.type;
+		if (_obj.type == TYPE::STRING)
+		{
+			value.str = new IString(*_obj.value.str);
+		}
+		else
+		{
+			value = _obj.value;
+		}
+	}
+
+	Object::Object(Object&& _obj)
+	{
+		type = _obj.type;
+		if (_obj.type == TYPE::STRING)
+		{
+			value.str = new IString(*_obj.value.str);
+		}
+		else
+		{
+			value = _obj.value;
+		}
+	}
+
+	Object& Object::operator=(const Object& _obj)
+	{
+		type = _obj.type;
+		if (_obj.type == TYPE::STRING)
+		{
+			value.str = new IString(*_obj.value.str);
+		}
+		else
+		{
+			value = _obj.value;
+		}
+		return *this;
+	}
+
+	Object& Object::operator=(Object&& _obj)
+	{
+		type = _obj.type;
+		if (_obj.type == TYPE::STRING)
+		{
+			value.str = new IString(*_obj.value.str);
+		}
+		else
+		{
+			value = _obj.value;
+		}
+		return *this;
+	}
+
 	TNumber toNumber(Object _obj)
 	{
 		if (_obj.isNumber())
@@ -29,7 +83,7 @@ namespace halang
 		case Object::TYPE::SMALL_INT:
 			return _ost << _obj.value.si;
 		case Object::TYPE::STRING:
-			return _ost << "<STRING>";
+			return _ost << *_obj.value.str;
 		}
 		return _ost;
 	}

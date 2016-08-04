@@ -1,3 +1,5 @@
+var aa = "abc"
+print aa
 func hello(a)
 {
 	if (a > 3)
@@ -7,8 +9,8 @@ func hello(a)
 }
 
 var a = 0
-while (a < 30)
+while (a < 10)
 {
-	hello(a)
+	print "abd"
 	a = a + 1
 }

@@ -57,6 +57,7 @@ namespace halang
 				_block->children.push_back(parseStatement());
 		} while (match(Token::TYPE::IDENTIFIER) ||
 			match(Token::TYPE::NUMBER) ||
+			match(Token::TYPE::STRING) ||
 			match(Token::TYPE::VAR) ||
 			match(Token::TYPE::OPEN_PAREN) ||
 			match(Token::TYPE::WHILE) ||
@@ -231,6 +232,10 @@ namespace halang
 		case Token::TYPE::NUMBER:
 			_node = make_node<NumberNode>(lookahead._double, lookahead.maybeInt);
 			nextToken();
+			break;
+		case Token::TYPE::STRING:
+			_id_name = *nextToken()._literal;
+			_node = make_node<StringNode>(_id_name);
 			break;
 		case Token::TYPE::IDENTIFIER:
 			_id_name = *nextToken()._literal;

@@ -2,6 +2,7 @@
 #include <cinttypes>
 #include <vector>
 #include "token.h"
+#include "string.h"
 
 namespace halang
 {
@@ -10,6 +11,7 @@ namespace halang
 	V(Assignment) \
 	V(Number) \
 	V(Identifier) \
+	V(String) \
 	V(BinaryExpr) \
 	V(UnaryExpr) \
 	V(BlockExpr) \
@@ -39,6 +41,7 @@ namespace halang
 	{
 	public:
 		Node() {}
+		virtual StringNode* asString() { return nullptr; }
 		virtual IdentifierNode* asIdentifier() { return nullptr; }
 		virtual NumberNode* asNumber() { return nullptr; }
 		virtual AssignmentNode* asAssignment() { return nullptr; }
@@ -62,6 +65,18 @@ namespace halang
 			cg->visit(cp, this);
 		}
 		*/
+	};
+
+	class StringNode : public Node
+	{
+	public:
+		StringNode(IString _content) : content(_content)
+		{}
+
+		virtual StringNode* asString() override { return this; }
+		IString content;
+
+		VISIT_OVERRIDE
 	};
 
 	class NumberNode : public Node

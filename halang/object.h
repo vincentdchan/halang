@@ -4,6 +4,7 @@
 #include <ostream>
 #include <string>
 #include "halang.h"
+#include "string.h"
 
 
 namespace halang
@@ -26,11 +27,13 @@ namespace halang
 	public:
 		GCObject* next;
 		bool marked;
+		virtual ~GCObject() {};
 	};
 
 	union _Value
 	{
 		GCObject* gc;
+		IString *str;
 		TSmallInt si;		// small int
 		TNumber number;
 		TBool bl;
@@ -56,11 +59,17 @@ namespace halang
 		_Value value;
 		TYPE type;
 
-		explicit Object() : type(TYPE::NUL) { value.gc = nullptr; }
+		Object() : type(TYPE::NUL) { value.gc = nullptr; }
+		Object(const Object&);
+		Object(Object&&);
 		explicit Object(GCObject* _object, TYPE _t) : type(_t) { value.gc = _object; }
 		explicit Object(TSmallInt _int) : type(TYPE::SMALL_INT) { value.si = _int; }
 		explicit Object(TNumber _num) : type(TYPE::NUMBER) { value.number = _num; }
 		explicit Object(TBool _bl) : type(TYPE::BOOL) { value.bl = _bl; }
+		// explicit Object(const char *_Str) { value.str = new IString(_Str); }
+		explicit Object(IString _isp) : type(TYPE::STRING) { value.str = new IString(_isp); }
+		Object& operator=(const Object&);
+		Object& operator=(Object&&);
 
 		inline bool isNul() const { return type == TYPE::NUL; }
 		inline bool isGCObject() const { return type == TYPE::GC; }
@@ -69,34 +78,53 @@ namespace halang
 		inline bool isNumber() const { return type == TYPE::NUMBER; }
 		inline bool isBool() const { return type == TYPE::BOOL; }
 
+		inline void check_delete_str()
+		{
+			if (type == TYPE::STRING)
+			{
+				delete value.str;
+				type = TYPE::NUL;
+			}
+		}
+
 		inline void setNull() 
 		{ 
+			check_delete_str();
 			value.gc = nullptr;
 			type = TYPE::NUL; 
 		}
+
 		inline void setGCObject(GCObject* _obj)
 		{
+			check_delete_str();
 			value.gc = _obj;
 			type = TYPE::GC;
 		}
-		inline void setString(GCObject* _str)
+
+		inline void setString(const IString& _str)
 		{
-			value.gc = _str;
+			check_delete_str();
+			value.str = new IString(_str);
 			type = TYPE::STRING;
 		}
+
 		inline void setNumber(TNumber num)
 		{
+			check_delete_str();
 			value.number = num;
 			type = TYPE::NUMBER;
 		}
+
 		inline void setSmallInt(TSmallInt num)
 		{
+			check_delete_str();
 			value.si = num;
 			type = TYPE::SMALL_INT;
 		}
 
 		inline void setBool(TBool _bl)
 		{
+			check_delete_str();
 			value.bl = _bl;
 			type = TYPE::BOOL;
 		}
@@ -165,6 +193,11 @@ namespace halang
 			return Object(0);
 		}
 		*/
+		~Object()
+		{
+			if (type == TYPE::STRING)
+				delete value.str;
+		}
 	};
 
 	static const char* STRUE = "True";

@@ -13,6 +13,17 @@ By default, the program read the file named "source.txt" in the same location wi
 
 This language is similar to JavaScript, but it has differences because this project is not completely finished.
 
+## String
+
+In HaLang, string is a immutable built-in object. It's described within *""*.
+
+```javascript
+var a = "Hello World!";
+print a // output a
+```
+
+
+
 ## Expression
 
 Similar to JavaScript.
@@ -107,7 +118,6 @@ But it is not support recursive now, it's coming...
 In the future, many features will be add to HaLang. Such as
 
 1. recursive calling function
-2. String
-3. Class
-4. Yield
-5. ...
+2. Class
+3. Yield
+4. ...

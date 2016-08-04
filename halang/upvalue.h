@@ -15,6 +15,6 @@ namespace halang
 			Object *refer;
 		};
 		bool closed;
-
+		virtual ~UpValue() {}
 	};
 }

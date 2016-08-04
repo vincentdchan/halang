@@ -4,6 +4,7 @@
 #include <cinttypes>
 #include <utility>
 #include <map>
+#include "string_pool.h"
 #include "svm_codes.h"
 #include "object.h"
 #include "upvalue.h"
@@ -61,7 +62,9 @@ namespace halang
 		const static unsigned int ENV_MAX = 255;
 
 		StackVM() : env(nullptr)
-		{}
+		{
+			string_pool = new StringPool();
+		}
 
 		/*
 		StackVM(StackVM&& _svm)
@@ -91,8 +94,20 @@ namespace halang
 
 		~StackVM()
 		{
-			delete env;
+			if (env)
+				delete env;
+			delete string_pool;
+
+			GCObject* optr = gcobj_list;
+			while (optr)
+			{
+				auto next = optr->next;
+				delete optr;
+				optr = next;
+			}
 		}
+
+		StringPool* string_pool;
 	private:
 		InstIter inst;
 		Object* ptr;

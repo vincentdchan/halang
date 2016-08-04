@@ -36,6 +36,7 @@ namespace halang
 	V(BREAK) \
 	V(ASSIGN) \
 	V(IDENTIFIER) \
+	V(STRING) \
 	V(OPEN_PAREN) \
 	V(CLOSE_PAREN) \
 	V(OPEN_BRAKET) \
