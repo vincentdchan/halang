@@ -77,13 +77,36 @@ The code above will output 0 - 50.
 
 ## Function
 
-function is coming soon.
+**2016/8/4 Updates**
+
+Halang supports function now.
+
+```javascript
+func hello(a)
+{
+	if (a > 3)
+		print a + 1
+	else
+		print 0
+}
+
+var a = 0
+while (a < 30)
+{
+	hello(a)
+	a = a + 1
+}
+```
+
+It's quite easy to understand.
+
+But it is not support recursive now, it's coming...
 
 # Future
 
 In the future, many features will be add to HaLang. Such as
 
-1. Functions
+1. recursive calling function
 2. String
 3. Class
 4. Yield

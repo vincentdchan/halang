@@ -1,7 +1,14 @@
-var a = 100
-while (a > 0)
+func hello(a)
 {
-	print a;
-	a = a-1
+	if (a > 3)
+		print a + 1
+	else
+		print 0
 }
-	
+
+var a = 0
+while (a < 30)
+{
+	hello(a)
+	a = a + 1
+}

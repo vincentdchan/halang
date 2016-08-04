@@ -27,32 +27,6 @@ namespace halang
 	void CodeGen::visit(CodePack* cp, Node* _node)
 	{
 		_node->visit(this, cp);
-		/*
-		if (_node == nullptr)
-			return;
-		else if (_node->asIdentifier())
-			visit(cp, _node->asIdentifier());
-		else if (_node->asNumber())
-			visit(cp, _node->asNumber());
-		else if (_node->asAssignment())
-			visit(cp, _node->asAssignment());
-		else if (cp, _node->asBinaryExpression())
-			visit(cp, _node->asBinaryExpression());
-		else if (_node->asUnaryExpression())
-			visit(cp, _node->asUnaryExpression());
-		else if (cp, _node->asBlockExpression())
-			visit(cp, _node->asBlockExpression());
-		else if (cp, _node->asIfStmt())
-			visit(cp, _node->asIfStmt());
-		else if (_node->asWhileStmt())
-			visit(cp, _node->asWhileStmt());
-		else if (cp, _node->asBreakStmt())
-			visit(cp, _node->asBreakStmt());
-		else if (cp, _node->asReturnStmt())
-			visit(cp, _node->asReturnStmt());
-		else if (_node->asFuncDef())
-			visit(cp, _node->asFuncDef());
-			*/
 	}
 
 	void CodeGen::visit(CodePack* cp, BlockExprNode* _node)
@@ -227,6 +201,7 @@ namespace halang
 
 		visit(new_pack, _node->parameters);
 		visit(new_pack, _node->block);
+		new_pack->instructions.push_back(Instruction(VM_CODE::RETURN, 0));
 
 		top_cp = new_pack->prev;
 
@@ -262,10 +237,17 @@ namespace halang
 
 	void CodeGen::visit(CodePack* cp, FuncCallNode* _node)
 	{
+		if (_node->params)
+			visit(cp, _node->params);
+
+		visit(cp, _node->exp);
+		cp->instructions.push_back(Instruction(VM_CODE::CALL, 0));
 	}
 
 	void CodeGen::visit(CodePack* cp, FuncCallParamsNode* _node)
 	{
+		for (auto i = _node->children.begin(); i != _node->children.end(); ++i)
+			visit(cp, *i);
 	}
 
 	void CodeGen::visit(CodePack* cp, PrintStmtNode* _node)

@@ -25,8 +25,6 @@ namespace halang
 			delete[] stack;
 		if (variables)
 			delete[] variables;
-		if (prev)
-			delete prev;
 	}
 
 #define TOP(INDEX) env->top(INDEX) 
@@ -80,16 +78,18 @@ namespace halang
 			case VM_CODE::CALL:
 				t1 = *POP();
 				func = reinterpret_cast<Function*>(t1.value.gc);
+				env->iter = inst;
 				new_env = createEnvironment(func->codepack);
-				for (auto i = func->paramsSize - 1; i >= 0; --i)
+				for (int i = func->paramsSize - 1; i >= 0; --i)
 					new_env->variables[i] = *new_env->prev->pop();
 				break;
 			case VM_CODE::RETURN:
-				if (inst->getParam() != 0)
+				if (current->getParam() != 0)
 				{
 					env->prev->push(std::move(*env->pop()));
 				}
 				quitEnvironment();
+				inst = env->iter;
 				break;
 			case VM_CODE::IFNO:
 				if (!*(POP()))
@@ -165,7 +165,7 @@ namespace halang
 	void StackVM::quitEnvironment()
 	{
 		auto current_env = env;
-		env = env->prev;
+		env = current_env->prev;
 		delete current_env;
 	}
 

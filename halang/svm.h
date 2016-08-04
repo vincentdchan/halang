@@ -14,27 +14,6 @@ namespace halang
 {
 	class CodePack;
 
-	struct Environment
-	{
-		const static unsigned int STACK_SIZE = 255;
-
-		Environment(CodePack* cp);
-		Environment* prev;
-		Object* stack;
-		Object* sptr;
-
-		Object* variables;
-		CodePack* codepack;
-		unsigned int index;
-		inline Object* top(int i = 0);
-		inline Object* pop();
-		inline void push(Object&& obj);
-		inline Object* getVar(unsigned int i);
-		inline void setVar(unsigned int i, Object&& obj);
-		inline Object getConstant(unsigned int i);
-		~Environment();
-	};
-
 	struct Instruction
 	{
 		uint16_t _content_;
@@ -52,11 +31,34 @@ namespace halang
 		}
 	};
 
+	typedef std::vector<Instruction>::iterator InstIter;
+
+	struct Environment
+	{
+		const static unsigned int STACK_SIZE = 255;
+
+		Environment(CodePack* cp);
+		Environment* prev;
+		Object* stack;
+		Object* sptr;
+
+		InstIter iter;
+		Object* variables;
+		CodePack* codepack;
+		unsigned int index;
+		inline Object* top(int i = 0);
+		inline Object* pop();
+		inline void push(Object&& obj);
+		inline Object* getVar(unsigned int i);
+		inline void setVar(unsigned int i, Object&& obj);
+		inline Object getConstant(unsigned int i);
+		~Environment();
+	};
+
 	class StackVM final
 	{
 	public:
 		const static unsigned int ENV_MAX = 255;
-		typedef std::vector<Instruction>::iterator InstIter;
 
 		StackVM() : env(nullptr)
 		{}
