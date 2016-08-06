@@ -1,9 +1,15 @@
 func hello(a)
 {
-	if (a == 0)
-		return 1
-	return a*hello(a-1)
+	func ho(b)
+	{
+		a = a + b
+		return a;
+	}
+	return ho;
 }
 
-print hello(5)
+var a = hello(5);
+print a(1);
+print a(1);
+print a(8);
 

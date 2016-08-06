@@ -88,7 +88,7 @@ The code above will output 0 - 50.
 
 ## Function
 
-**2016/8/4 Updates**
+**# 2016/8/4 Updates**
 
 Halang supports function now.
 
@@ -126,6 +126,25 @@ func hello(a)
 }
 
 print hello(5)
+```
+
+And also, Halang supports closure.
+
+```javascript
+func hello(a)
+{
+	func ho(b)
+	{
+		a = a + b
+		return a;
+	}
+	return ho;
+}
+
+var a = hello(5);
+print a(1);			// output: 6
+print a(1);			// output: 7
+print a(8);			// output: 15
 ```
 
 
