@@ -39,6 +39,18 @@ namespace halang
 		IString(_Str.c_str())
 	{ }
 
+	// move constructor
+	IString::IString(IString&& _Str)
+	{
+		_hash = _Str._hash;
+		_length = _Str._length;
+		_ref_data = _Str._ref_data;
+		_str = _Str._str;
+
+		_Str._ref_data = nullptr;
+		_Str._str = nullptr;
+	}
+
 	IString::IString(const IString& _IStr) :
 		_hash(_IStr._hash), _length(_IStr._length),
 		_str(_IStr._str), _ref_data(_IStr._ref_data)
@@ -46,12 +58,12 @@ namespace halang
 		_ref_data->count++;
 	}
 
-	IString IString::operator+(IString _is)
+	IString IString::operator+(IString _is) const
 	{
 		return this->operator+(_is.c_str());
 	}
 
-	IString IString::operator+(const char* _Str)
+	IString IString::operator+(const char* _Str) const
 	{
 		unsigned int s2_len = strlen(_Str);
 		char* tmp = new char[_length + s2_len + 1];
@@ -64,7 +76,7 @@ namespace halang
 		return new_str;
 	}
 
-	IString IString::operator=(IString _is)
+	IString& IString::operator=(IString _is)
 	{
 		if (_str == _is._str) return *this;
 
@@ -86,15 +98,18 @@ namespace halang
 
 	IString::~IString()
 	{
-		_ref_data->count--;
-		if (_ref_data->count == 0)
+		if (_ref_data)
 		{
-			delete[] _str;
-			delete _ref_data;
+			_ref_data->count--;
+			if (_ref_data->count == 0)
+			{
+				delete[] _str;
+				delete _ref_data;
+			}
 		}
 	}
 
-	std::string IString::getStdString()
+	std::string IString::getStdString() const
 	{
 		return std::string(_str);
 	}

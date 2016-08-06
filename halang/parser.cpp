@@ -65,6 +65,7 @@ namespace halang
 			match(Token::TYPE::FUNC) ||
 			match(Token::TYPE::SEMICOLON) ||
 			match(Token::TYPE::PRINT) ||
+			match(Token::TYPE::RETURN) ||
 			Token::isOperator(lookahead)
 			);
 

@@ -5,10 +5,44 @@
 namespace halang
 {
 
+	CodeGen::VarType CodeGen::findVar(CodePack * cp, IString _Str)
+	{
+		for (int i = 0; i < cp->var_names.size(); ++i)
+			if (cp->var_names[i] == _Str)
+			{
+				return VarType(VarType::LOCAL, i);
+			}
+
+		for (int i = 0; i < cp->upvalue_names.size(); ++i)
+			if (cp->upvalue_names[i] == _Str)
+			{
+				return VarType(VarType::UPVAL, i);
+			}
+		if (cp->prev)
+		{
+			VarType _p = findVar(cp->prev, _Str);
+			switch (_p.type())
+			{
+			case VarType::LOCAL:
+				cp->require_upvalues.push_back(_p.id());
+				cp->upvalue_names.push_back(_Str);
+				return VarType(VarType::UPVAL, cp->upvalue_size++);
+				break;
+			case VarType::UPVAL:
+				cp->require_upvalues.push_back(-1 - _p.id());
+				cp->upvalue_names.push_back(_Str);
+				return VarType(VarType::UPVAL, cp->upvalue_size++);
+				break;
+			}
+		}
+		return VarType(VarType::NONE);
+	}
+
 	CodeGen::CodeGen(StackVM* _vm) : 
 		vm(_vm), parser(nullptr)
 	{ 
 		top_cp = global_cp = vm->make_gcobject<CodePack>();
+		state = new GenState();
 	}
 
 	void CodeGen::generate(Parser* p)
@@ -126,14 +160,23 @@ namespace halang
 
 	void CodeGen::visit(CodePack* cp, IdentifierNode* _node)
 	{
-		// read the value of the memory
-		// and push to the top of the stack
+		auto _var = findVar(cp, _node->name);
 
-		int id = cp->findVarId(_node->name);
-
-		if (id >= 0)
-			cp->instructions.push_back(Instruction(VM_CODE::LOAD_V, id));
-		// else codegen error;
+		switch (_var.type())
+		{
+		case VarType::GLOBAL:
+			cp->instructions.push_back(Instruction(VM_CODE::LOAD_G, _var.id()));
+			break;
+		case VarType::LOCAL:
+			cp->instructions.push_back(Instruction(VM_CODE::LOAD_V, _var.id()));
+			break;
+		case VarType::UPVAL:
+			cp->instructions.push_back(Instruction(VM_CODE::LOAD_UPVAL, _var.id()));
+			break;
+		case VarType::NONE:
+			ReportError(std::string("variables not found: ") + _node->name);
+			break;
+		}
 	}
 
 	void CodeGen::visit(CodePack* cp, AssignmentNode* _node)
@@ -142,22 +185,79 @@ namespace halang
 		// if not exisits add a possition for it
 		auto _id_node = dynamic_cast<IdentifierNode*>(_node->identifier);
 
+		auto _var = findVar(cp, _id_node->name);
+
+		int _id;
+		switch(_var.type())
+		{
+		case VarType::GLOBAL:
+			visit(cp, _node->expression);
+			cp->instructions.push_back(Instruction(VM_CODE::STORE_G, _var.id()));
+			cp->instructions.push_back(Instruction(VM_CODE::LOAD_G, _var.id()));
+			break;
+		case VarType::LOCAL:
+			visit(cp, _node->expression);
+			cp->instructions.push_back(Instruction(VM_CODE::STORE_V, _var.id()));
+			cp->instructions.push_back(Instruction(VM_CODE::LOAD_V, _var.id()));
+			break;
+		case VarType::UPVAL:
+			visit(cp, _node->expression);
+			cp->instructions.push_back(Instruction(VM_CODE::STORE_UPVAL, _var.id()));
+			cp->instructions.push_back(Instruction(VM_CODE::LOAD_UPVAL, _var.id()));
+			break;
+		case VarType::NONE:
+			if (state->varStatement())
+			{
+				_id = cp->var_size++;
+				cp->var_names.push_back(_id_node->name);
+
+				// you must add the name first and then visit the expression.
+				// to generate the next code
+				visit(cp, _node->expression);
+				cp->instructions.push_back(Instruction(VM_CODE::STORE_V, _id));
+				cp->instructions.push_back(Instruction(VM_CODE::LOAD_V, _id));
+			}
+			else
+			{
+				// i don't know how to fix it, fuck you.
+				ReportError(std::string("Identifier: ") + _id_node->name + " not found." );
+			}
+			break;
+		}
+		/*
 		int _id = cp->findVarId(_id_node->name);
 
-		if (_id < 0)
+		if (_id >= 0)
+		{
+			visit(cp, _node->expression);
+			cp->instructions.push_back(Instruction(VM_CODE::STORE_V, _id));
+			cp->instructions.push_back(Instruction(VM_CODE::LOAD_V, _id));
+		}
+		else if (_id == -1)
 		{
 			_id = cp->var_size++;
 			cp->var_names.push_back(_id_node->name);
+			visit(cp, _node->expression);
+			cp->instructions.push_back(Instruction(VM_CODE::STORE_V, _id));
+			cp->instructions.push_back(Instruction(VM_CODE::LOAD_V, _id));
 		}
+		else // if _id < -1
+		{
+			_id = -2 - _id;
+			visit(cp, _node->expression);
+			cp->instructions.push_back(Instruction(VM_CODE::STORE_UPVAL, _id));
+			cp->instructions.push_back(Instruction(VM_CODE::LOAD_UPVAL, _id));
+		}
+		*/
 
-		visit(cp, _node->expression);
-		cp->instructions.push_back(Instruction(VM_CODE::STORE_V, _id));
 	}
 
 	void CodeGen::visit(CodePack* cp, VarStmtNode* _node)
 	{
+		state->setVarStatement(true);
 		for (auto i = _node->children.begin(); i != _node->children.end(); ++i)
 			visit(cp, *i);
+		state->setVarStatement(false);
 	}
 
 	void CodeGen::visit(CodePack* cp, IfStmtNode* _node)
@@ -197,11 +297,23 @@ namespace halang
 
 	void CodeGen::visit(CodePack* cp, ReturnStmtNode* _node)
 	{
-		cp->instructions.push_back(Instruction(VM_CODE::RETURN, 0));
+		if (_node->expression)
+		{
+			visit(cp, _node->expression);
+			cp->instructions.push_back(Instruction(VM_CODE::RETURN, 1));
+		}
+		else
+			cp->instructions.push_back(Instruction(VM_CODE::RETURN, 0));
 	}
 
 	void CodeGen::visit(CodePack* cp, FuncDefNode* _node)
 	{
+		int var_id = -1;
+		if (_node->name)
+		{
+			var_id = cp->var_size++;
+			cp->var_names.push_back(_node->name->name);
+		}
 		auto new_pack = vm->make_gcobject<CodePack>();
 		auto new_func = vm->make_gcobject<Function>(new_pack, _node->parameters->identifiers.size());
 		new_pack->prev = top_cp;
@@ -219,17 +331,8 @@ namespace halang
 		cp->instructions.push_back(Instruction(VM_CODE::LOAD_C, _id));
 		cp->instructions.push_back(Instruction(VM_CODE::CLOSURE, 0));
 
-		if (_node->name)
-		{
-			int var_id = cp->findVarId(_node->name->name);
-			if (var_id < 0)
-			{
-				var_id = cp->var_size++;
-				cp->var_names.push_back(_node->name->name);
-			}
-
+		if (var_id >= 0)
 			cp->instructions.push_back(Instruction(VM_CODE::STORE_V, var_id));
-		}
 	}
 
 	void CodeGen::visit(CodePack* cp, FuncDefParamsNode* _node)
@@ -267,6 +370,11 @@ namespace halang
 	void CodeGen::load()
 	{
 		vm->createEnvironment(global_cp);
+	}
+
+	CodeGen::~CodeGen()
+	{
+		delete state;
 	}
 
 }

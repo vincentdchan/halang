@@ -2,7 +2,9 @@
 #include <vector>
 #include <map>
 #include "svm.h"
+#include "string.h"
 #include "object.h"
+#include "upvalue.h"
 #include "svm_codes.h"
 
 namespace halang
@@ -22,12 +24,26 @@ namespace halang
 			prev(nullptr), param_size(0), var_size(0), isGlobal(false)
 		{}
 
-		int findVarId(const std::string& _name)
+		int findVarId(IString _name)
 		{
-			int _size = static_cast<int>(var_names.size());
-			for (int i = 0; i < _size; ++i)
+			int _var_size = static_cast<int>(var_names.size());
+			int _up_size = static_cast<int>(upvalue_names.size());
+
+			for (int i = 0; i < _var_size; ++i)
 				if (var_names[i] == _name)
 					return i;
+
+			for (int i = 0; i < _up_size; ++i)
+				if (upvalue_names[i] == _name)
+					return -2 - i;
+			if (prev)
+			{
+				auto _prev_id = prev->findVarId(_name);
+				auto _upvalue_id = upvalue_size++;
+				upvalue_names.push_back(_name);
+				require_upvalues.push_back(_prev_id);
+			}
+
 			return -1;
 		}
 
@@ -35,12 +51,16 @@ namespace halang
 		friend class StackVM;
 		friend struct Environment;
 	private:
+		IString name;
 		CodePack* prev;
 		std::size_t param_size;
 		std::size_t var_size;
+		std::size_t upvalue_size;
 		std::vector<Object> constant;
 		std::vector<Instruction> instructions;
-		std::vector<std::string> var_names;
+		std::vector<IString> var_names;
+		std::vector<IString> upvalue_names;
+		std::vector<int> require_upvalues;
 		bool isGlobal;
 	};
 
@@ -53,9 +73,15 @@ namespace halang
 		friend class CodeGen;
 		friend struct Environment;
 		friend class StackVM;
+		void close()
+		{
+			for (auto i = upvalues.begin(); i != upvalues.end(); ++i)
+				(*i)->close();
+		}
 	private:
 		CodePack* codepack;
 		unsigned int paramsSize;
+		std::vector<UpValue*> upvalues;
 	};
 
 };

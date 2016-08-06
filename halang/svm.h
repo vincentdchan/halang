@@ -45,14 +45,19 @@ namespace halang
 
 		InstIter iter;
 		Object* variables;
+		Object* upvalues;
 		CodePack* codepack;
+		std::vector<UpValue*> upval_local;
 		unsigned int index;
 		inline Object* top(int i = 0);
 		inline Object* pop();
 		inline void push(Object&& obj);
 		inline Object* getVar(unsigned int i);
-		inline void setVar(unsigned int i, Object&& obj);
+		inline Object* getUpVal(unsigned int i);
+		inline void setVar(unsigned int i, Object obj);
+		inline void setUpVal(unsigned int i, Object obj);
 		inline Object getConstant(unsigned int i);
+		void closeLoaclUpval();
 		~Environment();
 	};
 

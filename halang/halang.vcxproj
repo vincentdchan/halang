@@ -150,6 +150,7 @@
     <ClInclude Include="codegen.h" />
     <ClInclude Include="function.h" />
     <ClInclude Include="halang.h" />
+    <ClInclude Include="table.h" />
     <ClInclude Include="lex.h" />
     <ClInclude Include="object.h" />
     <ClInclude Include="parser.h" />

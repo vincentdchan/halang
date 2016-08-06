@@ -15,20 +15,22 @@ namespace halang
 		IString();
 		IString(const char*);
 		IString(const IString&);
+		IString(IString&&);
 		IString(const std::string&);
-		IString operator=(IString _is);
+		IString& operator=(IString _is);
 
-		IString operator+(IString _is);
-		IString operator+(const char*);
+		IString operator+(IString _is) const;
+		IString operator+(const char*) const;
 
-		friend bool operator==(const IString& _s1, const IString& _s2);
 		struct ReferData;
+		std::string getStdString() const;
+		inline unsigned int getHash() const { return _hash; }
+		inline unsigned int getLength() const { return _length; }
+		const char * c_str() { return _str; }
+
 		friend class String;
+		friend bool operator==(const IString& _s1, const IString& _s2);
 		friend std::ostream& operator<<(std::ostream&, const IString& _Str);
-		std::string getStdString();
-		inline unsigned int getHash() { return _hash; }
-		inline unsigned int getLength() { return _length; }
-		char* c_str() { return _str; }
 		~IString();
 	private:
 		ReferData* _ref_data;

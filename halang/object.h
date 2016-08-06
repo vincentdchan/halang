@@ -9,10 +9,31 @@
 
 namespace halang
 {
+	/*
+	Object Type
+	Basic Type:
+
+	Object
+		 - Immutable Object
+			- small int
+			- double
+			- Refer Count Object
+				- Imutable String		// for string constang, string splice and so on
+				- Big Integer
+		- Mutable Object				// GC Object
+			- CodePack
+			- Function
+			- HashMap
+			- Mutable String			// for string to edit
+				- String
+				- pointer to Immutable String	// from String Pool
+	*/
 
 #define OBJ_LIST(V) \
 	V(NUL) \
 	V(GC) \
+	V(UPVALUE) \
+	V(TABLE) \
 	V(STRING) \
 	V(CODE_PACK) \
 	V(FUNCTION) \

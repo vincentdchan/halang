@@ -111,13 +111,30 @@ while (a < 30)
 
 It's quite easy to understand.
 
-But it is not support recursive now, it's coming...
+**# 2016/8/6 Updates** 
+
+HaLang support recursive calling function now.
+
+example:
+
+```javascript
+func hello(a)
+{
+	if (a == 0)
+		return 1
+	return a*hello(a-1)
+}
+
+print hello(5)
+```
+
+
 
 # Future
 
 In the future, many features will be add to HaLang. Such as
 
-1. recursive calling function
-2. Class
+1. Closure
+2. break and continue statement
 3. Yield
 4. ...
