@@ -10,10 +10,6 @@ using namespace std;
 
 int main()
 {
-	halang::IString s("abc");
-	cout << s << endl;
-	string ch;
-	cin >> ch;
     return 0;
 }
 

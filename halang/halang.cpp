@@ -31,6 +31,11 @@ int main(int argc, char** argv)
 
 	fstream fs;
 	fs.open(filename, fstream::in);
+	if (fs.fail())
+	{
+		std::cout << "input source not found." << std::endl;
+		return 0;
+	}
 	Lexer* lexer = new Lexer(fs);
 
 	if (lexer->hasError())

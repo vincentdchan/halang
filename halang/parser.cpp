@@ -336,6 +336,12 @@ namespace halang
 			_func->name = nullptr;
 		expect(nextToken(), Token::TYPE::OPEN_PAREN);
 		_func->parameters = dynamic_cast<FuncDefParamsNode*>(parseFuncDefParams());
+		/*
+		if (match(Token::TYPE::IDENTIFIER))
+			_func->parameters = dynamic_cast<FuncDefParamsNode*>(parseFuncDefParams());
+		else
+			_func->parameters = nullptr;
+			*/
 		expect(nextToken(), Token::TYPE::CLOSE_PAREN);
 		expect(nextToken(), Token::TYPE::OPEN_BRAKET);
 		_func->block = dynamic_cast<BlockExprNode*>(parseBlock());
@@ -346,7 +352,6 @@ namespace halang
 	Node* Parser::parseFuncDefParams()
 	{
 		auto _params = make_node<FuncDefParamsNode>();
-		expect(Token::TYPE::IDENTIFIER);
 		while (match(Token::TYPE::IDENTIFIER))
 		{
 			Token t = nextToken();
