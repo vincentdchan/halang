@@ -85,7 +85,7 @@ namespace halang
 		NumberNode(double _num = 0, bool _mi = false) :
 			number(_num), maybeInt(_mi)
 		{}
-		virtual NumberNode* asNumber() override { return nullptr; }
+		virtual NumberNode* asNumber() override { return this; }
 		double number;
 		bool maybeInt;
 

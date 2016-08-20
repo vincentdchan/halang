@@ -225,6 +225,8 @@ namespace halang
 		switch (lookahead.type)
 		{
 		case Token::TYPE::ADD:
+			_node = parseUnaryExpr();
+			break;
 		case Token::TYPE::SUB:
 		case Token::TYPE::NOT:
 			_tk = nextToken();
@@ -276,7 +278,47 @@ namespace halang
 				if (getPrecedence(left_op) == 0)
 					return exp;
 				CHECK_NULL(left_exp);
-				exp = make_node<BinaryExprNode>(left_op, left_exp, exp);
+				if (left_exp->asNumber() && exp->asNumber())
+				{
+					auto num1_exp = left_exp->asNumber();
+					auto num2_exp = exp->asNumber();
+					auto num1 = num1_exp->number;
+					auto num2 = num2_exp->number;
+
+					double result = 0;
+					auto _maybeInt = num1_exp->maybeInt && num2_exp->maybeInt;
+
+					bool quit = false;
+					switch (left_op)
+					{
+					case OperatorType::ADD:
+						result = num1 + num2;
+						break;
+					case OperatorType::SUB:
+						result = num1 - num2;
+						break;
+					case OperatorType::MUL:
+						result = num1 * num2;
+						break;
+					case OperatorType::DIV:
+						result = num1 / num2;
+						break;
+					case OperatorType::MOD:
+						result = static_cast<int>(num1) & static_cast<int>(num2);
+						break;
+					case OperatorType::POW:
+						result = pow(num1, num2);
+						break;
+					default:
+						exp = make_node<BinaryExprNode>(left_op, left_exp, exp);
+						quit = true;
+					}
+
+					if (!quit)
+						exp = make_node<NumberNode>(result, _maybeInt);
+				}
+				else
+					exp = make_node<BinaryExprNode>(left_op, left_exp, exp);
 				nextToken();
 				return parseBinaryExpr(exp, right_tk);
 			}
