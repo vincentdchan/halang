@@ -110,29 +110,17 @@ namespace halang
 	Node* Parser::parseVarStmt()
 	{
 		expect(nextToken(), Token::TYPE::VAR);
-		Node *exp = nullptr;
-		AssignmentNode* _assign = nullptr;
+		VarInitExprNode *_initExpr = nullptr;
 		auto _var = make_node<VarStmtNode>();
 		if (match(Token::TYPE::IDENTIFIER))
 		{
-			Token _tk = nextToken();
-			expect(nextToken(), Token::TYPE::ASSIGN);
-			exp = parseStatement();
-
-			auto _assign = make_node<AssignmentNode>(make_node<IdentifierNode>(*_tk._literal), exp);
-
-			_var->children.push_back(_assign);
+			_initExpr = parseVarInitExpr()->asVarInitExpr();
+			_var->children.push_back(_initExpr);
 
 			while (match(Token::TYPE::COMMA))
 			{
-				nextToken();
-				expect(Token::TYPE::IDENTIFIER);
-				Token _tk = nextToken();
-				expect(nextToken(), Token::TYPE::ASSIGN);
-				exp = parseStatement();
-
-				_assign = make_node<AssignmentNode>(make_node<IdentifierNode>(*_tk._literal), exp);
-				_var->children.push_back(_assign);
+				_initExpr = parseVarInitExpr()->asVarInitExpr();
+				_var->children.push_back(_initExpr);
 			}
 		}
 		else
@@ -140,6 +128,25 @@ namespace halang
 			ReportError("<Var stmt> expected identifier");
 		}
 		return _var;
+	}
+
+	Node* Parser::parseVarInitExpr()
+	{
+		auto ptr = make_node<VarInitExprNode>();
+		expect(lookahead, Token::TYPE::IDENTIFIER);
+
+		ptr->varName = make_node<IdentifierNode>(nextToken()._literal);
+		if (match(Token::TYPE::SEMICOLON))
+		{
+			nextToken();
+			expect(lookahead, Token::TYPE::IDENTIFIER);
+			ptr->typeName = make_node<IdentifierNode>(nextToken()._literal);
+		}
+		expect(nextToken(), Token::TYPE::EQ);
+
+		ptr->expression = parseExpression();
+
+		return ptr;
 	}
 
 	Node* Parser::parseExpression()
@@ -182,13 +189,6 @@ namespace halang
 		}
 		else
 			return parseBinaryExpr();
-	}
-
-	Node* Parser::parseVarExpr()
-	{
-		expect(Token::TYPE::VAR);
-		nextToken();
-		return parseAssignment();
 	}
 
 	Node* Parser::parseAssignment(IdentifierNode* _id)
@@ -378,13 +378,13 @@ namespace halang
 			_func->name = nullptr;
 		expect(nextToken(), Token::TYPE::OPEN_PAREN);
 		_func->parameters = dynamic_cast<FuncDefParamsNode*>(parseFuncDefParams());
-		/*
-		if (match(Token::TYPE::IDENTIFIER))
-			_func->parameters = dynamic_cast<FuncDefParamsNode*>(parseFuncDefParams());
-		else
-			_func->parameters = nullptr;
-			*/
 		expect(nextToken(), Token::TYPE::CLOSE_PAREN);
+		// type
+		if (match(Token::TYPE::SEMICOLON))
+		{
+			nextToken();
+			_func->typeName = make_node<IdentifierNode>(*nextToken()._literal);
+		}
 		expect(nextToken(), Token::TYPE::OPEN_BRAKET);
 		_func->block = dynamic_cast<BlockExprNode*>(parseBlock());
 		expect(nextToken(), Token::TYPE::CLOSE_BRAKET);

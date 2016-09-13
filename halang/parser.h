@@ -38,13 +38,13 @@ namespace halang
 		Node* parseStatement();
 		Node* parseAssignment(IdentifierNode* = nullptr);
 		Node* parseExpression();
-		Node* parseVarExpr();
+		Node* parseVarStmt();
+		Node* parseVarInitExpr();
 		Node* parseUnaryExpr(OperatorType _op = OperatorType::ILLEGAL_OP);
 		Node* parseBinaryExpr(Node* left_exp = nullptr, Token left_tk = Token());
 		Node* parseIfStmt();
 		Node* parseElseStmt();
 		Node* parseWhileStmt();
-		Node* parseVarStmt();
 		Node* parseFuncDef();
 		Node* parseFuncDefParams();
 		Node* parseFuncCall(Node* _exp = nullptr);

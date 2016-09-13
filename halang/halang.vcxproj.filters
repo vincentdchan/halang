@@ -72,6 +72,9 @@
     <ClInclude Include="type.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="type_checker.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="codegen.cpp">
@@ -103,6 +106,9 @@
     </ClCompile>
     <ClCompile Include="string_poll.cpp">
       <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="type_checker.cpp">
+      <Filter>Header Files</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

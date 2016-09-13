@@ -7,7 +7,7 @@ namespace halang
 	public:
 		enum HA_TYPE
 		{
-			INT, DOUBLE, BOOL, Object
+			INT, NUMBER, BOOL, Object
 		};
 		HA_TYPE type;
 			 

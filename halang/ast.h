@@ -3,6 +3,7 @@
 #include <vector>
 #include "token.h"
 #include "string.h"
+#include "type.h"
 
 namespace halang
 {
@@ -16,6 +17,7 @@ namespace halang
 	V(UnaryExpr) \
 	V(BlockExpr) \
 	V(VarStmt) \
+	V(VarInitExpr) \
 	V(IfStmt) \
 	V(WhileStmt) \
 	V(BreakStmt) \
@@ -49,6 +51,7 @@ namespace halang
 		virtual BlockExprNode* asBlockExpression() { return nullptr; }
 		virtual BinaryExprNode* asBinaryExpression() { return nullptr; }
 		virtual VarStmtNode* asVarStmt() { return nullptr; }
+		virtual VarInitExprNode* asVarInitExpr() { return nullptr; }
 		virtual IfStmtNode* asIfStmt() { return nullptr; }
 		virtual WhileStmtNode* asWhileStmt() { return nullptr; }
 		virtual BreakStmtNode* asBreakStmt() { return nullptr; }
@@ -84,11 +87,12 @@ namespace halang
 	public:
 		NumberNode(double _num = 0, bool _mi = false) :
 			number(_num), maybeInt(_mi)
-		{}
+		{ }
 		virtual NumberNode* asNumber() override { return this; }
 		double number;
 		bool maybeInt;
 
+		Type type;
 		VISIT_OVERRIDE
 	};
 
@@ -108,7 +112,7 @@ namespace halang
 	{
 	public:
 		AssignmentNode() {}
-		AssignmentNode(IdentifierNode* _id, Node* _exp = nullptr) :
+		AssignmentNode(IdentifierNode* _id, Node* _exp = nullptr, IdentifierNode* _typeName = nullptr) :
 			identifier(_id), expression(_exp)
 		{}
 		virtual AssignmentNode* asAssignment() override { return this; }
@@ -165,7 +169,21 @@ namespace halang
 	{
 	public:
 		virtual VarStmtNode* asVarStmt() override { return this; }
-		std::vector<Node*> children;
+		std::vector<VarInitExprNode*> children;
+
+		VISIT_OVERRIDE
+	};
+
+	class VarInitExprNode : public Node
+	{
+	public:
+		VarInitExprNode() :
+			varName(nullptr), typeName(nullptr), expression(nullptr)
+		{}
+		virtual VarInitExprNode* asVarInitExpr() override { return this; }
+		IdentifierNode* varName;
+		IdentifierNode* typeName;
+		Node* expression;
 
 		VISIT_OVERRIDE
 	};
@@ -231,6 +249,7 @@ namespace halang
 		IdentifierNode* name;
 		FuncDefParamsNode* parameters;
 		BlockExprNode* block;
+		IdentifierNode* typeName;
 
 		VISIT_OVERRIDE
 	};
