@@ -24,9 +24,9 @@ namespace halang
 	V(ReturnStmt) \
 	V(PrintStmt) \
 	V(FuncDef) \
-	V(FuncDefParams) \
+	V(FuncDefParam)\
 	V(FuncCall) \
-	V(FuncCallParams)
+	V(FuncCallParam) \
 
 	class CodePack;
 	class CodeGen;
@@ -57,17 +57,13 @@ namespace halang
 		virtual BreakStmtNode* asBreakStmt() { return nullptr; }
 		virtual ReturnStmtNode* asReturnStmt() { return nullptr; }
 		virtual FuncDefNode* asFuncDef() { return nullptr; }
-		virtual FuncDefParamsNode* asFuncDefParams() { return nullptr; }
+		virtual FuncDefParamNode* asFuncDefParam() { return nullptr; }
 		virtual FuncCallNode* asFuncCall() { return nullptr; }
+		virtual FuncCallParamNode* asFuncCallParam() { return nullptr; }
 		virtual FuncCallParamsNode* asFuncCallParams() { return nullptr; }
 		virtual PrintStmtNode* asPrintStmt() { return nullptr; }
 
 		virtual void visit(CodeGen *cg, CodePack* cp) = 0;
-			/*
-		{
-			cg->visit(cp, this);
-		}
-		*/
 	};
 
 	class StringNode : public Node
@@ -105,6 +101,7 @@ namespace halang
 
 		std::string name;
 
+		Type type;
 		VISIT_OVERRIDE
 	};
 
@@ -247,18 +244,34 @@ namespace halang
 		FuncDefNode() {}
 		virtual FuncDefNode* asFuncDef() override { return this; }
 		IdentifierNode* name;
-		FuncDefParamsNode* parameters;
+		std::vector<FuncDefParamNode*> parameters;
+
 		BlockExprNode* block;
 		IdentifierNode* typeName;
 
+		Type type;
 		VISIT_OVERRIDE
 	};
 
+	/*
 	class FuncDefParamsNode : public Node
 	{
 	public:
 		virtual FuncDefParamsNode* asFuncDefParams() override { return this; }
-		std::vector<std::string> identifiers;
+		std::vector<FuncDefParamNode> defs;
+
+		VISIT_OVERRIDE
+	};
+	*/
+
+	class FuncDefParamNode : public Node
+	{
+	public:
+		FuncDefParamNode()
+		{}
+		virtual FuncDefParamNode* asFuncDefParam() override { return this; }
+		std::string name;
+		std::string typeName;
 
 		VISIT_OVERRIDE
 	};
@@ -266,16 +279,28 @@ namespace halang
 	class FuncCallNode : public Node
 	{
 	public:
-		FuncCallNode(Node* _exp = nullptr, FuncCallParamsNode* _params = nullptr) :
-			exp(_exp), params(_params)
+		FuncCallNode(Node* _exp = nullptr) :
+			exp(_exp)
 		{}
 		virtual FuncCallNode* asFuncCall() override { return this; }
 		Node* exp; // maybe identifier, maybe another func  foo(a) foo(a)(b)(b)
-		FuncCallParamsNode* params;
+		// FuncCallParamsNode* params;
+		std::vector<FuncCallParamNode*> parameters;
+
+		Type type;
+		VISIT_OVERRIDE
+	};
+
+	class FuncCallParamNode : public Node
+	{
+	public:
+		virtual FuncCallParamNode* asFuncCallParam() override { return this; }
+		std::string name;
 
 		VISIT_OVERRIDE
 	};
 
+	/*
 	class FuncCallParamsNode : public Node
 	{
 	public:
@@ -284,6 +309,7 @@ namespace halang
 
 		VISIT_OVERRIDE
 	};
+	*/
 
 	class PrintStmtNode : public Node
 	{

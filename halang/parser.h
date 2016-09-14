@@ -46,9 +46,9 @@ namespace halang
 		Node* parseElseStmt();
 		Node* parseWhileStmt();
 		Node* parseFuncDef();
-		Node* parseFuncDefParams();
+		Node* parseFuncDefParam();
 		Node* parseFuncCall(Node* _exp = nullptr);
-		Node* parseFuncCallParams();
+		Node* parseFuncCallParam();
 		Node* parseReturnStmt();
 		Node* parsePrintStmt();
 		Parser() = delete;

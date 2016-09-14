@@ -9,7 +9,17 @@ namespace halang
 		{
 			INT, NUMBER, BOOL, Object
 		};
-		HA_TYPE type;
+		HA_TYPE type = Object;
+
+		inline bool operator==(Type rhs) const
+		{
+			return this->type == rhs.type;
+		}
+
+		inline bool operator!=(Type rhs) const
+		{
+			return this->type != rhs.type;
+		}
 			 
 	};
 }

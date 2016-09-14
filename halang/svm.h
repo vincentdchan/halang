@@ -43,6 +43,7 @@ namespace halang
 		Object* stack;
 		Object* sptr;
 
+		bool cp;
 		InstIter iter;
 		Object* variables;
 		Object* upvalues;

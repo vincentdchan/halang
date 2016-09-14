@@ -106,7 +106,7 @@ namespace halang
 
 	}
 
-	// varStmt ::= VAR ID '=' exp [ , ID '=' EXP ]
+	// varStmt ::= VAR ID (':' TYPE)? '=' exp [ , ID (':' TYPE)? '=' EXP ]
 	Node* Parser::parseVarStmt()
 	{
 		expect(nextToken(), Token::TYPE::VAR);
@@ -135,12 +135,12 @@ namespace halang
 		auto ptr = make_node<VarInitExprNode>();
 		expect(lookahead, Token::TYPE::IDENTIFIER);
 
-		ptr->varName = make_node<IdentifierNode>(nextToken()._literal);
+		ptr->varName = make_node<IdentifierNode>(*nextToken()._literal);
 		if (match(Token::TYPE::SEMICOLON))
 		{
 			nextToken();
 			expect(lookahead, Token::TYPE::IDENTIFIER);
-			ptr->typeName = make_node<IdentifierNode>(nextToken()._literal);
+			ptr->typeName = make_node<IdentifierNode>(*nextToken()._literal);
 		}
 		expect(nextToken(), Token::TYPE::EQ);
 
@@ -377,7 +377,17 @@ namespace halang
 		else
 			_func->name = nullptr;
 		expect(nextToken(), Token::TYPE::OPEN_PAREN);
-		_func->parameters = dynamic_cast<FuncDefParamsNode*>(parseFuncDefParams());
+		while (match(Token::TYPE::IDENTIFIER))
+		{
+			auto param = reinterpret_cast<FuncDefParamNode*>(parseFuncCallParam());
+			_func->parameters.push_back(param);
+			if (match(Token::TYPE::COMMA))
+				nextToken();
+			else if (match(Token::TYPE::CLOSE_PAREN))
+				break;
+			else
+				ReportError("Unexpected def params.");
+		}
 		expect(nextToken(), Token::TYPE::CLOSE_PAREN);
 		// type
 		if (match(Token::TYPE::SEMICOLON))
@@ -391,45 +401,70 @@ namespace halang
 		return _func;
 	}
 
-	Node* Parser::parseFuncDefParams()
+	Node* Parser::parseFuncDefParam()
 	{
-		auto _params = make_node<FuncDefParamsNode>();
-		while (match(Token::TYPE::IDENTIFIER))
+		auto param = make_node<FuncDefParamNode>();
+		expect(lookahead, Token::TYPE::IDENTIFIER);
+		param->name = *nextToken()._literal;
+		if (match(Token::TYPE::SEMICOLON))
 		{
-			Token t = nextToken();
-			_params->identifiers.push_back(*t._literal);
-			if (match(Token::TYPE::CLOSE_PAREN))
-				break;
-			else if (match(Token::COMMA))
-				nextToken();
-			else
-			{
-				ReportError("Unexpected token.");
-				break;
-			}
+			nextToken();
+			expect(Token::TYPE::IDENTIFIER);
+			param->typeName = *nextToken()._literal;
 		}
-		return _params;
+		return param;
 	}
 
 	Node* Parser::parseFuncCall(Node* exp)
 	{
-		FuncCallNode* _node = nullptr;
-		Node * _params = nullptr;
+		FuncCallNode* _node = make_node<FuncCallNode>(exp);
+		// FuncCallParamNode* _params = nullptr;
+
 		expect(nextToken(), Token::TYPE::OPEN_PAREN);
-		_params = parseFuncCallParams();
-		CHECK_NULL(_params);
+		while (expect(lookahead, Token::TYPE::IDENTIFIER))
+		{
+			auto param = reinterpret_cast<FuncCallParamNode*>(parseFuncCallParam());
+			_node->parameters.push_back(param);
+			if (match(Token::TYPE::COMMA))
+				continue;
+			else if (match(Token::TYPE::CLOSE_PAREN))
+				break;
+			else
+				ReportError("Expect identifier or comma.");
+		}
 		expect(nextToken(), Token::TYPE::CLOSE_PAREN);
-		_node = make_node<FuncCallNode>(exp, dynamic_cast<FuncCallParamsNode*>(_params));
+
 		while (match(Token::TYPE::OPEN_PAREN))
 		{
 			nextToken();
-			_params = parseFuncCallParams();
+			_node = make_node<FuncCallNode>(_node);
+
+			while (expect(lookahead, Token::TYPE::IDENTIFIER))
+			{
+				auto param = reinterpret_cast<FuncCallParamNode*>(parseFuncCallParam());
+				_node->parameters.push_back(param);
+				if (match(Token::TYPE::COMMA))
+					continue;
+				else if (match(Token::TYPE::CLOSE_PAREN))
+					break;
+				else
+					ReportError("Expect identifier or comma.");
+			}
+
 			expect(nextToken(), Token::TYPE::CLOSE_PAREN);
-			_node = make_node<FuncCallNode>(_node, dynamic_cast<FuncCallParamsNode*>(_params));
 		}
 		return _node;
 	}
 
+	Node* Parser::parseFuncCallParam()
+	{
+		auto param = make_node<FuncCallParamNode>();
+		expect(lookahead, Token::TYPE::IDENTIFIER);
+		param->name = *nextToken()._literal;
+		return param;
+	}
+
+	/*
 	Node* Parser::parseFuncCallParams()
 	{
 		auto _params = make_node<FuncCallParamsNode>();
@@ -446,6 +481,7 @@ namespace halang
 		}
 		return _params;
 	}
+	*/
 
 	Node* Parser::parseReturnStmt()
 	{
