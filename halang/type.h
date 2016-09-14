@@ -5,6 +5,9 @@ namespace halang
 	class Type
 	{
 	public:
+		Type()
+		{}
+
 		enum HA_TYPE
 		{
 			INT, NUMBER, BOOL, Object

@@ -2,6 +2,7 @@
 #include <vector>
 #include <map>
 #include "svm.h"
+#include "type.h"
 #include "string.h"
 #include "object.h"
 #include "upvalue.h"
@@ -30,17 +31,17 @@ namespace halang
 			int _up_size = static_cast<int>(upvalue_names.size());
 
 			for (int i = 0; i < _var_size; ++i)
-				if (var_names[i] == _name)
+				if (var_names[i].first == _name)
 					return i;
 
 			for (int i = 0; i < _up_size; ++i)
-				if (upvalue_names[i] == _name)
+				if (upvalue_names[i].first == _name)
 					return -2 - i;
 			if (prev)
 			{
 				auto _prev_id = prev->findVarId(_name);
 				auto _upvalue_id = upvalue_size++;
-				upvalue_names.push_back(_name);
+				upvalue_names.push_back(std::make_pair(_name, Type()));
 				require_upvalues.push_back(_prev_id);
 			}
 
@@ -58,8 +59,8 @@ namespace halang
 		std::size_t upvalue_size;
 		std::vector<Object> constant;
 		std::vector<Instruction> instructions;
-		std::vector<IString> var_names;
-		std::vector<IString> upvalue_names;
+		std::vector<std::pair<IString, Type> > var_names;
+		std::vector<std::pair<IString, Type> > upvalue_names;
 		std::vector<int> require_upvalues;
 		bool isGlobal;
 	};

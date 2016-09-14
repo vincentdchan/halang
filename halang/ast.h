@@ -26,7 +26,6 @@ namespace halang
 	V(FuncDef) \
 	V(FuncDefParam)\
 	V(FuncCall) \
-	V(FuncCallParam) \
 
 	class CodePack;
 	class CodeGen;
@@ -59,8 +58,6 @@ namespace halang
 		virtual FuncDefNode* asFuncDef() { return nullptr; }
 		virtual FuncDefParamNode* asFuncDefParam() { return nullptr; }
 		virtual FuncCallNode* asFuncCall() { return nullptr; }
-		virtual FuncCallParamNode* asFuncCallParam() { return nullptr; }
-		virtual FuncCallParamsNode* asFuncCallParams() { return nullptr; }
 		virtual PrintStmtNode* asPrintStmt() { return nullptr; }
 
 		virtual void visit(CodeGen *cg, CodePack* cp) = 0;
@@ -273,6 +270,7 @@ namespace halang
 		std::string name;
 		std::string typeName;
 
+		Type type;
 		VISIT_OVERRIDE
 	};
 
@@ -284,19 +282,9 @@ namespace halang
 		{}
 		virtual FuncCallNode* asFuncCall() override { return this; }
 		Node* exp; // maybe identifier, maybe another func  foo(a) foo(a)(b)(b)
-		// FuncCallParamsNode* params;
-		std::vector<FuncCallParamNode*> parameters;
+		std::vector<Node*> parameters;
 
 		Type type;
-		VISIT_OVERRIDE
-	};
-
-	class FuncCallParamNode : public Node
-	{
-	public:
-		virtual FuncCallParamNode* asFuncCallParam() override { return this; }
-		std::string name;
-
 		VISIT_OVERRIDE
 	};
 

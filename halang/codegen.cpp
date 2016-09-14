@@ -8,13 +8,13 @@ namespace halang
 	CodeGen::VarType CodeGen::findVar(CodePack * cp, IString _Str)
 	{
 		for (int i = 0; i < cp->var_names.size(); ++i)
-			if (cp->var_names[i] == _Str)
+			if (cp->var_names[i].first == _Str)
 			{
 				return VarType(VarType::LOCAL, i);
 			}
 
 		for (int i = 0; i < cp->upvalue_names.size(); ++i)
-			if (cp->upvalue_names[i] == _Str)
+			if (cp->upvalue_names[i].first == _Str)
 			{
 				return VarType(VarType::UPVAL, i);
 			}
@@ -25,12 +25,12 @@ namespace halang
 			{
 			case VarType::LOCAL:
 				cp->require_upvalues.push_back(_p.id());
-				cp->upvalue_names.push_back(_Str);
+				cp->upvalue_names.push_back(make_pair(_Str, Type()));
 				return VarType(VarType::UPVAL, cp->upvalue_size++);
 				break;
 			case VarType::UPVAL:
 				cp->require_upvalues.push_back(-1 - _p.id());
-				cp->upvalue_names.push_back(_Str);
+				cp->upvalue_names.push_back(make_pair(_Str, Type()));
 				return VarType(VarType::UPVAL, cp->upvalue_size++);
 				break;
 			}
@@ -209,7 +209,7 @@ namespace halang
 			if (state->varStatement())
 			{
 				_id = cp->var_size++;
-				cp->var_names.push_back(_id_node->name);
+				cp->var_names.push_back(make_pair(_id_node->name, Type()));
 
 				// you must add the name first and then visit the expression.
 				// to generate the next code
@@ -290,7 +290,7 @@ namespace halang
 			if (state->varStatement())
 			{
 				_id = cp->var_size++;
-				cp->var_names.push_back(_id_node->name);
+				cp->var_names.push_back(make_pair(_id_node->name, Type()));
 
 				// you must add the name first and then visit the expression.
 				// to generate the next code
@@ -360,14 +360,17 @@ namespace halang
 		if (_node->name)
 		{
 			var_id = cp->var_size++;
-			cp->var_names.push_back(_node->name->name);
+			cp->var_names.push_back(make_pair(_node->name->name, Type()));
 		}
 		auto new_pack = vm->make_gcobject<CodePack>();
-		auto new_func = vm->make_gcobject<Function>(new_pack, _node->parameters->identifiers.size());
+		auto new_func = vm->make_gcobject<Function>(new_pack, _node->parameters.size());
 		new_pack->prev = top_cp;
 		top_cp = new_pack;
 
-		visit(new_pack, _node->parameters);
+		for (auto i = _node->parameters.begin();
+			i != _node->parameters.end(); ++i)
+			visit(new_pack, *i);
+
 		visit(new_pack, _node->block);
 		new_pack->instructions.push_back(Instruction(VM_CODE::RETURN, 0));
 
@@ -383,30 +386,19 @@ namespace halang
 			cp->instructions.push_back(Instruction(VM_CODE::STORE_V, var_id));
 	}
 
-	void CodeGen::visit(CodePack* cp, FuncDefParamsNode* _node)
+	void CodeGen::visit(CodePack* cp, FuncDefParamNode* _node)
 	{
-		int index;
-		for (auto i = _node->identifiers.begin();
-			i != _node->identifiers.end(); ++i)
-		{
-			index = cp->var_size++;
-			cp->var_names.push_back(*i);
-		}
+		cp->var_names.push_back(make_pair(_node->name, _node->type));
 	}
 
 	void CodeGen::visit(CodePack* cp, FuncCallNode* _node)
 	{
-		if (_node->params)
-			visit(cp, _node->params);
+		for (auto i = _node->parameters.begin(); 
+			i != _node->parameters.end(); ++i)
+			visit(cp, *i);
 
 		visit(cp, _node->exp);
 		cp->instructions.push_back(Instruction(VM_CODE::CALL, 0));
-	}
-
-	void CodeGen::visit(CodePack* cp, FuncCallParamsNode* _node)
-	{
-		for (auto i = _node->children.begin(); i != _node->children.end(); ++i)
-			visit(cp, *i);
 	}
 
 	void CodeGen::visit(CodePack* cp, PrintStmtNode* _node)

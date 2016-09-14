@@ -379,7 +379,7 @@ namespace halang
 		expect(nextToken(), Token::TYPE::OPEN_PAREN);
 		while (match(Token::TYPE::IDENTIFIER))
 		{
-			auto param = reinterpret_cast<FuncDefParamNode*>(parseFuncCallParam());
+			auto param = reinterpret_cast<FuncDefParamNode*>(parseFuncDefParam());
 			_func->parameters.push_back(param);
 			if (match(Token::TYPE::COMMA))
 				nextToken();
@@ -396,7 +396,7 @@ namespace halang
 			_func->typeName = make_node<IdentifierNode>(*nextToken()._literal);
 		}
 		expect(nextToken(), Token::TYPE::OPEN_BRAKET);
-		_func->block = dynamic_cast<BlockExprNode*>(parseBlock());
+		_func->block = reinterpret_cast<BlockExprNode*>(parseBlock());
 		expect(nextToken(), Token::TYPE::CLOSE_BRAKET);
 		return _func;
 	}
@@ -421,10 +421,11 @@ namespace halang
 		// FuncCallParamNode* _params = nullptr;
 
 		expect(nextToken(), Token::TYPE::OPEN_PAREN);
-		while (expect(lookahead, Token::TYPE::IDENTIFIER))
+		while (!expect(lookahead, Token::TYPE::CLOSE_PAREN))
 		{
-			auto param = reinterpret_cast<FuncCallParamNode*>(parseFuncCallParam());
-			_node->parameters.push_back(param);
+			auto node = parseExpression();
+
+			_node->parameters.push_back(node);
 			if (match(Token::TYPE::COMMA))
 				continue;
 			else if (match(Token::TYPE::CLOSE_PAREN))
@@ -439,10 +440,11 @@ namespace halang
 			nextToken();
 			_node = make_node<FuncCallNode>(_node);
 
-			while (expect(lookahead, Token::TYPE::IDENTIFIER))
+			while (!expect(lookahead, Token::TYPE::CLOSE_PAREN))
 			{
-				auto param = reinterpret_cast<FuncCallParamNode*>(parseFuncCallParam());
-				_node->parameters.push_back(param);
+				auto node = parseExpression();
+
+				_node->parameters.push_back(node);
 				if (match(Token::TYPE::COMMA))
 					continue;
 				else if (match(Token::TYPE::CLOSE_PAREN))
@@ -455,33 +457,6 @@ namespace halang
 		}
 		return _node;
 	}
-
-	Node* Parser::parseFuncCallParam()
-	{
-		auto param = make_node<FuncCallParamNode>();
-		expect(lookahead, Token::TYPE::IDENTIFIER);
-		param->name = *nextToken()._literal;
-		return param;
-	}
-
-	/*
-	Node* Parser::parseFuncCallParams()
-	{
-		auto _params = make_node<FuncCallParamsNode>();
-		if (!match(Token::TYPE::CLOSE_PAREN))
-		{
-			auto _exp = parseExpression();
-			_params->children.push_back(_exp);
-			while (match(Token::TYPE::COMMA))
-			{
-				nextToken();
-				_exp = parseExpression();
-				_params->children.push_back(_exp);
-			}
-		}
-		return _params;
-	}
-	*/
 
 	Node* Parser::parseReturnStmt()
 	{
