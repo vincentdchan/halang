@@ -1,6 +1,7 @@
 #pragma once
 #include <cinttypes>
 #include <vector>
+#include <memory>
 #include "token.h"
 #include "string.h"
 #include "type.h"
@@ -61,6 +62,8 @@ namespace halang
 		virtual PrintStmtNode* asPrintStmt() { return nullptr; }
 
 		virtual void visit(CodeGen *cg, CodePack* cp) = 0;
+
+		std::unique_ptr<Type> typeInfo;
 	};
 
 	class StringNode : public Node
@@ -85,7 +88,6 @@ namespace halang
 		double number;
 		bool maybeInt;
 
-		Type type;
 		VISIT_OVERRIDE
 	};
 
@@ -98,7 +100,6 @@ namespace halang
 
 		std::string name;
 
-		Type type;
 		VISIT_OVERRIDE
 	};
 
@@ -246,7 +247,6 @@ namespace halang
 		BlockExprNode* block;
 		IdentifierNode* typeName;
 
-		Type type;
 		VISIT_OVERRIDE
 	};
 
@@ -270,7 +270,6 @@ namespace halang
 		std::string name;
 		std::string typeName;
 
-		Type type;
 		VISIT_OVERRIDE
 	};
 
@@ -284,7 +283,6 @@ namespace halang
 		Node* exp; // maybe identifier, maybe another func  foo(a) foo(a)(b)(b)
 		std::vector<Node*> parameters;
 
-		Type type;
 		VISIT_OVERRIDE
 	};
 

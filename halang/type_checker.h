@@ -1,4 +1,5 @@
 #pragma once
+#include "halang.h"
 #include "ast.h"
 #include "util.h"
 #include "type.h"
@@ -9,27 +10,65 @@ namespace halang
 	class TypeChecker : public utils::_MessageContainer
 	{
 	public:
-		TypeChecker() : guestFuncType(false)
+		TypeChecker() : guestFuncType(false), env(nullptr)
 		{
 
 		}
 
+		// disable copy constructor
+		TypeChecker(TypeChecker&) = delete;
+		TypeChecker(TypeChecker&&) = delete;
+		TypeChecker& operator=(TypeChecker&) = delete;
+
 		static std::unique_ptr<TypeChecker> TypeCheck(Node* node);
+
+		virtual ~TypeChecker()
+		{
+			if (env != nullptr)
+				delete env;
+		}
 
 	private:
 
+		struct TypeCheckEnv;		// TypeCheck Environment
+
 		static void TypeCheck(TypeChecker& tc, Node* node);
-		static void TypeCheck(TypeChecker& tc, FuncDefNode* node);
-		static void TypeCheck(TypeChecker& tc, BlockExprNode* node);
-		static void TypeCheck(TypeChecker& tc, FuncCallNode* node);
-		static void TypeCheck(TypeChecker& tc, ReturnStmtNode* node);
+#define VISIT_METHOD(NAME) static void TypeCheck(TypeChecker& tc, NAME##Node*);
+		NODE_LIST(VISIT_METHOD)
+#undef VISIT_METHOD
 
 		static Type getTypeFromString(TypeChecker* tc, std::string typeName);
 
 		Type mustReturnType;
 		Type currentType;
 		std::unique_ptr<Type> guestType;
+		TypeCheckEnv* env;
 
 		bool guestFuncType;
 	};
+
+	struct TypeChecker::TypeCheckEnv
+	{
+		TypeCheckEnv() : prev(nullptr)
+		{}
+		TypeCheckEnv* prev;
+		std::vector<std::pair<std::string, Type> > vars;
+
+		bool findVar(std::string& _name, std::pair<std::string, Type>& result)
+		{
+			for (auto i = vars.begin(); i != vars.end(); ++i)
+			{ 
+				if (i->first == _name)
+				{
+					result = *i;
+					return true;
+				}
+			}
+			if (prev == nullptr)
+				return false;
+			else
+				return prev->findVar(_name, result);
+		}
+	};
+
 }

@@ -388,7 +388,7 @@ namespace halang
 
 	void CodeGen::visit(CodePack* cp, FuncDefParamNode* _node)
 	{
-		cp->var_names.push_back(make_pair(_node->name, _node->type));
+		cp->var_names.push_back(make_pair(_node->name, *_node->typeInfo));
 	}
 
 	void CodeGen::visit(CodePack* cp, FuncCallNode* _node)
