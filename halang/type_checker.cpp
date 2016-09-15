@@ -6,6 +6,12 @@ namespace halang
 {
 	typedef std::unique_ptr<TypeChecker> PTC;
 
+	TypeChecker::TypeChecker() : 
+		guestFuncType(false), env(nullptr)
+	{
+		env = new TypeCheckEnv();
+	}
+
 	PTC TypeChecker::TypeCheck(Node* node)
 	{
 		auto ptr = make_unique<TypeChecker>();
@@ -125,7 +131,7 @@ namespace halang
 		{
 			if (i->first == node->name)
 			{
-				node->typeInfo.reset(new Type(i->second));
+				node->typeInfo.reset(new Type(i->second.type));
 				break;
 			}
 		}

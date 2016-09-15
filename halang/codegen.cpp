@@ -25,12 +25,12 @@ namespace halang
 			{
 			case VarType::LOCAL:
 				cp->require_upvalues.push_back(_p.id());
-				cp->upvalue_names.push_back(make_pair(_Str, Type()));
+				cp->upvalue_names.push_back(make_pair(IString(_Str), Type()));
 				return VarType(VarType::UPVAL, cp->upvalue_size++);
 				break;
 			case VarType::UPVAL:
 				cp->require_upvalues.push_back(-1 - _p.id());
-				cp->upvalue_names.push_back(make_pair(_Str, Type()));
+				cp->upvalue_names.push_back(make_pair(IString(_Str), Type()));
 				return VarType(VarType::UPVAL, cp->upvalue_size++);
 				break;
 			}
@@ -209,7 +209,7 @@ namespace halang
 			if (state->varStatement())
 			{
 				_id = cp->var_size++;
-				cp->var_names.push_back(make_pair(_id_node->name, Type()));
+				cp->var_names.push_back(make_pair(IString(_id_node->name), Type()));
 
 				// you must add the name first and then visit the expression.
 				// to generate the next code
@@ -290,7 +290,7 @@ namespace halang
 			if (state->varStatement())
 			{
 				_id = cp->var_size++;
-				cp->var_names.push_back(make_pair(_id_node->name, Type()));
+				cp->var_names.push_back(make_pair(IString(_id_node->name), Type()));
 
 				// you must add the name first and then visit the expression.
 				// to generate the next code
@@ -360,7 +360,7 @@ namespace halang
 		if (_node->name)
 		{
 			var_id = cp->var_size++;
-			cp->var_names.push_back(make_pair(_node->name->name, Type()));
+			cp->var_names.push_back(make_pair(IString(_node->name->name), Type()));
 		}
 		auto new_pack = vm->make_gcobject<CodePack>();
 		auto new_func = vm->make_gcobject<Function>(new_pack, _node->parameters.size());
@@ -388,7 +388,7 @@ namespace halang
 
 	void CodeGen::visit(CodePack* cp, FuncDefParamNode* _node)
 	{
-		cp->var_names.push_back(make_pair(_node->name, *_node->typeInfo));
+		cp->var_names.push_back(make_pair(IString(_node->name), *_node->typeInfo));
 	}
 
 	void CodeGen::visit(CodePack* cp, FuncCallNode* _node)

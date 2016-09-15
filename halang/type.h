@@ -10,18 +10,23 @@ namespace halang
 			INT, NUMBER, BOOL, Object
 		};
 
-		HA_TYPE type = Object;
+		HA_TYPE type;
 
-		Type()
+		Type() :
+			type(Object)
 		{}
-		Type(Type& t):
+		Type(const Type& t):
 			type(t.type)
 		{}
-
 		Type(HA_TYPE t):
 			type(t)
 		{}
 
+		inline Type& operator=(const Type &t)
+		{
+			type = t.type;
+			return *this;
+		}
 
 		inline bool operator==(Type rhs) const
 		{
@@ -32,6 +37,7 @@ namespace halang
 		{
 			return this->type != rhs.type;
 		}
+
 			 
 	};
 }

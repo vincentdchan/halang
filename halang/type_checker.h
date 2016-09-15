@@ -9,11 +9,11 @@ namespace halang
 {
 	class TypeChecker : public utils::_MessageContainer
 	{
-	public:
-		TypeChecker() : guestFuncType(false), env(nullptr)
-		{
+	private:
+		struct TypeCheckEnv;		// TypeCheck Environment
 
-		}
+	public:
+		TypeChecker();
 
 		// disable copy constructor
 		TypeChecker(TypeChecker&) = delete;
@@ -29,8 +29,6 @@ namespace halang
 		}
 
 	private:
-
-		struct TypeCheckEnv;		// TypeCheck Environment
 
 		static void TypeCheck(TypeChecker& tc, Node* node);
 #define VISIT_METHOD(NAME) static void TypeCheck(TypeChecker& tc, NAME##Node*);
@@ -51,6 +49,7 @@ namespace halang
 	{
 		TypeCheckEnv() : prev(nullptr)
 		{}
+		~TypeCheckEnv() {}
 		TypeCheckEnv* prev;
 		std::vector<std::pair<std::string, Type> > vars;
 
