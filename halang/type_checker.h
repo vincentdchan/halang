@@ -5,8 +5,14 @@
 #include "type.h"
 #include <memory>
 
+
+
 namespace halang
 {
+
+	/// <summary>
+	/// Do the type check to the root of AST.
+	/// </summary>
 	class TypeChecker : public utils::_MessageContainer
 	{
 	private:
@@ -31,6 +37,7 @@ namespace halang
 	private:
 
 		static void TypeCheck(TypeChecker& tc, Node* node);
+
 #define VISIT_METHOD(NAME) static void TypeCheck(TypeChecker& tc, NAME##Node*);
 		NODE_LIST(VISIT_METHOD)
 #undef VISIT_METHOD
@@ -45,6 +52,10 @@ namespace halang
 		bool guestFuncType;
 	};
 
+	/// <summary>
+	/// The envrionment to help the type check.
+	/// To simulate the function call.
+	/// </summary>
 	struct TypeChecker::TypeCheckEnv
 	{
 		TypeCheckEnv() : prev(nullptr)

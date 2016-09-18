@@ -12,6 +12,11 @@ namespace halang
 		env = new TypeCheckEnv();
 	}
 
+	/// <sumary>
+	/// Get a abstract syntax tree root node of the whole tree, 
+	/// do the typecheck to the whole tree
+	/// </sumary>
+	/// <returns>Return a TypeChekcer of the whole AST.</returns>
 	PTC TypeChecker::TypeCheck(Node* node)
 	{
 		auto ptr = make_unique<TypeChecker>();
@@ -21,6 +26,7 @@ namespace halang
 
 	void TypeChecker::TypeCheck(TypeChecker& tc, Node* node)
 	{
+		TypeChecker::TypeCheck(node);
 		if (node->asFuncDef())
 		{
 			TypeCheck(tc, node->asFuncDef());
@@ -125,6 +131,10 @@ namespace halang
 
 	}
 
+	/// <summary>
+	/// Find the name of identifier in the variable table or type table.
+	/// Report error if the identifier not found.
+	/// </summary>
 	void TypeChecker::TypeCheck(TypeChecker& tc, IdentifierNode* node)
 	{
 		for (auto i = tc.env->vars.begin(); i != tc.env->vars.end(); ++i)
@@ -132,9 +142,11 @@ namespace halang
 			if (i->first == node->name)
 			{
 				node->typeInfo.reset(new Type(i->second.type));
-				break;
+				return;
 			}
 		}
+
+		tc.ReportError("identifier not found in variable table and type table.");
 	}
 
 	void TypeChecker::TypeCheck(TypeChecker& tc, FuncDefNode* node)

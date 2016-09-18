@@ -11,16 +11,21 @@ namespace halang
 
 	namespace utils
 	{
+
+		/// <summary>
+		/// A helper class to help record message of
+		/// errors and warnings.
+		/// </summary>
 		class _MessageContainer
 		{
 		public:
-			enum struct MESSAGE_TYPE
+			enum struct FLAG
 			{
 				NORMAL,
 				WARNING,
 				ERROR
 			};
-			typedef std::tuple<std::string, Location, MESSAGE_TYPE> MESSAGE;
+			typedef std::tuple<std::string, Location, FLAG> MESSAGE;
 
 			_MessageContainer() : _hasError(false) {}
 			_MessageContainer(const _MessageContainer& _con) :
@@ -30,23 +35,40 @@ namespace halang
 				_messages(std::move(_con._messages)), _hasError(_con._hasError)
 			{}
 
-			void ReportMessage(const std::string& _content, Location _loc, MESSAGE_TYPE _mt)
+			void ReportMessage(const std::string& _content, Location _loc, FLAG _mt)
 			{
 				_messages.push_back(std::make_tuple(std::move(_content), std::move(_loc), _mt));
 			}
+
+			/// <summary>
+			/// Add a error message to the message container.
+			/// </summary>
 			void ReportError(const std::string& _content, Location _loc = Location())
 			{
 				_hasError = true;
-				_messages.push_back(std::make_tuple(std::move(_content), std::move(_loc), MESSAGE_TYPE::ERROR));
+				_messages.push_back(std::make_tuple(std::move(_content), std::move(_loc), FLAG::ERROR));
 			}
+
+			/// <summary>
+			/// Add a warining message to the message container.
+			/// </summary>
 			void ReportWarning(const std::string& _content, Location _loc = Location())
 			{
-				_messages.push_back(std::make_tuple(std::move(_content), std::move(_loc), MESSAGE_TYPE::WARNING));
+				_messages.push_back(std::make_tuple(std::move(_content), std::move(_loc), FLAG::WARNING));
 			}
+
+			/// <summary>
+			/// Add a normal message to the message container.
+			/// </summary>
 			void ReportNormal(const std::string& _content, Location _loc = Location())
 			{
-				_messages.push_back(std::make_tuple(std::move(_content), std::move(_loc), MESSAGE_TYPE::NORMAL));
+				_messages.push_back(std::make_tuple(std::move(_content), std::move(_loc), FLAG::NORMAL));
 			}
+
+			/// <summary>
+			/// get the list of the message
+			/// </summary>
+			/// <returns>return the list of message</returns>
 			const std::list<MESSAGE>& getMessages()
 			{
 				return _messages;
@@ -67,16 +89,16 @@ namespace halang
 		{
 			std::string _msg_content;
 			Location _location;
-			_MessageContainer::MESSAGE_TYPE _msg_type;
+			_MessageContainer::FLAG _msg_type;
 			std::tie(_msg_content, _location, _msg_type) = _msg;
 			std::string _result;
 			switch (_msg_type)
 			{
-			case _MessageContainer::MESSAGE_TYPE::NORMAL:
+			case _MessageContainer::FLAG::NORMAL:
 				_os << "Normal: "; break;
-			case _MessageContainer::MESSAGE_TYPE::WARNING:
+			case _MessageContainer::FLAG::WARNING:
 				_os << "Warnging: "; break;
-			case _MessageContainer::MESSAGE_TYPE::ERROR:
+			case _MessageContainer::FLAG::ERROR:
 				_os << "Error: "; break;
 			}
 			if (_location.line > -1)
