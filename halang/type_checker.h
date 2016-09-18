@@ -13,7 +13,7 @@ namespace halang
 	/// <summary>
 	/// Do the type check to the root of AST.
 	/// </summary>
-	class TypeChecker : public utils::_MessageContainer
+	class TypeChecker : public utils::_MessageContainer<std::string>
 	{
 	private:
 		struct TypeCheckEnv;		// TypeCheck Environment
@@ -61,6 +61,7 @@ namespace halang
 		TypeCheckEnv() : prev(nullptr)
 		{}
 		~TypeCheckEnv() {}
+
 		TypeCheckEnv* prev;
 		std::vector<std::pair<std::string, Type> > vars;
 

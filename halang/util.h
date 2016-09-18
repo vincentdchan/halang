@@ -16,6 +16,7 @@ namespace halang
 		/// A helper class to help record message of
 		/// errors and warnings.
 		/// </summary>
+		template<typename _MsgType = std::string>
 		class _MessageContainer
 		{
 		public:
@@ -25,7 +26,19 @@ namespace halang
 				WARNING,
 				ERROR
 			};
-			typedef std::tuple<std::string, Location, FLAG> MESSAGE;
+
+			// typedef std::tuple<_MsgType, Location, FLAG> MESSAGE;
+
+			struct Message
+			{
+				Message(_MsgType _msg, Location _loc, FLAG _flag):
+					msg(_msg), loc(_loc), flag(_flag)
+				{}
+
+				_MsgType msg;
+				Location loc;
+				FLAG flag;
+			};
 
 			_MessageContainer() : _hasError(false) {}
 			_MessageContainer(const _MessageContainer& _con) :
@@ -35,81 +48,107 @@ namespace halang
 				_messages(std::move(_con._messages)), _hasError(_con._hasError)
 			{}
 
-			void ReportMessage(const std::string& _content, Location _loc, FLAG _mt)
+			void ReportMessage(const _MsgType& _content, Location _loc, FLAG _mt)
 			{
-				_messages.push_back(std::make_tuple(std::move(_content), std::move(_loc), _mt));
+				_messages.push_back(Message(_content, _loc, _mt));
 			}
 
 			/// <summary>
 			/// Add a error message to the message container.
 			/// </summary>
-			void ReportError(const std::string& _content, Location _loc = Location())
+			void ReportError(const _MsgType& _content, Location _loc = Location())
 			{
 				_hasError = true;
-				_messages.push_back(std::make_tuple(std::move(_content), std::move(_loc), FLAG::ERROR));
+				_messages.push_back(Message(_content, _loc, FLAG::ERROR));
 			}
 
 			/// <summary>
 			/// Add a warining message to the message container.
 			/// </summary>
-			void ReportWarning(const std::string& _content, Location _loc = Location())
+			void ReportWarning(const _MsgType& _content, Location _loc = Location())
 			{
-				_messages.push_back(std::make_tuple(std::move(_content), std::move(_loc), FLAG::WARNING));
+				_messages.push_back(Message(_content, _loc, FLAG::WARNING));
 			}
 
 			/// <summary>
 			/// Add a normal message to the message container.
 			/// </summary>
-			void ReportNormal(const std::string& _content, Location _loc = Location())
+			void ReportNormal(const _MsgType& _content, Location _loc = Location())
 			{
-				_messages.push_back(std::make_tuple(std::move(_content), std::move(_loc), FLAG::NORMAL));
+				_messages.push_back(Message(_content, _loc, FLAG::NORMAL));
 			}
 
 			/// <summary>
 			/// get the list of the message
 			/// </summary>
 			/// <returns>return the list of message</returns>
-			const std::list<MESSAGE>& getMessages()
+			const std::list<Message>& getMessages()
 			{
 				return _messages;
 			}
+
 			bool hasError()
 			{
 				return _hasError;
 			}
+
+			static std::ostream& OutputMsg(std::ostream& _os,
+				const typename _MessageContainer<_MsgType>::Message& _msg)
+			{
+				switch (_msg.flag)
+				{
+				case _MessageContainer<_MsgType>::FLAG::NORMAL:
+					_os << "Normal: "; break;
+				case _MessageContainer<_MsgType>::FLAG::WARNING:
+					_os << "Warnging: "; break;
+				case _MessageContainer<_MsgType>::FLAG::ERROR:
+					_os << "Error: "; break;
+				}
+				if (_msg.loc.line > -1)
+				{
+					_os << "line " << _msg.loc.line;
+					if (_msg.loc.column > -1)
+						_os << " Col " << _msg.loc.column << " : ";
+				}
+				_os << _msg.msg << std::endl;
+				return _os;
+			}
 		private:
-			std::list<MESSAGE> _messages;
+			std::list<Message> _messages;
 			bool _hasError;
 		};
 
 		// why should I use 'inline' ?
 		// http://stackoverflow.com/questions/6964819/function-already-defined-error-in-c
 
-		inline std::ostream& operator<<(std::ostream& _os, _MessageContainer::MESSAGE _msg)
+	};
+
+
+};
+
+namespace std
+{
+		template<typename _MsgType>
+		inline std::ostream& operator<<(std::ostream& _os,
+			const typename halang::utils::_MessageContainer<_MsgType>::Message& _msg)
 		{
-			std::string _msg_content;
-			Location _location;
-			_MessageContainer::FLAG _msg_type;
-			std::tie(_msg_content, _location, _msg_type) = _msg;
-			std::string _result;
-			switch (_msg_type)
+			switch (_msg.flag)
 			{
-			case _MessageContainer::FLAG::NORMAL:
+			case _MessageContainer<_MsgType>::FLAG::NORMAL:
 				_os << "Normal: "; break;
-			case _MessageContainer::FLAG::WARNING:
+			case _MessageContainer<_MsgType>::FLAG::WARNING:
 				_os << "Warnging: "; break;
-			case _MessageContainer::FLAG::ERROR:
+			case _MessageContainer<_MsgType>::FLAG::ERROR:
 				_os << "Error: "; break;
 			}
-			if (_location.line > -1)
+			if (_msg.loc.line > -1)
 			{
-				_os << "line " << _location.line;
+				_os << "line " << _msg.loc.line;
 				if (_location.column > -1)
-					_os << " Col " << _location.column << " : ";
+					_os << " Col " << _msg.loc.column << " : ";
 			}
-			_os << _msg_content << std::endl;
+			_os << _msg.msg << std::endl;
 			return _os;
 		}
-	};
 
 };

@@ -11,7 +11,7 @@ namespace halang
 {
 	using namespace std;
 
-	class Lexer final: public utils::_MessageContainer
+	class Lexer final: public utils::_MessageContainer<std::string>
 	{
 	public:
 		typedef shared_ptr<string> pString;

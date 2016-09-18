@@ -14,6 +14,7 @@
 #include "svm_codes.h"
 #include "svm.h"
 #include "codegen.h"
+#include "util.h"
 
 const char* DEFAULT_FILENAME = "source.txt";
 
@@ -42,7 +43,7 @@ int main(int argc, char** argv)
 	{
 		for (auto i = lexer->getMessages().begin(); i != lexer->getMessages().end(); ++i)
 		{
-			std::cout << *i;
+			utils::_MessageContainer<std::string>::OutputMsg(std::cout, *i);
 		}
 	}
 
@@ -67,7 +68,7 @@ int main(int argc, char** argv)
 	{
 		for (auto i = parser->getMessages().begin(); i != parser->getMessages().end(); ++i)
 		{
-			std::cout << *i;
+			utils::_MessageContainer<std::string>::OutputMsg(std::cout, *i);
 		}
 	}
 

@@ -11,7 +11,7 @@
 namespace halang
 {
 
-	class Parser final : public utils::_MessageContainer
+	class Parser final : public utils::_MessageContainer<std::string>
 	{
 	public:
 		enum struct MESSAGE_TYPE

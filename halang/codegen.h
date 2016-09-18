@@ -11,7 +11,7 @@
 namespace halang
 {
 
-	class CodeGen final : public utils::_MessageContainer
+	class CodeGen final : public utils::_MessageContainer<std::string>
 	{
 	public:
 		class GenState;
