@@ -224,31 +224,6 @@ namespace halang
 			}
 			break;
 		}
-		/*
-		int _id = cp->findVarId(_id_node->name);
-
-		if (_id >= 0)
-		{
-			visit(cp, _node->expression);
-			cp->instructions.push_back(Instruction(VM_CODE::STORE_V, _id));
-			cp->instructions.push_back(Instruction(VM_CODE::LOAD_V, _id));
-		}
-		else if (_id == -1)
-		{
-			_id = cp->var_size++;
-			cp->var_names.push_back(_id_node->name);
-			visit(cp, _node->expression);
-			cp->instructions.push_back(Instruction(VM_CODE::STORE_V, _id));
-			cp->instructions.push_back(Instruction(VM_CODE::LOAD_V, _id));
-		}
-		else // if _id < -1
-		{
-			_id = -2 - _id;
-			visit(cp, _node->expression);
-			cp->instructions.push_back(Instruction(VM_CODE::STORE_UPVAL, _id));
-			cp->instructions.push_back(Instruction(VM_CODE::LOAD_UPVAL, _id));
-		}
-		*/
 
 	}
 
@@ -260,50 +235,19 @@ namespace halang
 		state->setVarStatement(false);
 	}
 
-	void CodeGen::visit(CodePack* cp, VarInitExprNode* _node)
+	void CodeGen::visit(CodePack* cp, VarSubExprNode* _node)
 	{
-		// find if the var is exisits
-		// if not exisits add a possition for it
+
 		auto _id_node = _node->varName;
+		int _id = cp->var_size++;
+		cp->var_names.push_back(make_pair(IString(_id_node->name), *_node->typeInfo));
 
-		auto _var = findVar(cp, _id_node->name);
-
-		int _id;
-		switch(_var.type())
+		// you must add the name first and then visit the expression.
+		// to generate the next code
+		if (_node->expression)
 		{
-		case VarType::GLOBAL:
 			visit(cp, _node->expression);
-			cp->instructions.push_back(Instruction(VM_CODE::STORE_G, _var.id()));
-			cp->instructions.push_back(Instruction(VM_CODE::LOAD_G, _var.id()));
-			break;
-		case VarType::LOCAL:
-			visit(cp, _node->expression);
-			cp->instructions.push_back(Instruction(VM_CODE::STORE_V, _var.id()));
-			cp->instructions.push_back(Instruction(VM_CODE::LOAD_V, _var.id()));
-			break;
-		case VarType::UPVAL:
-			visit(cp, _node->expression);
-			cp->instructions.push_back(Instruction(VM_CODE::STORE_UPVAL, _var.id()));
-			cp->instructions.push_back(Instruction(VM_CODE::LOAD_UPVAL, _var.id()));
-			break;
-		case VarType::NONE:
-			if (state->varStatement())
-			{
-				_id = cp->var_size++;
-				cp->var_names.push_back(make_pair(IString(_id_node->name), Type()));
-
-				// you must add the name first and then visit the expression.
-				// to generate the next code
-				visit(cp, _node->expression);
-				cp->instructions.push_back(Instruction(VM_CODE::STORE_V, _id));
-				cp->instructions.push_back(Instruction(VM_CODE::LOAD_V, _id));
-			}
-			else
-			{
-				// i don't know how to fix it, fuck you.
-				ReportError(std::string("Identifier: ") + _id_node->name + " not found." );
-			}
-			break;
+			cp->instructions.push_back(Instruction(VM_CODE::STORE_V, _id));
 		}
 
 	}

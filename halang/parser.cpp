@@ -110,41 +110,49 @@ namespace halang
 	Node* Parser::parseVarStmt()
 	{
 		expect(nextToken(), Token::TYPE::VAR);
-		VarInitExprNode *_initExpr = nullptr;
-		auto _var = make_node<VarStmtNode>();
-		if (match(Token::TYPE::IDENTIFIER))
-		{
-			_initExpr = parseVarInitExpr()->asVarInitExpr();
-			_var->children.push_back(_initExpr);
 
-			while (match(Token::TYPE::COMMA))
-			{
-				_initExpr = parseVarInitExpr()->asVarInitExpr();
-				_var->children.push_back(_initExpr);
-			}
-		}
-		else
+		VarSubExprNode *_subExpr = nullptr;
+		auto _var = make_node<VarStmtNode>();
+		expect(lookahead, Token::TYPE::IDENTIFIER);
+
+		auto id = make_node<IdentifierNode>(*nextToken()._literal);
+		_subExpr = parseVarSubExpr(id);
+		_var->children.push_back(_subExpr);
+
+		while (match(Token::TYPE::COMMA))
 		{
-			ReportError("<Var stmt> expected identifier");
+			_subExpr = parseVarSubExpr();
+			_var->children.push_back(_subExpr);
 		}
+
 		return _var;
 	}
 
-	Node* Parser::parseVarInitExpr()
+	VarSubExprNode* Parser::parseVarSubExpr(IdentifierNode *_id)
 	{
-		auto ptr = make_node<VarInitExprNode>();
-		expect(lookahead, Token::TYPE::IDENTIFIER);
+		auto ptr = make_node<VarSubExprNode>();
 
-		ptr->varName = make_node<IdentifierNode>(*nextToken()._literal);
+		if (_id == nullptr)
+		{
+			expect(lookahead, Token::TYPE::IDENTIFIER);
+			_id = make_node<IdentifierNode>(*nextToken()._literal);
+			ptr->varName = _id;
+		}
+		else
+			ptr->varName = _id;
+
 		if (match(Token::TYPE::SEMICOLON))
 		{
 			nextToken();
 			expect(lookahead, Token::TYPE::IDENTIFIER);
 			ptr->typeName = make_node<IdentifierNode>(*nextToken()._literal);
+			if (match(Token::TYPE::ASSIGN))
+				ptr->expression = parseExpression();
 		}
-		expect(nextToken(), Token::TYPE::EQ);
-
-		ptr->expression = parseExpression();
+		else if (match(Token::TYPE::ASSIGN))
+			ptr->expression = parseExpression();
+		else
+			ReportError("Expect semicolon or '='.");
 
 		return ptr;
 	}

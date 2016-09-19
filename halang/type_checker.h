@@ -26,7 +26,7 @@ namespace halang
 		TypeChecker(TypeChecker&&) = delete;
 		TypeChecker& operator=(TypeChecker&) = delete;
 
-		static std::unique_ptr<TypeChecker> TypeCheck(Node* node);
+		static TypeChecker* TypeCheck(Node* node);
 
 		virtual ~TypeChecker()
 		{
@@ -42,7 +42,7 @@ namespace halang
 		NODE_LIST(VISIT_METHOD)
 #undef VISIT_METHOD
 
-		static Type getTypeFromString(TypeChecker* tc, std::string typeName);
+		static Type getTypeFromString(TypeChecker& tc, std::string typeName);
 
 		Type mustReturnType;
 		Type currentType;

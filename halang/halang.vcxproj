@@ -166,6 +166,7 @@
     <ClInclude Include="type_checker.h" />
     <ClInclude Include="upvalue.h" />
     <ClInclude Include="util.h" />
+    <ClInclude Include="visitor.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="ast.cpp" />

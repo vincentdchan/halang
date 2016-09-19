@@ -17,17 +17,20 @@ namespace halang
 	/// do the typecheck to the whole tree
 	/// </sumary>
 	/// <returns>Return a TypeChekcer of the whole AST.</returns>
-	PTC TypeChecker::TypeCheck(Node* node)
+	TypeChecker* TypeChecker::TypeCheck(Node* node)
 	{
-		auto ptr = make_unique<TypeChecker>();
+		auto ptr = new TypeChecker();
 		TypeCheck(*ptr, node);
 		return ptr;
 	}
 
 	void TypeChecker::TypeCheck(TypeChecker& tc, Node* node)
 	{
-		TypeChecker::TypeCheck(node);
-		if (node->asFuncDef())
+		if (node->asBlockExpression())
+		{
+			TypeCheck(node->asBlockExpression());
+		}
+		else if (node->asFuncDef())
 		{
 			TypeCheck(tc, node->asFuncDef());
 		}
@@ -38,6 +41,27 @@ namespace halang
 		else if (node->asFuncCall())
 		{
 			TypeCheck(tc, node->asFuncCall());
+		}
+		else if (node->asVarStmt())
+		{
+			TypeCheck(tc, node->asVarStmt());
+		}
+		else if (node->asVarSubExpr())
+		{
+			TypeCheck(tc, node->asVarSubExpr());
+		}
+		else if (node->asIfStmt())
+		{
+			TypeCheck(tc, node->asVarSubExpr());
+		}
+	}
+
+	void TypeChecker::TypeCheck(TypeChecker&tc, BlockExprNode* node)
+	{
+		for (auto i = node->children.begin();
+			i != node->children.end(); ++i)
+		{
+			TypeCheck(tc, *i);
 		}
 	}
 
@@ -123,12 +147,33 @@ namespace halang
 
 	void TypeChecker::TypeCheck(TypeChecker& tc, VarStmtNode* node)
 	{
-
+		for (auto i = node->children.begin();
+			i != node->children.end(); ++i)
+		{
+			TypeCheck(tc, *i);
+		}
 	}
 
-	void TypeChecker::TypeCheck(TypeChecker& tc, VarInitExprNode* node)
+	void TypeChecker::TypeCheck(TypeChecker& tc, VarSubExprNode* node)
 	{
+		if (node->typeName)
+		{
+			auto tName = node->typeName->name;
+			auto t = getTypeFromString(tc, tName);
+			node->typeInfo.reset(new Type(t));
 
+			if (node->expression)
+			{
+				TypeCheck(tc, node->expression);
+				if (*node->expression->typeInfo != *node->typeInfo)
+					tc.ReportError("The variable statement's type isn't match the defined one");
+			}
+		}
+		else if (node->expression)
+		{
+			TypeCheck(tc, node->expression);
+			node->typeInfo.reset(new Type(*node->expression->typeInfo));
+		}
 	}
 
 	/// <summary>
@@ -155,7 +200,7 @@ namespace halang
 		if (node->typeName)
 		{
 			auto typeName = node->typeName->name;
-			_type = getTypeFromString(&tc, typeName);
+			_type = getTypeFromString(tc, typeName);
 			tc.guestFuncType = false;
 			tc.mustReturnType = _type;
 		}
@@ -213,7 +258,7 @@ namespace halang
 
 	}
 
-	Type TypeChecker::getTypeFromString(TypeChecker* tc, std::string typeName)
+	Type TypeChecker::getTypeFromString(TypeChecker& tc, std::string typeName)
 	{
 		Type t;
 		if (typeName == "int")
