@@ -30,13 +30,14 @@ namespace halang
 
 	class CodePack;
 	class CodeGen;
+	class Visitor;
 
 	class Node;
 #define E(Name) class Name##Node;
 	NODE_LIST(E)
 #undef E
 
-#define VISIT_OVERRIDE virtual void visit(CodeGen *cg, CodePack* cp) override;
+#define VISIT_OVERRIDE virtual void visit(Visitor*) override;
 
 
 	/// <summary>
@@ -67,9 +68,9 @@ namespace halang
 		virtual FuncCallNode* asFuncCall() { return nullptr; }
 		virtual PrintStmtNode* asPrintStmt() { return nullptr; }
 
-		virtual void visit(CodeGen *cg, CodePack* cp) = 0;
+		virtual void visit(Visitor*) = 0;
 
-		std::unique_ptr<Type> typeInfo;
+		Type typeInfo;
 	};
 
 	/// <summary>

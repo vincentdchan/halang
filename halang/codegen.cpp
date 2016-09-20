@@ -49,25 +49,21 @@ namespace halang
 	{
 		parser = p;
 
-		generate(global_cp);
+		visit(parser->getRoot());
 		global_cp->instructions.push_back(Instruction(VM_CODE::STOP, 0));
 	}
 
-	void CodeGen::generate(CodePack* cp)
+	void CodeGen::visit(Node* _node)
 	{
-		visit(cp, parser->getRoot());
+		_node->visit(this);
 	}
 
-	void CodeGen::visit(CodePack* cp, Node* _node)
+	void CodeGen::visit(BlockExprNode* _node)
 	{
-		_node->visit(this, cp);
-	}
-
-	void CodeGen::visit(CodePack* cp, BlockExprNode* _node)
-	{
+		auto cp = top_cp;
 		for (auto i = _node->children.begin(); i != _node->children.end(); ++i)
 		{
-			(*i)->visit(this, cp);
+			(*i)->visit(this);
 
 			// TODO: debug
 			if ((*i)->asUnaryExpression() || 
@@ -78,9 +74,11 @@ namespace halang
 		}
 	}
 
-	void CodeGen::visit(CodePack* cp, UnaryExprNode* _node)
+	void CodeGen::visit(UnaryExprNode* _node)
 	{
-		visit(cp, _node->child);
+		auto cp = top_cp;
+
+		visit(_node->child);
 		switch (_node->op)
 		{
 		case OperatorType::SUB:
@@ -93,10 +91,11 @@ namespace halang
 		}
 	}
 
-	void CodeGen::visit(CodePack* cp, BinaryExprNode* _node)
+	void CodeGen::visit(BinaryExprNode* _node)
 	{
-		visit(cp, _node->left);
-		visit(cp, _node->right);
+		auto cp = top_cp;
+		visit(_node->left);
+		visit(_node->right);
 		switch (_node->op)
 		{
 		case OperatorType::ADD:
@@ -139,8 +138,9 @@ namespace halang
 		}
 	}
 
-	void CodeGen::visit(CodePack* cp, NumberNode* _node)
+	void CodeGen::visit(NumberNode* _node)
 	{
+		auto cp = top_cp;
 		auto index = cp->constant.size();
 
 		if (_node->maybeInt)
@@ -150,16 +150,18 @@ namespace halang
 		cp->instructions.push_back(Instruction(VM_CODE::LOAD_C, index));
 	}
 
-	void CodeGen::visit(CodePack* cp, StringNode* _node)
+	void CodeGen::visit(StringNode* _node)
 	{
+		auto cp = top_cp;
 		auto index = cp->constant.size();
 		cp->constant.push_back(Object(_node->content));
 
 		cp->instructions.push_back(Instruction(VM_CODE::LOAD_C, index));
 	}
 
-	void CodeGen::visit(CodePack* cp, IdentifierNode* _node)
+	void CodeGen::visit(IdentifierNode* _node)
 	{
+		auto cp = top_cp;
 		auto _var = findVar(cp, _node->name);
 
 		switch (_var.type())
@@ -179,8 +181,9 @@ namespace halang
 		}
 	}
 
-	void CodeGen::visit(CodePack* cp, AssignmentNode* _node)
+	void CodeGen::visit(AssignmentNode* _node)
 	{
+		auto cp = top_cp;
 		// find if the var is exisits
 		// if not exisits add a possition for it
 		auto _id_node = dynamic_cast<IdentifierNode*>(_node->identifier);
@@ -191,17 +194,17 @@ namespace halang
 		switch(_var.type())
 		{
 		case VarType::GLOBAL:
-			visit(cp, _node->expression);
+			visit(_node->expression);
 			cp->instructions.push_back(Instruction(VM_CODE::STORE_G, _var.id()));
 			cp->instructions.push_back(Instruction(VM_CODE::LOAD_G, _var.id()));
 			break;
 		case VarType::LOCAL:
-			visit(cp, _node->expression);
+			visit(_node->expression);
 			cp->instructions.push_back(Instruction(VM_CODE::STORE_V, _var.id()));
 			cp->instructions.push_back(Instruction(VM_CODE::LOAD_V, _var.id()));
 			break;
 		case VarType::UPVAL:
-			visit(cp, _node->expression);
+			visit(_node->expression);
 			cp->instructions.push_back(Instruction(VM_CODE::STORE_UPVAL, _var.id()));
 			cp->instructions.push_back(Instruction(VM_CODE::LOAD_UPVAL, _var.id()));
 			break;
@@ -213,7 +216,7 @@ namespace halang
 
 				// you must add the name first and then visit the expression.
 				// to generate the next code
-				visit(cp, _node->expression);
+				visit(_node->expression);
 				cp->instructions.push_back(Instruction(VM_CODE::STORE_V, _id));
 				cp->instructions.push_back(Instruction(VM_CODE::LOAD_V, _id));
 			}
@@ -227,38 +230,40 @@ namespace halang
 
 	}
 
-	void CodeGen::visit(CodePack* cp, VarStmtNode* _node)
+	void CodeGen::visit(VarStmtNode* _node)
 	{
+		auto cp = top_cp;
 		state->setVarStatement(true);
 		for (auto i = _node->children.begin(); i != _node->children.end(); ++i)
-			visit(cp, *i);
+			visit(*i);
 		state->setVarStatement(false);
 	}
 
-	void CodeGen::visit(CodePack* cp, VarSubExprNode* _node)
+	void CodeGen::visit(VarSubExprNode* _node)
 	{
-
+		auto cp = top_cp;
 		auto _id_node = _node->varName;
 		int _id = cp->var_size++;
-		cp->var_names.push_back(make_pair(IString(_id_node->name), *_node->typeInfo));
+		cp->var_names.push_back(make_pair(IString(_id_node->name), _node->typeInfo));
 
 		// you must add the name first and then visit the expression.
 		// to generate the next code
 		if (_node->expression)
 		{
-			visit(cp, _node->expression);
+			visit(_node->expression);
 			cp->instructions.push_back(Instruction(VM_CODE::STORE_V, _id));
 		}
 
 	}
 
-	void CodeGen::visit(CodePack* cp, IfStmtNode* _node)
+	void CodeGen::visit(IfStmtNode* _node)
 	{
+		auto cp = top_cp;
 		int jmp_val;
-		visit(cp, _node->condition);
+		visit(_node->condition);
 		auto jmp_loc = cp->instructions.size();
 		cp->instructions.push_back(Instruction(VM_CODE::IFNO, 1));
-		visit(cp, _node->true_branch);
+		visit(_node->true_branch);
 		auto true_finish_loc = cp->instructions.size();
 		cp->instructions.push_back(Instruction(VM_CODE::JMP, 1));
 		// if condition not ture, jmp to the right location
@@ -266,40 +271,43 @@ namespace halang
 		cp->instructions[jmp_loc] = Instruction(VM_CODE::IFNO, jmp_val); 
 		if (_node->false_branch)
 		{
-			visit(cp, _node->false_branch);
+			visit(_node->false_branch);
 			jmp_val = cp->instructions.size() - true_finish_loc;
 			cp->instructions[true_finish_loc] = Instruction(VM_CODE::JMP, jmp_val);
 		}
 	}
 
-	void CodeGen::visit(CodePack* cp, WhileStmtNode* _node)
+	void CodeGen::visit(WhileStmtNode* _node)
 	{
+		auto cp = top_cp;
 		auto _begin_loc = cp->instructions.size();
-		visit(cp, _node->condition);
+		visit(_node->condition);
 		auto _condition_loc = cp->instructions.size();
 		cp->instructions.push_back(Instruction(VM_CODE::IFNO, 0));
-		visit(cp, _node->child);
+		visit(_node->child);
 		cp->instructions.push_back(Instruction(VM_CODE::JMP, -1 * (cp->instructions.size() - _begin_loc)));
 		cp->instructions[_condition_loc] = Instruction(VM_CODE::IFNO, cp->instructions.size() - _condition_loc);
 	}
 
-	void CodeGen::visit(CodePack* cp, BreakStmtNode* _node)
+	void CodeGen::visit(BreakStmtNode* _node)
 	{
 	}
 
-	void CodeGen::visit(CodePack* cp, ReturnStmtNode* _node)
+	void CodeGen::visit(ReturnStmtNode* _node)
 	{
+		auto cp = top_cp;
 		if (_node->expression)
 		{
-			visit(cp, _node->expression);
+			visit(_node->expression);
 			cp->instructions.push_back(Instruction(VM_CODE::RETURN, 1));
 		}
 		else
 			cp->instructions.push_back(Instruction(VM_CODE::RETURN, 0));
 	}
 
-	void CodeGen::visit(CodePack* cp, FuncDefNode* _node)
+	void CodeGen::visit(FuncDefNode* _node)
 	{
+		auto cp = top_cp;
 		int var_id = -1;
 		if (_node->name)
 		{
@@ -309,15 +317,17 @@ namespace halang
 		auto new_pack = vm->make_gcobject<CodePack>();
 		auto new_func = vm->make_gcobject<Function>(new_pack, _node->parameters.size());
 		new_pack->prev = top_cp;
+		// Push
 		top_cp = new_pack;
 
 		for (auto i = _node->parameters.begin();
 			i != _node->parameters.end(); ++i)
-			visit(new_pack, *i);
+			visit(*i);
 
-		visit(new_pack, _node->block);
+		visit(_node->block);
 		new_pack->instructions.push_back(Instruction(VM_CODE::RETURN, 0));
 
+		// Pop
 		top_cp = new_pack->prev;
 
 		new_func->codepack = new_pack;
@@ -330,25 +340,26 @@ namespace halang
 			cp->instructions.push_back(Instruction(VM_CODE::STORE_V, var_id));
 	}
 
-	void CodeGen::visit(CodePack* cp, FuncDefParamNode* _node)
+	void CodeGen::visit(FuncDefParamNode* _node)
 	{
-		cp->var_names.push_back(make_pair(IString(_node->name), *_node->typeInfo));
+		top_cp->var_names.push_back(make_pair(IString(_node->name), _node->typeInfo));
 	}
 
-	void CodeGen::visit(CodePack* cp, FuncCallNode* _node)
+	void CodeGen::visit(FuncCallNode* _node)
 	{
+		auto cp = top_cp;
 		for (auto i = _node->parameters.begin(); 
 			i != _node->parameters.end(); ++i)
-			visit(cp, *i);
+			visit(*i);
 
-		visit(cp, _node->exp);
+		visit(_node->exp);
 		cp->instructions.push_back(Instruction(VM_CODE::CALL, 0));
 	}
 
-	void CodeGen::visit(CodePack* cp, PrintStmtNode* _node)
+	void CodeGen::visit(PrintStmtNode* _node)
 	{
-		visit(cp, _node->expression);
-		cp->instructions.push_back(Instruction(VM_CODE::OUT, 0));
+		visit(_node->expression);
+		top_cp->instructions.push_back(Instruction(VM_CODE::OUT, 0));
 	}
 
 	void CodeGen::load()

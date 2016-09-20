@@ -2,8 +2,9 @@
 #include <iostream>
 #include <tuple>
 #include <list>
-#include <utility>
 #include <string>
+#include <memory>
+#include <utility>
 #include "token.h"
 
 namespace halang
@@ -11,6 +12,43 @@ namespace halang
 
 	namespace utils
 	{
+
+		/// <summary>
+		/// A helper class to help class to help collect pointer
+		/// that create on the process and release them when the
+		/// class is released.
+		/// </summary>
+		template<typename _BaseType>
+		class PointerContainer
+		{
+		private:
+			std::list<_BaseType*> _node_list;
+		protected:
+
+			/// <summary>
+			/// record all the pointers of Node value.
+			/// It can be clear when the parser is destructing.
+			///
+			/// make_node is similar to make_unqiue.
+			/// </summary>
+			/// <returns>The pointer of the object.</returns>
+			template<typename _Ty, typename... _Types>
+			_Ty* make_object(_Types&&... args)
+			{
+				_Ty* _node = new _Ty(std::forward<_Types>(args)...);
+				_node_list.push_back(_node);
+				return _node;
+			}
+
+		public:
+
+			virtual ~PointerContainer()
+			{
+				for (auto i = _node_list.begin(); i != _node_list.end(); ++i)
+					delete *i;
+			}
+
+		};
 
 		/// <summary>
 		/// A helper class to help record message of
@@ -47,6 +85,8 @@ namespace halang
 			_MessageContainer(_MessageContainer&& _con) :
 				_messages(std::move(_con._messages)), _hasError(_con._hasError)
 			{}
+
+			virtual ~_MessageContainer() {}
 
 			void ReportMessage(const _MsgType& _content, Location _loc, FLAG _mt)
 			{

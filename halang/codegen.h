@@ -7,11 +7,13 @@
 #include "svm.h"
 #include "function.h"
 #include "object.h"
+#include "visitor.h"
 
 namespace halang
 {
 
-	class CodeGen final : public utils::_MessageContainer<std::string>
+	class CodeGen final : 
+		public utils::_MessageContainer<std::string>, public Visitor
 	{
 	public:
 		class GenState;
@@ -26,10 +28,11 @@ namespace halang
 		void generate(Parser*);
 
 		void load();
-		void visit(CodePack*, Node*);
 
 		static VarType findVar(CodePack*, IString);
-#define VISIT_METHOD(NAME) void visit(CodePack*, NAME##Node*);
+
+		virtual void visit(Node*) override;
+#define VISIT_METHOD(NAME) void visit(NAME##Node*);
 		NODE_LIST(VISIT_METHOD)
 #undef VISIT_METHOD
 
@@ -40,9 +43,6 @@ namespace halang
 		Parser* parser;
 		CodePack *top_cp, *global_cp;
 		GenState* state;
-
-
-		void generate(CodePack*);
 
 	};
 

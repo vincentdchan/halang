@@ -47,7 +47,7 @@ namespace halang
 	// First(block) = First(stat)
 	Node* Parser::parseBlock()
 	{
-		auto _block = make_node<BlockExprNode>();
+		auto _block = make_object<BlockExprNode>();
 		
 		do
 		{
@@ -86,7 +86,7 @@ namespace halang
 			return parseWhileStmt();
 		case Token::TYPE::BREAK:
 			nextToken();
-			return make_node<BreakStmtNode>();
+			return make_object<BreakStmtNode>();
 		case Token::TYPE::IF:
 			return parseIfStmt();
 		case Token::TYPE::FUNC:
@@ -112,10 +112,10 @@ namespace halang
 		expect(nextToken(), Token::TYPE::VAR);
 
 		VarSubExprNode *_subExpr = nullptr;
-		auto _var = make_node<VarStmtNode>();
+		auto _var = make_object<VarStmtNode>();
 		expect(lookahead, Token::TYPE::IDENTIFIER);
 
-		auto id = make_node<IdentifierNode>(*nextToken()._literal);
+		auto id = make_object<IdentifierNode>(*nextToken()._literal);
 		_subExpr = parseVarSubExpr(id);
 		_var->children.push_back(_subExpr);
 
@@ -130,12 +130,12 @@ namespace halang
 
 	VarSubExprNode* Parser::parseVarSubExpr(IdentifierNode *_id)
 	{
-		auto ptr = make_node<VarSubExprNode>();
+		auto ptr = make_object<VarSubExprNode>();
 
 		if (_id == nullptr)
 		{
 			expect(lookahead, Token::TYPE::IDENTIFIER);
-			_id = make_node<IdentifierNode>(*nextToken()._literal);
+			_id = make_object<IdentifierNode>(*nextToken()._literal);
 			ptr->varName = _id;
 		}
 		else
@@ -145,7 +145,7 @@ namespace halang
 		{
 			nextToken();
 			expect(lookahead, Token::TYPE::IDENTIFIER);
-			ptr->typeName = make_node<IdentifierNode>(*nextToken()._literal);
+			ptr->typeName = make_object<IdentifierNode>(*nextToken()._literal);
 			if (match(Token::TYPE::ASSIGN))
 				ptr->expression = parseExpression();
 		}
@@ -157,24 +157,26 @@ namespace halang
 		return ptr;
 	}
 
+	/// <summary>
+	/// Expression ::=
+	///		Assignment | BinaryExpr
+	/// 
+	/// Assignment ::= Variable '=' Expression
+	///
+	/// BinaryExpr :: BinaryExpr OP BinaryExpr | UnaryExpr
+	///
+	/// Variable ::= ID ( '[' Expression ']' )?
+	///
+	/// UnaryExpr ::= ('+' | '-' | '!') UnaryExpr | '(' Expression ')' | FuncCall
+	///
+	/// FuncCall ::= ID '(' FuncCallArgs ')'
+	/// </summary>
 	Node* Parser::parseExpression()
 	{
-		// Expression ::=
-		//		Assignment | BinaryExpr
-		// 
-		// Assignment ::= Variable '=' Expression
-		//
-		// BinaryExpr :: BinaryExpr OP BinaryExpr | UnaryExpr
-		//
-		// Variable ::= ID ( '[' Expression ']' )?
-		//
-		// UnaryExpr ::= ('+' | '-' | '!') UnaryExpr | '(' Expression ')' | FuncCall
-		//
-		// FuncCall ::= ID '(' FuncCallArgs ')'
 		if (match(Token::TYPE::IDENTIFIER))
 		{
 			Token _tk = nextToken();
-			auto _id = make_node<IdentifierNode>(*_tk._literal);
+			auto _id = make_object<IdentifierNode>(*_tk._literal);
 			if (match(Token::TYPE::OPEN_PAREN))
 			{
 				auto _func = parseFuncCall(_id);
@@ -199,27 +201,28 @@ namespace halang
 			return parseBinaryExpr();
 	}
 
+	/// <summary>
+	/// current version:
+	/// Assignment ::=
+	///		VAR '=' Expression
+	///
+	/// future version:
+	/// Assignment ::=
+	///		VAR { ',' VAR } = Expression { ',' Expression }
+	/// </summary>
 	Node* Parser::parseAssignment(IdentifierNode* _id)
 	{
-		// current version:
-		// Assignment ::=
-		//		VAR '=' Expression
-		//
-		// future version:
-		// Assignment ::=
-		//		VAR { ',' VAR } = Expression { ',' Expression }
-		//
 		if (!_id)
 		{
 			expect(Token::TYPE::IDENTIFIER);
 			string _str = *lookahead._literal;
 			nextToken();
-			_id = make_node<IdentifierNode>(_str);
+			_id = make_object<IdentifierNode>(_str);
 		}
 
 		expect(nextToken(), Token::TYPE::ASSIGN);
 		Node* _exp = parseExpression();
-		return make_node<AssignmentNode>(_id, _exp);
+		return make_object<AssignmentNode>(_id, _exp);
 	}
 
 	Node* Parser::parseUnaryExpr(OperatorType _op)
@@ -238,19 +241,19 @@ namespace halang
 		case Token::TYPE::SUB:
 		case Token::TYPE::NOT:
 			_tk = nextToken();
-			_node = make_node<UnaryExprNode>(Token::toOperator(_tk), parseUnaryExpr());
+			_node = make_object<UnaryExprNode>(Token::toOperator(_tk), parseUnaryExpr());
 			break;
 		case Token::TYPE::NUMBER:
-			_node = make_node<NumberNode>(lookahead._double, lookahead.maybeInt);
+			_node = make_object<NumberNode>(lookahead._double, lookahead.maybeInt);
 			nextToken();
 			break;
 		case Token::TYPE::STRING:
 			_id_name = *nextToken()._literal;
-			_node = make_node<StringNode>(_id_name);
+			_node = make_object<StringNode>(_id_name);
 			break;
 		case Token::TYPE::IDENTIFIER:
 			_id_name = *nextToken()._literal;
-			_node = make_node<IdentifierNode>(_id_name);
+			_node = make_object<IdentifierNode>(_id_name);
 
 			if (match(Token::TYPE::OPEN_PAREN))
 				_node = parseFuncCall(_node);
@@ -318,22 +321,22 @@ namespace halang
 						result = pow(num1, num2);
 						break;
 					default:
-						exp = make_node<BinaryExprNode>(left_op, left_exp, exp);
+						exp = make_object<BinaryExprNode>(left_op, left_exp, exp);
 						quit = true;
 					}
 
 					if (!quit)
-						exp = make_node<NumberNode>(result, _maybeInt);
+						exp = make_object<NumberNode>(result, _maybeInt);
 				}
 				else
-					exp = make_node<BinaryExprNode>(left_op, left_exp, exp);
+					exp = make_object<BinaryExprNode>(left_op, left_exp, exp);
 				nextToken();
 				return parseBinaryExpr(exp, right_tk);
 			}
 			else // left_op > right_op
 			{
 				if (left_exp)
-					exp = make_node<BinaryExprNode>(left_op, left_exp, exp);
+					exp = make_object<BinaryExprNode>(left_op, left_exp, exp);
 				return exp;
 			}
 		}
@@ -352,7 +355,7 @@ namespace halang
 		Node* _else = nullptr;
 		if (match(Token::TYPE::ELSE))
 			_else = parseElseStmt();
-		return make_node<IfStmtNode>(_condition, _stmt, _else);
+		return make_object<IfStmtNode>(_condition, _stmt, _else);
 	}
 
 	Node* Parser::parseElseStmt()
@@ -372,16 +375,16 @@ namespace halang
 		auto _condition = parseBinaryExpr();
 		expect(nextToken(), Token::TYPE::CLOSE_PAREN);
 		auto _stmt = parseStatement();
-		return make_node<WhileStmtNode>(_condition, _stmt);
+		return make_object<WhileStmtNode>(_condition, _stmt);
 	}
 
 	Node* Parser::parseFuncDef()
 	{
 		// def new function
-		auto _func = make_node<FuncDefNode>();
+		auto _func = make_object<FuncDefNode>();
 		expect(nextToken(), Token::TYPE::FUNC);
 		if (match(Token::TYPE::IDENTIFIER))
-			_func->name = make_node<IdentifierNode>(*nextToken()._literal);
+			_func->name = make_object<IdentifierNode>(*nextToken()._literal);
 		else
 			_func->name = nullptr;
 		expect(nextToken(), Token::TYPE::OPEN_PAREN);
@@ -401,7 +404,7 @@ namespace halang
 		if (match(Token::TYPE::SEMICOLON))
 		{
 			nextToken();
-			_func->typeName = make_node<IdentifierNode>(*nextToken()._literal);
+			_func->typeName = make_object<IdentifierNode>(*nextToken()._literal);
 		}
 		expect(nextToken(), Token::TYPE::OPEN_BRAKET);
 		_func->block = reinterpret_cast<BlockExprNode*>(parseBlock());
@@ -411,7 +414,7 @@ namespace halang
 
 	Node* Parser::parseFuncDefParam()
 	{
-		auto param = make_node<FuncDefParamNode>();
+		auto param = make_object<FuncDefParamNode>();
 		expect(lookahead, Token::TYPE::IDENTIFIER);
 		param->name = *nextToken()._literal;
 		if (match(Token::TYPE::SEMICOLON))
@@ -425,7 +428,7 @@ namespace halang
 
 	Node* Parser::parseFuncCall(Node* exp)
 	{
-		FuncCallNode* _node = make_node<FuncCallNode>(exp);
+		FuncCallNode* _node = make_object<FuncCallNode>(exp);
 		// FuncCallParamNode* _params = nullptr;
 
 		expect(nextToken(), Token::TYPE::OPEN_PAREN);
@@ -446,7 +449,7 @@ namespace halang
 		while (match(Token::TYPE::OPEN_PAREN))
 		{
 			nextToken();
-			_node = make_node<FuncCallNode>(_node);
+			_node = make_object<FuncCallNode>(_node);
 
 			while (!expect(lookahead, Token::TYPE::CLOSE_PAREN))
 			{
@@ -470,20 +473,18 @@ namespace halang
 	{
 		expect(nextToken(), Token::TYPE::RETURN);
 		auto exp = parseExpression();
-		return make_node<ReturnStmtNode>(exp);
+		return make_object<ReturnStmtNode>(exp);
 	}
 
 	Node* Parser::parsePrintStmt()
 	{
 		expect(nextToken(), Token::TYPE::PRINT);
 		auto exp = parseExpression();
-		return make_node<PrintStmtNode>(exp);
+		return make_object<PrintStmtNode>(exp);
 	}
 
 	Parser::~Parser()
 	{
-		for (auto i = _node_list.begin(); i != _node_list.end(); ++i)
-			delete *i;
 	}
 
 }

@@ -11,7 +11,8 @@
 namespace halang
 {
 
-	class Parser final : public utils::_MessageContainer<std::string>
+	class Parser final : 
+		public utils::_MessageContainer<std::string>, private utils::PointerContainer<Node>
 	{
 	public:
 		enum struct MESSAGE_TYPE
@@ -54,7 +55,7 @@ namespace halang
 		Parser(const Parser&) = delete;
 		Parser& operator=(const Parser&) = delete;
 		Lexer& lexer;
-		std::list<Node*> _node_list;
+
 		inline bool match(Token::TYPE t) { return lookahead.type == t; } // just judge
 		inline bool expect(Token::TYPE t)
 		{
@@ -73,20 +74,6 @@ namespace halang
 				ok = false;
 				return false;
 			}
-		}
-
-		//================================================
-		// record all the pointers of Node value.
-		// it can be clear when the parser is destructing
-		//
-		// make_node is similar to make_unqiue
-		template<typename _Ty, typename... _Types>
-		_Ty* make_node(_Types&&... args)
-		{
-			_Ty* _node = new _Ty(std::forward<_Types>(args)...);
-			_node_list.push_back(_node);
-			make_unique<int>(3);
-			return _node;
 		}
 
 	};
