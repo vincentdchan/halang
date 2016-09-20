@@ -12,81 +12,70 @@ namespace halang
 		env = new TypeCheckEnv();
 	}
 
-	/// <sumary>
-	/// Get a abstract syntax tree root node of the whole tree, 
-	/// do the typecheck to the whole tree
-	/// </sumary>
-	/// <returns>Return a TypeChekcer of the whole AST.</returns>
-	PTC TypeChecker::TypeCheck(Node* node)
+	TypeChecker* TypeChecker::TypeCheck(Node *node)
 	{
-		auto ptr = make_unique<TypeChecker>();
-		TypeCheck(*ptr, node);
-		return ptr;
+		auto tc = new TypeChecker();
+		tc->visit(node);
+		return tc;
 	}
 
-	void TypeChecker::TypeCheck(TypeChecker& tc, Node* node)
+	void TypeChecker::visit(BlockExprNode* node)
 	{
-		TypeChecker::TypeCheck(node);
-		if (node->asFuncDef())
-		{
-			TypeCheck(tc, node->asFuncDef());
-		}
-		else if (node->asReturnStmt())
-		{
-			TypeCheck(tc, node->asReturnStmt());
-		}
-		else if (node->asFuncCall())
-		{
-			TypeCheck(tc, node->asFuncCall());
-		}
+		for (auto i = node->children.begin();
+			i != node->children.end(); ++i)
+			this->visit(*i);
 	}
 
-	void TypeChecker::TypeCheck(TypeChecker& tc, NumberNode* node)
+	void TypeChecker::visit(NumberNode* node)
 	{
 		if (node->maybeInt)
-			node->typeInfo.reset(new Type(Type::INT));
+			node->typeInfo.setType(Type::INT);
 		else
-			node->typeInfo.reset(new Type(Type::NUMBER));
+			node->typeInfo.setType(Type::NUMBER);
 	}
 
-	void TypeChecker::TypeCheck(TypeChecker& tc, UnaryExprNode* node)
+	void TypeChecker::visit(StringNode* node)
 	{
-		TypeCheck(tc, node->child);
+		node->typeInfo.setType(Type::STRING);
+	}
+
+	void TypeChecker::visit(UnaryExprNode* node)
+	{
+		visit(node->child);
+
 		switch (node->op)
 		{
 		case OperatorType::ADD:
 		case OperatorType::SUB:
-			if (node->child->typeInfo->type == Type::INT ||
-				node->child->typeInfo->type == Type::NUMBER)
-			{
-				node->typeInfo.reset(new Type(*node->child->typeInfo));
-			}
+			if (node->child->typeInfo.type == Type::INT ||
+				node->child->typeInfo.type == Type::NUMBER)
+				node->typeInfo = node->child->typeInfo;
 			else
-				tc.ReportError("Use numberic operation on non-number value.");
+				ReportError("Use numberic operation on non-number value.");
 			break;
 		case OperatorType::NOT:
-			if (node->child->typeInfo->type == Type::BOOL)
-				node->typeInfo.reset(new Type(Type::BOOL));
+			if (node->child->typeInfo.type == Type::BOOL)
+				node->typeInfo.setType(Type::BOOL);
 			break;
 		default:
-			tc.ReportError("Do not use correct operation on unary expression.");
+			ReportError("Do not use correct operation on unary expression.");
 		}
 	}
 
-	void TypeChecker::TypeCheck(TypeChecker& tc, BinaryExprNode* node)
+	void TypeChecker::visit(BinaryExprNode* node)
 	{
-		TypeCheck(tc, node->right);
-		TypeCheck(tc, node->left);
+		visit(node->right);
+		visit(node->left);
 
 		switch (node->op)
 		{
 		case OperatorType::MOD:
 		{
-			if (node->left->typeInfo->type == Type::INT &&
-				node->right->typeInfo->type == Type::INT)
-				node->typeInfo.reset(new Type(Type::INT));
+			if (node->left->typeInfo.type == Type::INT &&
+				node->right->typeInfo.type == Type::INT)
+				node->typeInfo.setType(Type::INT);
 			else
-				tc.ReportError("Use mod operation on non-integer value.");
+				ReportError("Use mod operation on non-integer value.");
 		}
 		case OperatorType::ADD:
 		case OperatorType::SUB:
@@ -94,12 +83,12 @@ namespace halang
 		case OperatorType::DIV:
 		case OperatorType::POW:
 		{
-			if (node->left->typeInfo->type == Type::INT &&
-				node->right->typeInfo->type == Type::INT)
-				node->typeInfo.reset(new Type(Type::INT));
-			else if (node->left->typeInfo->type == Type::NUMBER ||
-				node->right->typeInfo->type == Type::NUMBER)
-				node->typeInfo.reset(new Type(Type::NUMBER));
+			if (node->left->typeInfo.type == Type::INT &&
+				node->right->typeInfo.type == Type::INT)
+				node->typeInfo.setType(Type::INT);
+			else if (node->left->typeInfo.type == Type::NUMBER ||
+				node->right->typeInfo.type == Type::NUMBER)
+				node->typeInfo.setType(Type::NUMBER);
 			break;
 		}
 		case OperatorType::EQ:
@@ -108,112 +97,194 @@ namespace halang
 		case OperatorType::LT:
 		case OperatorType::LTEQ:
 		{
-			if (node->left->typeInfo->type == Type::BOOL &&
-				node->right->typeInfo->type == Type::BOOL)
-				node->typeInfo.reset(new Type(Type::BOOL));
+			if (node->left->typeInfo.type == Type::BOOL &&
+				node->right->typeInfo.type == Type::BOOL)
+				node->typeInfo.setType(Type::BOOL);
 			else
-				tc.ReportError("Use bool operation on non-boolean value.");
+				ReportError("Use bool operation on non-boolean value.");
 			break;
 		}
 		default:
-			tc.ReportError("Unkown binary operation.");
+			ReportError("Unkown binary operation.");
 		}
 
 	}
 
-	void TypeChecker::TypeCheck(TypeChecker& tc, VarStmtNode* node)
+	void TypeChecker::visit(VarStmtNode* node)
 	{
-
+		for (auto i = node->children.begin();
+			i != node->children.end(); ++i)
+			visit(*i);
 	}
 
-	void TypeChecker::TypeCheck(TypeChecker& tc, VarInitExprNode* node)
+	void TypeChecker::visit(VarSubExprNode* node)
 	{
+		if (node->typeName)
+		{
+			auto tName = node->typeName->name;
+			node->typeInfo = getTypeFromString(tName);
 
+			if (node->expression)
+			{
+				visit(node->expression);
+				if (node->expression->typeInfo != node->typeInfo)
+					ReportError("The variable statement's type isn't match the defined one");
+			}
+		}
+		else if (node->expression)
+		{
+			visit(node->expression);
+			node->typeInfo = node->expression->typeInfo;
+		}
+	}
+
+	void TypeChecker::visit(AssignmentNode* node)
+	{
+		auto typeName = node->identifier->name;
+		for (auto i = env->vars.begin(); i != env->vars.end(); ++i)
+		{
+			if (i->first == typeName)
+			{
+				visit(node->expression);
+				if (node->expression->typeInfo == i->second)
+					node->typeInfo = i->second;
+				else
+					ReportError("Assignment type doesn't match.");
+				return;
+			}
+		}
+
+		ReportError("identifier not found in variable table.");
 	}
 
 	/// <summary>
 	/// Find the name of identifier in the variable table or type table.
 	/// Report error if the identifier not found.
 	/// </summary>
-	void TypeChecker::TypeCheck(TypeChecker& tc, IdentifierNode* node)
+	void TypeChecker::visit(IdentifierNode* node)
 	{
-		for (auto i = tc.env->vars.begin(); i != tc.env->vars.end(); ++i)
+		for (auto i = env->vars.begin(); i != env->vars.end(); ++i)
 		{
 			if (i->first == node->name)
 			{
-				node->typeInfo.reset(new Type(i->second.type));
+				node->typeInfo = i->second;
 				return;
 			}
 		}
 
-		tc.ReportError("identifier not found in variable table and type table.");
+		ReportError("identifier not found in variable table and type table.");
 	}
 
-	void TypeChecker::TypeCheck(TypeChecker& tc, FuncDefNode* node)
+	void TypeChecker::visit(IfStmtNode* node)
+	{
+		visit(node->condition);
+		if (node->condition->typeInfo.type != Type::BOOL)
+		{
+			ReportError("The condition of if-else statement'type MUST be bool.");
+			return;
+		}
+		visit(node->true_branch);
+		visit(node->false_branch);
+	}
+
+	void TypeChecker::visit(WhileStmtNode* node)
+	{
+		visit(node->condition);
+		if (node->condition->typeInfo.type != Type::BOOL)
+		{
+			ReportError("The condition of if-else statement'type MUST be bool.");
+			return;
+		}
+		visit(node->child);
+	}
+
+	void TypeChecker::visit(BreakStmtNode* node)
+	{
+
+	}
+
+	void TypeChecker::visit(FuncDefNode* node)
 	{
 		Type _type;
 		if (node->typeName)
 		{
 			auto typeName = node->typeName->name;
-			_type = getTypeFromString(&tc, typeName);
-			tc.guestFuncType = false;
-			tc.mustReturnType = _type;
+			_type = getTypeFromString(typeName);
+			guestFuncType = false;
+			mustReturnType = _type;
 		}
 		else
 		{
-			tc.guestFuncType = true;
-			tc.guestType.release();
+			guestFuncType = true;
+			guestType.release();
 		}
-		TypeCheck(tc, node->block);
 
-		*(node->typeInfo) = *tc.guestType;
+		for (auto i = node->parameters.begin();
+			i != node->parameters.end(); ++i)
+		{
+			visit(*i);
+		}
+
+		auto new_env = new TypeCheckEnv();
+		new_env->prev = env;
+		env = new_env;
+
+		visit(node->block);
+
+		env = env->prev;
+		delete new_env;
+
+		node->typeInfo = *guestType;
 	}
 
-	void TypeChecker::TypeCheck(TypeChecker& tc, FuncCallNode* node)
+	void TypeChecker::visit(FuncDefParamNode* node)
+	{
+		node->typeInfo = getTypeFromString(node->typeName);
+	}
+
+	void TypeChecker::visit(FuncCallNode* node)
 	{
 		for (auto i = node->parameters.begin();
 			i != node->parameters.end(); ++i)
-			TypeCheck(tc, *i);
+			visit(*i);
 
 		// find the function definition and compare to the parameters
 	}
 
-	void TypeChecker::TypeCheck(TypeChecker& tc, BlockExprNode* node)
+	void TypeChecker::visit(ReturnStmtNode* node)
 	{
-		for (auto i = node->children.begin(); i != node->children.end(); ++i)
-			TypeCheck(tc, *i);
+		visit(node->expression);
 
-		// a typeInfo of a Block is equal to the last statement of the block
-		node->typeInfo.reset(new Type(*node->children[node->children.size() - 1]->typeInfo));
-	}
-
-	void TypeChecker::TypeCheck(TypeChecker& tc, ReturnStmtNode* node)
-	{
-		TypeCheck(tc, node->expression);
-
-		if (tc.guestFuncType)
+		if (guestFuncType)
 		{
-			if (tc.guestType == nullptr)
-				tc.guestType = std::make_unique<Type>(tc.currentType);
+			if (guestType == nullptr)
+				guestType = std::make_unique<Type>(currentType);
 			else
 			{
-				if (*tc.guestType != tc.currentType)
+				if (*guestType != currentType)
 				{
-					tc.ReportError("A function have different return type.");
+					ReportError("A function have different return type.");
 				}
 			}
 		}
 		else
 		{
-			if (tc.currentType != tc.mustReturnType)
+			if (currentType != mustReturnType)
 			{
-				tc.ReportError("Type not match.");
+				ReportError("Type not match.");
 			}
 		}
 
 	}
 
-	Type TypeChecker::getTypeFromString(TypeChecker* tc, std::string typeName)
+	void TypeChecker::visit(PrintStmtNode* node)
+	{
+		visit(node->expression);
+		if (node->expression->typeInfo.type != Type::STRING)
+			ReportError("The print statement MUST be followed by STRING.");
+	}
+
+	Type TypeChecker::getTypeFromString(std::string typeName)
 	{
 		Type t;
 		if (typeName == "int")

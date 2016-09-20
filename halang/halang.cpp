@@ -10,6 +10,7 @@
 #include "scanner.h"
 #include "ast.h"
 #include "parser.h"
+#include "type_checker.h"
 #include "string.h"
 #include "svm_codes.h"
 #include "svm.h"
@@ -18,11 +19,35 @@
 
 const char* DEFAULT_FILENAME = "source.txt";
 
+#define CHECK_ERROR(MC) do { \
+	if (MC->hasError()) \
+	{			\
+		for (auto i = MC->getMessages().begin();  \
+				i != MC->getMessages().end(); ++i) \
+		{ \
+			utils:: _MessageContainer<std::string>::OutputMsg(std::cout, *i); \
+		} \
+		goto CLEAR_AND_EXIT; \
+	} \
+} while(0)
+
+#define CLEAR_PTR(PTR) if ((PTR) != nullptr) \
+	{ \
+		delete (PTR); \
+		(PTR) = nullptr; \
+	}
+
+
 int main(int argc, char** argv)
 {
 	using namespace halang;
+	Lexer *lexer = nullptr;
+	Parser *parser = nullptr;
+	TypeChecker *tc = nullptr;
+	CodeGen *cg = nullptr;
+	StackVM *nvm = nullptr;
 
-	auto nvm = new StackVM();
+	nvm = new StackVM();
 
 	char *filename;
 	if (argc > 1)
@@ -37,43 +62,39 @@ int main(int argc, char** argv)
 		std::cout << "input source not found." << std::endl;
 		return 0;
 	}
-	Lexer* lexer = new Lexer(fs);
+	lexer = new Lexer(fs);
 
-	if (lexer->hasError())
-	{
-		for (auto i = lexer->getMessages().begin(); i != lexer->getMessages().end(); ++i)
-		{
-			utils::_MessageContainer<std::string>::OutputMsg(std::cout, *i);
-		}
-	}
+	CHECK_ERROR(lexer);
 
-	auto parser = new Parser(*lexer);
+	parser = new Parser(*lexer);
 	parser->parse();
-
 	fs.close();
 
-	delete lexer; // release lexer resources after parsing
-	lexer = nullptr;
+	CHECK_ERROR(parser);
 
-	if (!parser->hasError())
-	{
-		CodeGen cg(nvm);
-		cg.generate(parser);
-		delete parser;
-		cg.load();
+	tc = TypeChecker::TypeCheck(parser->getRoot());
+	CHECK_ERROR(tc);
 
-		nvm->execute();
-	}
-	else
-	{
-		for (auto i = parser->getMessages().begin(); i != parser->getMessages().end(); ++i)
-		{
-			utils::_MessageContainer<std::string>::OutputMsg(std::cout, *i);
-		}
-	}
+	cg = new CodeGen(nvm);
+	cg->generate(parser);
+	CHECK_ERROR(cg);
 
-	delete nvm;
-	nvm = nullptr;
+	cg->load();
+	CLEAR_PTR(lexer);
+	CLEAR_PTR(parser);
+	CLEAR_PTR(tc);
+	CLEAR_PTR(cg);
+
+	nvm->execute();
+
+	CLEAR_AND_EXIT:
+
+	CLEAR_PTR(lexer);
+	CLEAR_PTR(parser);
+	CLEAR_PTR(tc);
+	CLEAR_PTR(cg);
+	CLEAR_PTR(nvm);
+
 	string ch;
 	cin >> ch;
     return 0;

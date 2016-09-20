@@ -18,7 +18,7 @@ namespace halang
 	V(UnaryExpr) \
 	V(BlockExpr) \
 	V(VarStmt) \
-	V(VarInitExpr) \
+	V(VarSubExpr) \
 	V(IfStmt) \
 	V(WhileStmt) \
 	V(BreakStmt) \
@@ -30,15 +30,22 @@ namespace halang
 
 	class CodePack;
 	class CodeGen;
+	class Visitor;
 
 	class Node;
 #define E(Name) class Name##Node;
 	NODE_LIST(E)
 #undef E
 
-#define VISIT_OVERRIDE virtual void visit(CodeGen *cg, CodePack* cp) override;
+#define VISIT_OVERRIDE virtual void visit(Visitor*) override;
 
 
+	/// <summary>
+	/// A node that is the basic class of all ast node,
+	/// providing visiter for codegen and store the type infomation.
+	/// 
+	/// The sub class MUST override the virtual function for the class
+	/// </summary>
 	class Node
 	{
 	public:
@@ -51,7 +58,7 @@ namespace halang
 		virtual BlockExprNode* asBlockExpression() { return nullptr; }
 		virtual BinaryExprNode* asBinaryExpression() { return nullptr; }
 		virtual VarStmtNode* asVarStmt() { return nullptr; }
-		virtual VarInitExprNode* asVarInitExpr() { return nullptr; }
+		virtual VarSubExprNode* asVarSubExpr() { return nullptr; }
 		virtual IfStmtNode* asIfStmt() { return nullptr; }
 		virtual WhileStmtNode* asWhileStmt() { return nullptr; }
 		virtual BreakStmtNode* asBreakStmt() { return nullptr; }
@@ -61,11 +68,14 @@ namespace halang
 		virtual FuncCallNode* asFuncCall() { return nullptr; }
 		virtual PrintStmtNode* asPrintStmt() { return nullptr; }
 
-		virtual void visit(CodeGen *cg, CodePack* cp) = 0;
+		virtual void visit(Visitor*) = 0;
 
-		std::unique_ptr<Type> typeInfo;
+		Type typeInfo;
 	};
 
+	/// <summary>
+	/// Represent the characters in the quotes
+	/// </summary>
 	class StringNode : public Node
 	{
 	public:
@@ -78,6 +88,9 @@ namespace halang
 		VISIT_OVERRIDE
 	};
 
+	/// <summary>
+	/// Represent a number, integer or double.
+	/// </summary>
 	class NumberNode : public Node
 	{
 	public:
@@ -91,6 +104,9 @@ namespace halang
 		VISIT_OVERRIDE
 	};
 
+	/// <summary>
+	/// identifier
+	/// </summary>
 	class IdentifierNode : public Node
 	{
 	public:
@@ -103,6 +119,9 @@ namespace halang
 		VISIT_OVERRIDE
 	};
 
+	/// <summary>
+	/// Assignment ::= Identifier '=' Expression
+	/// </summary>
 	class AssignmentNode : public Node
 	{
 	public:
@@ -118,6 +137,9 @@ namespace halang
 		VISIT_OVERRIDE
 	};
 
+	/// <summary>
+	/// Block ::= '{' {Expression} '}'
+	/// </summary>
 	class BlockExprNode : public Node
 	{
 	public:
@@ -128,6 +150,9 @@ namespace halang
 		VISIT_OVERRIDE
 	};
 
+	/// <summary>
+	/// UnaryExpression ::=  '+' | '-' | '!' ,  Identifier | Number | '(' Expression ')'
+	/// </summary>
 	class UnaryExprNode : public Node
 	{
 	public:
@@ -142,6 +167,10 @@ namespace halang
 		VISIT_OVERRIDE
 	};
 
+	/// <summary>
+	/// BinaryExpression ::= BinaryExpression' OP BinaryExpression' 
+	/// BinaryExpression' ::= UnaryExpression | Number | Identifier | '(' BinaryExpression ')'
+	/// </summary>
 	class BinaryExprNode : public Node
 	{
 	public:
@@ -160,22 +189,31 @@ namespace halang
 	};
 
 
+	/// <summary>
+	/// VarStatement ::= "var" VarSubExpression {',' VarSubExpression} 
+	/// VarSubExpression ::= Identifier VarInitExpression
+	/// VarInitExpression ::= ':' Identifier |  '=' Expression | ':' Identifier '=' Expression
+	/// </summary>
 	class VarStmtNode : public Node
 	{
 	public:
 		virtual VarStmtNode* asVarStmt() override { return this; }
-		std::vector<VarInitExprNode*> children;
+		std::vector<VarSubExprNode*> children;
 
 		VISIT_OVERRIDE
 	};
 
-	class VarInitExprNode : public Node
+	/// <summary>
+	/// VarSubExpression ::= Identifier VarInitExpression
+	/// VarInitExpression ::= ':' Identifier |  '=' Expression | ':' Identifier '=' Expression
+	/// </summary>
+	class VarSubExprNode : public Node
 	{
 	public:
-		VarInitExprNode() :
+		VarSubExprNode() :
 			varName(nullptr), typeName(nullptr), expression(nullptr)
 		{}
-		virtual VarInitExprNode* asVarInitExpr() override { return this; }
+		virtual VarSubExprNode* asVarSubExpr() override { return this; }
 		IdentifierNode* varName;
 		IdentifierNode* typeName;
 		Node* expression;
@@ -183,6 +221,12 @@ namespace halang
 		VISIT_OVERRIDE
 	};
 
+	/// <summary>
+	/// IfStatement ::= 'if' '(' Expression ')' TrueBranch { FalseBranch }
+	/// TrueBranch ::= Branch
+	/// FalseBranch ::= 'else' ( IfStatement | Branch ) 
+	/// Branch ::= Expression | Block
+	/// </summary>
 	class IfStmtNode : public Node
 	{
 	public:
@@ -202,6 +246,9 @@ namespace halang
 		VISIT_OVERRIDE
 	};
 
+	/// <summary>
+	/// WhileStatement ::= 'while' '(' Expression ')' (Expression | Block)
+	/// </summary>
 	class WhileStmtNode : public Node
 	{
 	public:
@@ -217,6 +264,9 @@ namespace halang
 		VISIT_OVERRIDE
 	};
 
+	/// <summary>
+	/// Break ::= 'break'
+	/// </summary>
 	class BreakStmtNode : public Node
 	{
 	public:
@@ -225,6 +275,9 @@ namespace halang
 		VISIT_OVERRIDE
 	};
 
+	/// <summary>
+	/// Return ::= 'return'
+	/// </summary>
 	class ReturnStmtNode : public Node
 	{
 	public:
@@ -236,6 +289,10 @@ namespace halang
 		VISIT_OVERRIDE
 	};
 
+	/// <summary>
+	/// FuncDefinition ::= 'func' '(' ParamList ')' '{' { Expression } '}
+	/// ParamList ::=  Identifier ':' Identifier { ',' Identifier ':' Identifier }
+	/// </summary>
 	class FuncDefNode : public Node
 	{
 	public:
@@ -250,17 +307,9 @@ namespace halang
 		VISIT_OVERRIDE
 	};
 
-	/*
-	class FuncDefParamsNode : public Node
-	{
-	public:
-		virtual FuncDefParamsNode* asFuncDefParams() override { return this; }
-		std::vector<FuncDefParamNode> defs;
-
-		VISIT_OVERRIDE
-	};
-	*/
-
+	/// <summary>
+	/// ParamList ::=  Identifier ':' Identifier { ',' Identifier ':' Identifier }
+	/// </summary>
 	class FuncDefParamNode : public Node
 	{
 	public:
@@ -273,6 +322,10 @@ namespace halang
 		VISIT_OVERRIDE
 	};
 
+	/// <summary>
+	/// FunctionCall ::= Expression  '(' FunctionCallParams ')'
+	/// FunctionCallParams ::= Identifier { ',' Identifier }
+	/// </summary>
 	class FuncCallNode : public Node
 	{
 	public:
@@ -286,17 +339,9 @@ namespace halang
 		VISIT_OVERRIDE
 	};
 
-	/*
-	class FuncCallParamsNode : public Node
-	{
-	public:
-		virtual FuncCallParamsNode* asFuncCallParams() override { return this; }
-		std::vector<Node*> children;
-
-		VISIT_OVERRIDE
-	};
-	*/
-
+	/// <summary>
+	/// PrintStatement ::= 'print' Expression
+	/// </summary>
 	class PrintStmtNode : public Node
 	{
 	public:

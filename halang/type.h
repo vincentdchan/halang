@@ -7,13 +7,13 @@ namespace halang
 	public:
 		enum HA_TYPE
 		{
-			INT, NUMBER, BOOL, Object
+			INT, NUMBER, BOOL, STRING, OBJECT, UNDEFINED
 		};
 
 		HA_TYPE type;
 
 		Type() :
-			type(Object)
+			type(UNDEFINED)
 		{}
 		Type(const Type& t):
 			type(t.type)
@@ -26,6 +26,11 @@ namespace halang
 		{
 			type = t.type;
 			return *this;
+		}
+
+		inline void setType(HA_TYPE t)
+		{
+			this->type = t;
 		}
 
 		inline bool operator==(Type rhs) const
