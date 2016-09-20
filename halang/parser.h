@@ -40,7 +40,7 @@ namespace halang
 		Node* parseAssignment(IdentifierNode* = nullptr);
 		Node* parseExpression();
 		Node* parseVarStmt();
-		VarSubExprNode* parseVarSubExpr(IdentifierNode* = nullptr);
+		VarSubExprNode* parseVarSubExpr();
 		Node* parseUnaryExpr(OperatorType _op = OperatorType::ILLEGAL_OP);
 		Node* parseBinaryExpr(Node* left_exp = nullptr, Token left_tk = Token());
 		Node* parseIfStmt();

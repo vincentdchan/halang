@@ -136,6 +136,8 @@ namespace halang
 			visit(node->expression);
 			node->typeInfo = node->expression->typeInfo;
 		}
+
+		env->vars.push_back(make_pair(node->varName->name, node->typeInfo));
 	}
 
 	void TypeChecker::visit(AssignmentNode* node)
@@ -219,15 +221,16 @@ namespace halang
 			guestType.release();
 		}
 
+		auto new_env = new TypeCheckEnv();
+		new_env->prev = env;
+		env = new_env;
+
 		for (auto i = node->parameters.begin();
 			i != node->parameters.end(); ++i)
 		{
 			visit(*i);
 		}
 
-		auto new_env = new TypeCheckEnv();
-		new_env->prev = env;
-		env = new_env;
 
 		visit(node->block);
 
@@ -240,6 +243,7 @@ namespace halang
 	void TypeChecker::visit(FuncDefParamNode* node)
 	{
 		node->typeInfo = getTypeFromString(node->typeName);
+		env->vars.push_back(make_pair(node->name, node->typeInfo));
 	}
 
 	void TypeChecker::visit(FuncCallNode* node)
