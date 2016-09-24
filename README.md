@@ -15,17 +15,17 @@ This language is similar to JavaScript, but it has differences because this proj
 
 
 
-**Typed Halang**
+## Typed?
 
-Sinse [#bc39771](https://github.com/ChannelOne/halang/commit/bc39771a55f74c3a23778337b53875158d50cf9b) commit, Halang is building a type system. Now all the function and variable has it's own type.
+Once Halang is static typed, but after my consideration, Halang return to be dynamic because it's its origin propose. The static typed version is still in another branch.
 
 ## String
 
 In HaLang, string is a immutable built-in object. It's described within *""*.
 
 ```javascript
-var a = "Hello World!"; // define a variable name "a", and it's type is string.
-var b : string; // define a string variable named "a"
+var a = "Hello World!" // define a variable name "a", and it's value is "Hello World!"
+print a
 ```
 
 
@@ -60,7 +60,7 @@ var a = 100
 if (a > 0)
 	a = -a
 	
-if (a > 0) { a = -a } else { a + 100 } // Correct! output: 100
+if (a > 0) { print -a } else { print a + 100 } // Correct! output: -100
 ```
 
 This situation is due to the implementation of parser. I just implemented it in a very early stage. There will be a enhancement in the future to improve this situation.
@@ -74,6 +74,7 @@ var a = 0
 while (a <= 50)
 {
   a = a + 1
+  print a
 }
 ```
 
@@ -86,7 +87,7 @@ The code above will output 0 - 50.
 Halang supports function now.
 
 ```javascript
-func hello(a : int) : int // define a function return int
+func hello(a)
 {
 	if (a > 3)
 		return a + 1
@@ -111,7 +112,7 @@ HaLang support recursive calling function now.
 example:
 
 ```javascript
-func hello(a : int) : int
+func hello(a)
 {
 	if (a == 0)
 		return 1
@@ -122,7 +123,7 @@ func hello(a : int) : int
 And also, Halang supports closure.
 
 ```javascript
-func hello(a : int) : int
+func hello(a)
 {
 	func ho(b)
 	{
@@ -144,7 +145,7 @@ a(8);			// 15
 
 In the future, many features will be add to HaLang. Such as
 
-1. Closure
-2. break and continue statement
+1. break and continue statement
+2. List and Hashmap
 3. Yield
 4. ...
