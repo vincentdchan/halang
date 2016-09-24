@@ -272,7 +272,3 @@ ModelManifest.xml
 *.exe
 *.out
 *.app
-
-# Self Defined
-
-**/source.txt

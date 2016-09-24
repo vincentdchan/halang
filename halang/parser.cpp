@@ -113,23 +113,33 @@ namespace halang
 
 		VarSubExprNode *_subExpr = nullptr;
 		auto _var = make_object<VarStmtNode>();
+		expect(lookahead, Token::TYPE::IDENTIFIER);
 
-		do
+		auto id = make_object<IdentifierNode>(*nextToken()._literal);
+		_subExpr = parseVarSubExpr(id);
+		_var->children.push_back(_subExpr);
+
+		while (match(Token::TYPE::COMMA))
 		{
 			_subExpr = parseVarSubExpr();
 			_var->children.push_back(_subExpr);
-		} while (match(Token::TYPE::COMMA));
+		}
 
 		return _var;
 	}
 
-	VarSubExprNode* Parser::parseVarSubExpr()
+	VarSubExprNode* Parser::parseVarSubExpr(IdentifierNode *_id)
 	{
 		auto ptr = make_object<VarSubExprNode>();
 
-		expect(lookahead, Token::TYPE::IDENTIFIER);
-		auto _id = make_object<IdentifierNode>(*nextToken()._literal);
-		ptr->varName = _id;
+		if (_id == nullptr)
+		{
+			expect(lookahead, Token::TYPE::IDENTIFIER);
+			_id = make_object<IdentifierNode>(*nextToken()._literal);
+			ptr->varName = _id;
+		}
+		else
+			ptr->varName = _id;
 
 		if (match(Token::TYPE::SEMICOLON))
 		{
@@ -140,10 +150,7 @@ namespace halang
 				ptr->expression = parseExpression();
 		}
 		else if (match(Token::TYPE::ASSIGN))
-		{
-			nextToken();
 			ptr->expression = parseExpression();
-		}
 		else
 			ReportError("Expect semicolon or '='.");
 
@@ -218,12 +225,10 @@ namespace halang
 		return make_object<AssignmentNode>(_id, _exp);
 	}
 
-	/// <summary>
-	/// UnaryExpr ::= 
-	///	( '+' | '-' | '!' ) UnaryExpr | Number | VAR | FUNCTIONCALL
-	/// </summary>
 	Node* Parser::parseUnaryExpr(OperatorType _op)
 	{
+		// UnaryExpr ::= 
+		//	( '+' | '-' | '!' ) UnaryExpr | Number | VAR | FUNCTIONCALL
 		Node *_node = nullptr,
 			*exp = nullptr;
 		Token _tk;
