@@ -4,7 +4,6 @@
 #include <memory>
 #include "token.h"
 #include "string.h"
-#include "type.h"
 
 namespace halang
 {
@@ -69,8 +68,6 @@ namespace halang
 		virtual PrintStmtNode* asPrintStmt() { return nullptr; }
 
 		virtual void visit(Visitor*) = 0;
-
-		Type typeInfo;
 	};
 
 	/// <summary>
