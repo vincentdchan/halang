@@ -19,6 +19,8 @@ namespace halang
 	class List : GCObject
 	{
 	public:
+		class RopeNode;
+
 		List();
 		List(const List&) = delete;
 
@@ -46,6 +48,16 @@ namespace halang
 
 		bool enableRope = false;
 
+	};
+
+	class RopeNode
+	{
+	private:
+		RopeNode *left = nullptr;
+		RopeNode *right = nullptr;
+
+
+		std::size_t weight;
 	};
 
 }
