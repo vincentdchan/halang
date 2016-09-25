@@ -13,13 +13,19 @@ By default, the program read the file named "source.txt" in the same location wi
 
 This language is similar to JavaScript, but it has differences because this project is not completely finished.
 
+
+
+## Typed?
+
+Once Halang is static typed, but after my consideration, Halang return to be dynamic because it's its origin propose. The static typed version is still in another branch.
+
 ## String
 
 In HaLang, string is a immutable built-in object. It's described within *""*.
 
 ```javascript
-var a = "Hello World!";
-print a // output a
+var a = "Hello World!" // define a variable name "a", and it's value is "Hello World!"
+print a
 ```
 
 
@@ -30,18 +36,6 @@ Similar to JavaScript.
 
 ```
 2 * (3 + 4) // 14
-```
-
-## Print Statement
-
-You can print a expression.
-
-```javascript
-print 1 + 1 // output : 2
-
-var a = 3
-print a			// output: 3
-print a + 1		// output: 4
 ```
 
 ## Assignment
@@ -64,9 +58,9 @@ You can use the *if* and *else* expression. But there is a little differences fr
 ```javascript
 var a = 100
 if (a > 0)
-	print a            // ! no brackets
+	a = -a
 	
-if (a > 0) { print a } else { a + 100 } // Correct! output: 100
+if (a > 0) { print -a } else { print a + 100 } // Correct! output: -100
 ```
 
 This situation is due to the implementation of parser. I just implemented it in a very early stage. There will be a enhancement in the future to improve this situation.
@@ -79,8 +73,8 @@ You can use *while* expression to loop. The usage of *while* are similar to *if*
 var a = 0
 while (a <= 50)
 {
-  print a
   a = a + 1
+  print a
 }
 ```
 
@@ -96,9 +90,9 @@ Halang supports function now.
 func hello(a)
 {
 	if (a > 3)
-		print a + 1
+		return a + 1
 	else
-		print 0
+		return a
 }
 
 var a = 0
@@ -124,8 +118,6 @@ func hello(a)
 		return 1
 	return a*hello(a-1)
 }
-
-print hello(5)
 ```
 
 And also, Halang supports closure.
@@ -141,10 +133,10 @@ func hello(a)
 	return ho;
 }
 
-var a = hello(5);
-print a(1);			// output: 6
-print a(1);			// output: 7
-print a(8);			// output: 15
+var a = hello(5);	// type int
+a(1);			// 6
+a(1);			// 7
+a(8);			// 15
 ```
 
 
@@ -153,7 +145,7 @@ print a(8);			// output: 15
 
 In the future, many features will be add to HaLang. Such as
 
-1. Closure
-2. break and continue statement
+1. break and continue statement
+2. List and Hashmap
 3. Yield
 4. ...

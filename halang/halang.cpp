@@ -10,7 +10,6 @@
 #include "scanner.h"
 #include "ast.h"
 #include "parser.h"
-#include "type_checker.h"
 #include "string.h"
 #include "svm_codes.h"
 #include "svm.h"
@@ -43,7 +42,6 @@ int main(int argc, char** argv)
 	using namespace halang;
 	Lexer *lexer = nullptr;
 	Parser *parser = nullptr;
-	TypeChecker *tc = nullptr;
 	CodeGen *cg = nullptr;
 	StackVM *nvm = nullptr;
 
@@ -72,9 +70,6 @@ int main(int argc, char** argv)
 
 	CHECK_ERROR(parser);
 
-	tc = TypeChecker::TypeCheck(parser->getRoot());
-	CHECK_ERROR(tc);
-
 	cg = new CodeGen(nvm);
 	cg->generate(parser);
 	CHECK_ERROR(cg);
@@ -82,7 +77,6 @@ int main(int argc, char** argv)
 	cg->load();
 	CLEAR_PTR(lexer);
 	CLEAR_PTR(parser);
-	CLEAR_PTR(tc);
 	CLEAR_PTR(cg);
 
 	nvm->execute();
@@ -91,7 +85,6 @@ int main(int argc, char** argv)
 
 	CLEAR_PTR(lexer);
 	CLEAR_PTR(parser);
-	CLEAR_PTR(tc);
 	CLEAR_PTR(cg);
 	CLEAR_PTR(nvm);
 

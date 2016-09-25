@@ -149,6 +149,7 @@
     <ClInclude Include="ast.h" />
     <ClInclude Include="codegen.h" />
     <ClInclude Include="function.h" />
+    <ClInclude Include="functions.h" />
     <ClInclude Include="halang.h" />
     <ClInclude Include="table.h" />
     <ClInclude Include="lex.h" />
@@ -162,8 +163,6 @@
     <ClInclude Include="svm_codes.h" />
     <ClInclude Include="targetver.h" />
     <ClInclude Include="token.h" />
-    <ClInclude Include="type.h" />
-    <ClInclude Include="type_checker.h" />
     <ClInclude Include="upvalue.h" />
     <ClInclude Include="util.h" />
     <ClInclude Include="visitor.h" />
@@ -179,7 +178,6 @@
     <ClCompile Include="string.cpp" />
     <ClCompile Include="string_poll.cpp" />
     <ClCompile Include="svm.cpp" />
-    <ClCompile Include="type_checker.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
