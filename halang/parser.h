@@ -4,6 +4,7 @@
 #include <stack>
 #include <list>
 #include <iostream>
+#include <sstream>
 #include "lex.h"
 #include "ast.h"
 #include "util.h"
@@ -56,6 +57,20 @@ namespace halang
 		Parser& operator=(const Parser&) = delete;
 		Lexer& lexer;
 
+		inline void add_error(Token t, char* msg)
+		{
+			stringstream ss;
+			ss << "Line: " << t.location.line << ": " << msg;
+			ReportError(ss.str());
+		}
+
+		inline void add_error(Token t, const string& msg)
+		{
+			stringstream ss;
+			ss << "Line: " << t.location.line << ": " << msg;
+			ReportError(ss.str());
+		}
+
 		inline bool match(Token::TYPE t) { return lookahead.type == t; } // just judge
 		inline bool expect(Token::TYPE t)
 		{
@@ -70,7 +85,7 @@ namespace halang
 			{
 				auto num = static_cast<int>(_c.type);
 				// warning: here may cause crash if num is not in range
-				ReportError(string("Unexpected token: ") + TokenName[num]);
+				this->add_error(_c, string("Unexpected token: ") + TokenName[num]);
 				ok = false;
 				return false;
 			}

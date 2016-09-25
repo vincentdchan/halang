@@ -131,15 +131,7 @@ namespace halang
 		auto _id = make_object<IdentifierNode>(*nextToken()._literal);
 		ptr->varName = _id;
 
-		if (match(Token::TYPE::SEMICOLON))
-		{
-			nextToken();
-			expect(lookahead, Token::TYPE::IDENTIFIER);
-			ptr->typeName = make_object<IdentifierNode>(*nextToken()._literal);
-			if (match(Token::TYPE::ASSIGN))
-				ptr->expression = parseExpression();
-		}
-		else if (match(Token::TYPE::ASSIGN))
+		if (match(Token::TYPE::ASSIGN))
 		{
 			nextToken();
 			ptr->expression = parseExpression();
@@ -395,12 +387,7 @@ namespace halang
 				ReportError("Unexpected def params.");
 		}
 		expect(nextToken(), Token::TYPE::CLOSE_PAREN);
-		// type
-		if (match(Token::TYPE::SEMICOLON))
-		{
-			nextToken();
-			_func->typeName = make_object<IdentifierNode>(*nextToken()._literal);
-		}
+
 		expect(nextToken(), Token::TYPE::OPEN_BRAKET);
 		_func->block = reinterpret_cast<BlockExprNode*>(parseBlock());
 		expect(nextToken(), Token::TYPE::CLOSE_BRAKET);
@@ -412,12 +399,6 @@ namespace halang
 		auto param = make_object<FuncDefParamNode>();
 		expect(lookahead, Token::TYPE::IDENTIFIER);
 		param->name = *nextToken()._literal;
-		if (match(Token::TYPE::SEMICOLON))
-		{
-			nextToken();
-			expect(Token::TYPE::IDENTIFIER);
-			param->typeName = *nextToken()._literal;
-		}
 		return param;
 	}
 
@@ -427,7 +408,7 @@ namespace halang
 		// FuncCallParamNode* _params = nullptr;
 
 		expect(nextToken(), Token::TYPE::OPEN_PAREN);
-		while (!expect(lookahead, Token::TYPE::CLOSE_PAREN))
+		while (!match(Token::TYPE::CLOSE_PAREN))
 		{
 			auto node = parseExpression();
 

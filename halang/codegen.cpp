@@ -316,8 +316,9 @@ namespace halang
 		}
 		auto new_pack = vm->make_gcobject<CodePack>();
 		auto new_func = vm->make_gcobject<Function>(new_pack, _node->parameters.size());
-		new_pack->prev = top_cp;
+
 		// Push
+		new_pack->prev = top_cp;
 		top_cp = new_pack;
 
 		for (auto i = _node->parameters.begin();
@@ -343,6 +344,7 @@ namespace halang
 	void CodeGen::visit(FuncDefParamNode* _node)
 	{
 		top_cp->var_names.push_back(IString(_node->name));
+		top_cp->var_size++;
 	}
 
 	void CodeGen::visit(FuncCallNode* _node)

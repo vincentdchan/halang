@@ -313,6 +313,7 @@ namespace halang
 							++loc.length;
 						}
 						t._double = std::stod(num);
+						t.location = loc;
 						token_q.push(t);
 
 						if (match)
@@ -333,6 +334,7 @@ namespace halang
 			}
 			t.maybeInt = true;
 			t._double = std::stod(num);
+			t.location = loc;
 			token_q.push(t);
 		}
 		else
