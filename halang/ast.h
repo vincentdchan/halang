@@ -123,7 +123,7 @@ namespace halang
 	{
 	public:
 		AssignmentNode() {}
-		AssignmentNode(IdentifierNode* _id, Node* _exp = nullptr, IdentifierNode* _typeName = nullptr) :
+		AssignmentNode(IdentifierNode* _id, Node* _exp = nullptr) :
 			identifier(_id), expression(_exp)
 		{}
 		virtual AssignmentNode* asAssignment() override { return this; }
@@ -208,11 +208,10 @@ namespace halang
 	{
 	public:
 		VarSubExprNode() :
-			varName(nullptr), typeName(nullptr), expression(nullptr)
+			varName(nullptr), expression(nullptr)
 		{}
 		virtual VarSubExprNode* asVarSubExpr() override { return this; }
 		IdentifierNode* varName;
-		IdentifierNode* typeName;
 		Node* expression;
 
 		VISIT_OVERRIDE
@@ -299,7 +298,6 @@ namespace halang
 		std::vector<FuncDefParamNode*> parameters;
 
 		BlockExprNode* block;
-		IdentifierNode* typeName;
 
 		VISIT_OVERRIDE
 	};
@@ -314,7 +312,6 @@ namespace halang
 		{}
 		virtual FuncDefParamNode* asFuncDefParam() override { return this; }
 		std::string name;
-		std::string typeName;
 
 		VISIT_OVERRIDE
 	};

@@ -1,3 +1,16 @@
-var a = 1
-print a
-print "are you ok?"
+func hello(a)
+{
+    func ho(b)
+    {
+        a = a + b
+        return a;
+    }
+    return ho;
+}
+
+var num = 5;
+var a = hello(num);
+num = 10;
+print a(1);
+print a(1);
+print a(8);

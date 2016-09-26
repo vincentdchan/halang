@@ -11,8 +11,8 @@ namespace halang
 		, codepack(cp), index(0)
 	{
 		sptr = stack = new Object[STACK_SIZE];
-		variables = new Object[cp->var_size];
-		upvalues = new Object[cp->upvalue_size];
+		variables = new Object[cp->VarSize()];
+		upvalues = new Object[cp->UpValueSize()];
 	}
 
 	Object* Environment::top(int i) { return sptr - i - 1; }
@@ -72,11 +72,10 @@ namespace halang
 				PUSH(std::move(*GET_VAR(current->getParam())));
 				break;
 			case VM_CODE::LOAD_UPVAL:
-				do
 				{
 					auto _upval = reinterpret_cast<UpValue*>(GET_UPVAL(current->getParam())->value.gc);
 					PUSH(_upval->getVal());
-				} while (0);
+				}
 				break;
 			case VM_CODE::LOAD_C:
 				PUSH(GET_CON(current->getParam()));
@@ -85,12 +84,11 @@ namespace halang
 				SET_VAR(current->getParam(), std::move(*POP()));
 				break;
 			case VM_CODE::STORE_UPVAL:
-				do
 				{
 					auto _id = current->getParam();
 					auto _upval = reinterpret_cast<UpValue*>(GET_UPVAL(_id)->value.gc);
 					_upval->setVal(*POP());
-				} while (0);
+				}
 				break;
 			case VM_CODE::PUSH_INT:
 				PUSH(Object(current->getParam()));
@@ -135,7 +133,7 @@ namespace halang
 				for (int i = func->paramsSize - 1; i >= 0; --i)
 					new_env->variables[i] = *new_env->prev->pop();
 				// copy upvalues
-				for (unsigned int i = 0; i < func->codepack->upvalue_size; ++i)
+				for (unsigned int i = 0; i < func->codepack->UpValueSize(); ++i)
 				{
 					new_env->upvalues[i] = Object(func->upvalues[i], Object::TYPE::UPVALUE);
 				}

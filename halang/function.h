@@ -21,9 +21,14 @@ namespace halang
 	{
 	public:
 		CodePack() :
-			prev(nullptr), param_size(0), var_size(0), isGlobal(false)
+			prev(nullptr), param_size(0), isGlobal(false)
 		{}
 
+		/// <summary>
+		/// Find the id in the var tables and
+		/// return id of variable in table, return 0 if id is not found.
+		/// </summary>
+		/// <returns>return id of variable in table, return 0 if id is not found</returns>
 		int findVarId(IString _name)
 		{
 			int _var_size = static_cast<int>(var_names.size());
@@ -39,12 +44,45 @@ namespace halang
 			if (prev)
 			{
 				auto _prev_id = prev->findVarId(_name);
-				auto _upvalue_id = upvalue_size++;
-				upvalue_names.push_back(_name);
+				addUpValue(name);
 				require_upvalues.push_back(_prev_id);
 			}
 
 			return -1;
+		}
+
+		/// <summary>
+		/// Add a variable name to the variable table and
+		/// return the id of the new variable.
+		/// </summary>
+		/// <returns>return the id of the new variable</returns>
+		inline std::size_t addVar(IString s)
+		{
+			auto id = var_names.size();
+			var_names.push_back(s);
+			return id;
+		}
+
+		/// <summary>
+		/// Add a upvalue name to the upvalue table and
+		/// return the id of the new upvalue.
+		/// </summary>
+		/// <returns>return the id of the new upvalue.</returns>
+		inline std::size_t addUpValue(IString s)
+		{
+			auto id = upvalue_names.size();
+			upvalue_names.push_back(s);
+			return id;
+		}
+
+		inline std::size_t VarSize() const
+		{
+			return var_names.size();
+		}
+
+		inline std::size_t UpValueSize() const
+		{
+			return upvalue_names.size();
 		}
 
 		friend class CodeGen;
@@ -54,8 +92,6 @@ namespace halang
 		IString name;
 		CodePack* prev;
 		std::size_t param_size;
-		std::size_t var_size;
-		std::size_t upvalue_size;
 		std::vector<Object> constant;
 		std::vector<Instruction> instructions;
 		std::vector<IString> var_names;
