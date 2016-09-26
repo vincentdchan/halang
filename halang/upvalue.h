@@ -39,11 +39,8 @@ namespace halang
 		virtual ~UpValue() {}
 	private:
 
-		union
-		{
-			Object value;
-			Object *refer;
-		};
+		Object value;
+		Object *refer;
 
 		bool _closed;
 	};

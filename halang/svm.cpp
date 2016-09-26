@@ -11,8 +11,8 @@ namespace halang
 		, codepack(cp), index(0)
 	{
 		sptr = stack = new Object[STACK_SIZE];
-		variables = new Object[cp->var_size];
-		upvalues = new Object[cp->upvalue_size];
+		variables = new Object[cp->VarSize()];
+		upvalues = new Object[cp->UpValueSize()];
 	}
 
 	Object* Environment::top(int i) { return sptr - i - 1; }
@@ -133,7 +133,7 @@ namespace halang
 				for (int i = func->paramsSize - 1; i >= 0; --i)
 					new_env->variables[i] = *new_env->prev->pop();
 				// copy upvalues
-				for (unsigned int i = 0; i < func->codepack->upvalue_size; ++i)
+				for (unsigned int i = 0; i < func->codepack->UpValueSize(); ++i)
 				{
 					new_env->upvalues[i] = Object(func->upvalues[i], Object::TYPE::UPVALUE);
 				}

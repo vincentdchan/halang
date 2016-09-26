@@ -5,34 +5,45 @@
 namespace halang
 {
 
+	/// <summary>
+	/// Find the variable name in the codepack
+	/// if it isn't exist, find it in the upvalue table
+	///
+	/// Find the variable in the previous codepack.
+	/// if the variable name in the previous codepack and
+	///		if it's a local in the previous codepack
+	///			let it be a upvalue
+	///		else if it's already a upvalue
+	///			you guess what
+	/// </summary>
 	CodeGen::VarType CodeGen::findVar(CodePack * cp, IString _Str)
 	{
 		for (int i = 0; i < cp->var_names.size(); ++i)
 			if (cp->var_names[i] == _Str)
-			{
 				return VarType(VarType::LOCAL, i);
-			}
 
 		for (int i = 0; i < cp->upvalue_names.size(); ++i)
 			if (cp->upvalue_names[i] == _Str)
-			{
 				return VarType(VarType::UPVAL, i);
-			}
+
 		if (cp->prev)
 		{
 			VarType _p = findVar(cp->prev, _Str);
 			switch (_p.type())
 			{
 			case VarType::LOCAL:
+			{
 				cp->require_upvalues.push_back(_p.id());
-				cp->upvalue_names.push_back(IString(_Str));
-				return VarType(VarType::UPVAL, cp->upvalue_size++);
-				break;
+				auto t = cp->addUpValue(IString(_Str));
+				return VarType(VarType::UPVAL, t);
+			}
 			case VarType::UPVAL:
+			{
 				cp->require_upvalues.push_back(-1 - _p.id());
-				cp->upvalue_names.push_back(IString(_Str));
-				return VarType(VarType::UPVAL, cp->upvalue_size++);
-				break;
+				auto i = cp->addUpValue(IString(_Str));
+				return VarType(VarType::UPVAL, i);
+			}
+
 			}
 		}
 		return VarType(VarType::NONE);
@@ -211,8 +222,7 @@ namespace halang
 		case VarType::NONE:
 			if (state->varStatement())
 			{
-				_id = cp->var_size++;
-				cp->var_names.push_back(IString(_id_node->name));
+				_id = cp->addVar(IString(_id_node->name));
 
 				// you must add the name first and then visit the expression.
 				// to generate the next code
@@ -243,8 +253,7 @@ namespace halang
 	{
 		auto cp = top_cp;
 		auto _id_node = _node->varName;
-		int _id = cp->var_size++;
-		cp->var_names.push_back(IString(_id_node->name));
+		int _id = cp->addVar(IString(_id_node->name));
 
 		// you must add the name first and then visit the expression.
 		// to generate the next code
@@ -310,10 +319,7 @@ namespace halang
 		auto cp = top_cp;
 		int var_id = -1;
 		if (_node->name)
-		{
-			var_id = cp->var_size++;
-			cp->var_names.push_back(IString(_node->name->name));
-		}
+			var_id = cp->addVar(IString(_node->name->name));
 		auto new_pack = vm->make_gcobject<CodePack>();
 		auto new_func = vm->make_gcobject<Function>(new_pack, _node->parameters.size());
 
@@ -343,8 +349,7 @@ namespace halang
 
 	void CodeGen::visit(FuncDefParamNode* _node)
 	{
-		top_cp->var_names.push_back(IString(_node->name));
-		top_cp->var_size++;
+		top_cp->addVar(IString(_node->name));
 	}
 
 	void CodeGen::visit(FuncCallNode* _node)
