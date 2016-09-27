@@ -4,45 +4,52 @@
 namespace halang
 {
 
+	/// <summary>
+	/// UpValue is a magic class.
+	///
+	/// Before the upvalue is closed, upvalue store the pointer 
+	/// of the object.
+	/// After the upvalue is closed, upvalue construct a new
+	/// Object and own it.
+	/// </summary>
 	class UpValue : public GCObject
 	{
 	public:
-		UpValue(Object* _re = nullptr) : refer(_re), _closed(false)
+		UpValue(Object* _re = nullptr) : value(_re), _closed(false)
 		{}
+
+		virtual ~UpValue() 
+		{
+			if (_closed)
+				delete value;
+		}
 
 		Object getVal() const
 		{
-			if (_closed)
-				return value;
-			else
-				return *refer;
+			return *value;
 		}
 
 		void setVal(const Object& _obj)
 		{
-			if (_closed)
-				value = _obj;
-			else
-				*refer = _obj;
+			*value = _obj;
 		}
 
 		void close()
 		{
 			if (!_closed) 
 			{
-				value = *refer;
+				value = new Object(*value);
 				_closed = true;
 			}
 		}
 
 		inline bool closed() const { return _closed; }
-		virtual ~UpValue() {}
+
 	private:
 
-		Object value;
-		Object *refer;
-
+		Object *value;
 		bool _closed;
+
 	};
 
 }
