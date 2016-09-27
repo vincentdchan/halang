@@ -83,6 +83,12 @@ namespace halang
 			case '}':
 				PUSH_TOKEN(CLOSE_BRAKET);
 				++iter; break;
+			case '[':
+				PUSH_TOKEN(OPEN_SQUARE_BRAKET);
+				++iter; break;
+			case ']':
+				PUSH_TOKEN(CLOSE_SQUARE_BRAKET);
+				++iter; break;
 			case '+':
 				PUSH_TOKEN(ADD);
 				++iter; break;

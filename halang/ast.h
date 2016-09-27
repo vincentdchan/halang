@@ -13,6 +13,7 @@ namespace halang
 	V(Number) \
 	V(Identifier) \
 	V(String) \
+	V(ListExpr) \
 	V(BinaryExpr) \
 	V(UnaryExpr) \
 	V(BlockExpr) \
@@ -53,6 +54,7 @@ namespace halang
 		virtual IdentifierNode* asIdentifier() { return nullptr; }
 		virtual NumberNode* asNumber() { return nullptr; }
 		virtual AssignmentNode* asAssignment() { return nullptr; }
+		virtual ListExprNode* asListExpr() { return nullptr; }
 		virtual UnaryExprNode* asUnaryExpression() { return nullptr; }
 		virtual BlockExprNode* asBlockExpression() { return nullptr; }
 		virtual BinaryExprNode* asBinaryExpression() { return nullptr; }
@@ -130,6 +132,21 @@ namespace halang
 
 		IdentifierNode* identifier;
 		Node* expression;
+
+		VISIT_OVERRIDE
+	};
+
+	/// <summary>
+	/// ListExpression ::= '[' ListExpressionChildren ']'
+	/// ListExpressionChildren ::= NULL | Expression ListExpressionChildren
+	/// </summary>
+	class ListExprNode : public Node
+	{
+	public:
+		ListExprNode() {}
+		std::vector<Node*> children;
+
+		virtual ListExprNode* asListExpr() override { return this; }
 
 		VISIT_OVERRIDE
 	};

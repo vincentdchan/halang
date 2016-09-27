@@ -1,6 +1,7 @@
 #pragma once
 #include <vector>
 #include <map>
+#include <functional>
 #include "svm.h"
 #include "string.h"
 #include "object.h"
@@ -100,24 +101,104 @@ namespace halang
 		bool isGlobal;
 	};
 
+	class Isolate
+	{
+
+	};
+
+	template<class _ObjectType>
+	class Local final
+	{
+	};
+
+	template<>
+	class Local<IString> final
+	{
+	public:
+		static Local<IString> New(Isolate*, const IString);
+		static Local<IString> New(Isolate*, const std::string&);
+
+	private:
+		Local();
+
+	};
+
+	template<>
+	class Local<TSmallInt> final
+	{
+
+	};
+
+	template<>
+	class Local<TNumber> final
+	{
+
+	};
+
+	class FunctionCallbackInfo : GCObject
+	{
+	public:
+
+		FunctionCallbackInfo(Isolate* iso) :
+			isolate(iso)
+		{}
+
+		Local<Object>& operator[](std::size_t index)
+		{
+			return arguments[index];
+		}
+
+		inline Local<Object>& GetReturnObject()
+		{
+			return returnObject;
+		}
+
+		inline Isolate* GetIsolate()
+		{
+			return isolate;
+		}
+
+	private:
+
+		Isolate* isolate;
+		std::vector<Local<Object> > arguments;
+		Local<Object> returnObject;
+
+	};
+
+	typedef std::function<void (const FunctionCallbackInfo&)> ExternFunction;
+
 	class Function : public GCObject
 	{
 	public:
+
+		Function(ExternFunction* fun, unsigned int _ps = 0) :
+			paramsSize(_ps), externFunction(fun), isExtern(true)
+		{}
+
 		Function(CodePack* cp, unsigned int _ps = 0) :
-			codepack(cp), paramsSize(_ps)
+			codepack(cp), paramsSize(_ps), isExtern(false)
 		{}
 		friend class CodeGen;
 		friend struct Environment;
 		friend class StackVM;
+
 		void close()
 		{
 			for (auto i = upvalues.begin(); i != upvalues.end(); ++i)
 				(*i)->close();
 		}
+
 	private:
+
+		bool isExtern;
+
 		CodePack* codepack;
+		ExternFunction *externFunction;
+
 		unsigned int paramsSize;
 		std::vector<UpValue*> upvalues;
+
 	};
 
 };

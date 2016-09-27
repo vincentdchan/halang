@@ -210,6 +210,31 @@ namespace halang
 		return make_object<AssignmentNode>(_id, _exp);
 	}
 
+	ListExprNode* Parser::parseListExpr()
+	{
+		auto list = make_object<ListExprNode>();
+
+		expect(nextToken(), Token::TYPE::OPEN_SQUARE_BRAKET);
+		if (!match(Token::TYPE::CLOSE_SQUARE_BRAKET))
+		{
+			Node *node = parseExpression();
+			list->children.push_back(node);
+
+			while (match(Token::TYPE::COMMA))
+			{
+				nextToken();
+				node = parseExpression();
+				list->children.push_back(node);
+			}
+
+			expect(nextToken(), Token::TYPE::CLOSE_SQUARE_BRAKET);
+		}
+		else // ']'
+			nextToken();
+
+		return list;
+	}
+
 	/// <summary>
 	/// UnaryExpr ::= 
 	///	( '+' | '-' | '!' ) UnaryExpr | Number | VAR | FUNCTIONCALL

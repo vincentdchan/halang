@@ -41,6 +41,8 @@ namespace halang
 	V(CLOSE_PAREN) \
 	V(OPEN_BRAKET) \
 	V(CLOSE_BRAKET) \
+	V(OPEN_SQUARE_BRAKET) \
+	V(CLOSE_SQUARE_BRAKET) \
 	V(NUMBER) \
 	V(VAR) \
 	V(FUNC) \
