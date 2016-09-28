@@ -13,6 +13,7 @@ namespace halang
 	V(Number) \
 	V(Identifier) \
 	V(String) \
+	V(InvokeExpr) \
 	V(ListExpr) \
 	V(BinaryExpr) \
 	V(UnaryExpr) \
@@ -54,6 +55,7 @@ namespace halang
 		virtual IdentifierNode* asIdentifier() { return nullptr; }
 		virtual NumberNode* asNumber() { return nullptr; }
 		virtual AssignmentNode* asAssignment() { return nullptr; }
+		virtual InvokeExprNode* asInvokeExpr() { return nullptr; }
 		virtual ListExprNode* asListExpr() { return nullptr; }
 		virtual UnaryExprNode* asUnaryExpression() { return nullptr; }
 		virtual BlockExprNode* asBlockExpression() { return nullptr; }
@@ -114,6 +116,24 @@ namespace halang
 		virtual IdentifierNode* asIdentifier() override { return this; }
 
 		std::string name;
+
+		VISIT_OVERRIDE
+	};
+
+	/// <summary>
+	/// InvokeExpression ::= InvokeExpression ID | ID
+	/// </summary>
+	class InvokeExprNode : public Node
+	{
+	public:
+		InvokeExprNode(Node* src = nullptr, IdentifierNode* _id = nullptr):
+			source(src), id(_id)
+		{}
+
+		virtual InvokeExprNode* asInvokeExpr() { return this; }
+
+		Node* source;
+		IdentifierNode* id;
 
 		VISIT_OVERRIDE
 	};

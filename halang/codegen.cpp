@@ -85,6 +85,15 @@ namespace halang
 		}
 	}
 
+	void CodeGen::visit(ListExprNode* _node)
+	{
+
+	}
+
+	void CodeGen::visit(InvokeExprNode* _node)
+	{
+	}
+
 	void CodeGen::visit(UnaryExprNode* _node)
 	{
 		auto cp = top_cp;

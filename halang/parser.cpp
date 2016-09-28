@@ -106,6 +106,27 @@ namespace halang
 
 	}
 
+	Node* Parser::parseInvokeExpression(Node *src)
+	{
+		if (src == nullptr)
+		{
+			expect(lookahead, Token::TYPE::IDENTIFIER);
+			src = make_object<IdentifierNode>(*nextToken()._literal);
+			if (match(Token::TYPE::OPEN_PAREN))
+				src = parseFuncCall(src);
+		}
+		while (match(Token::TYPE::DOT))
+		{
+			nextToken();
+			expect(lookahead, Token::TYPE::IDENTIFIER);
+			auto second = make_object<IdentifierNode>(*nextToken()._literal);
+			src = make_object <InvokeExprNode>(src, second);
+			if (match(Token::TYPE::OPEN_PAREN))
+				src = parseFuncCall(src);
+		}
+		return src;
+	}
+
 	// varStmt ::= VAR ID (':' TYPE)? '=' exp [ , ID (':' TYPE)? '=' EXP ]
 	Node* Parser::parseVarStmt()
 	{
@@ -162,16 +183,16 @@ namespace halang
 		{
 			Token _tk = nextToken();
 			auto _id = make_object<IdentifierNode>(*_tk._literal);
-			if (match(Token::TYPE::OPEN_PAREN))
+			if (match(Token::TYPE::DOT) || match(Token::TYPE::OPEN_PAREN ))
 			{
-				auto _func = parseFuncCall(_id);
+				auto _node = parseInvokeExpression(_id);
 				if (Token::isOperator(lookahead))
 				{
 					auto _op = nextToken();
-					return parseBinaryExpr(_func, _op);
+					return parseBinaryExpr(_node, _op);
 				}
 				else
-					return _func;
+					return _node;
 			}
 			else if (match(Token::TYPE::ASSIGN))
 				return parseAssignment(_id);

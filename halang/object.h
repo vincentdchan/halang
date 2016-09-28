@@ -10,30 +10,34 @@
 namespace halang
 {
 	/*
-	Object Type
-	Basic Type:
+	Object:
 
-	Object
 		 - Immutable Object
 			- small int
 			- double
 			- Refer Count Object
 				- Imutable String		// for string constang, string splice and so on
 				- Big Integer
+
 		- Mutable Object				// GC Object
 			- CodePack
 			- Function
 			- HashMap
+				- GenericObject
+					- Array
+					- Class
+
 			- Mutable String			// for string to edit
 				- String
 				- pointer to Immutable String	// from String Pool
+
 	*/
 
 #define OBJ_LIST(V) \
 	V(NUL) \
 	V(GC) \
 	V(UPVALUE) \
-	V(TABLE) \
+	V(DICT) \
 	V(STRING) \
 	V(CODE_PACK) \
 	V(FUNCTION) \
@@ -94,6 +98,7 @@ namespace halang
 
 		inline bool isNul() const { return type == TYPE::NUL; }
 		inline bool isGCObject() const { return type == TYPE::GC; }
+		inline bool isDict() const { return type == TYPE::DICT; }
 		inline bool isString() const { return type == TYPE::STRING; }
 		inline bool isSmallInt() const { return type == TYPE::SMALL_INT; }
 		inline bool isNumber() const { return type == TYPE::NUMBER; }
@@ -203,22 +208,12 @@ namespace halang
 				return true;
 		}
 
-		/*
-		Object compareTo(Object that) const
-		{
-			return Object(0);
-		}
-
-		Object equalTo(Object that) const
-		{
-			return Object(0);
-		}
-		*/
 		~Object()
 		{
 			if (type == TYPE::STRING)
 				delete value.str;
 		}
+
 	};
 
 	static const char* STRUE = "True";

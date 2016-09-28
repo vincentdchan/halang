@@ -3,6 +3,7 @@
 #include "function.h"
 #include "upvalue.h"
 #include "string.h"
+#include "Dict.h"
 
 namespace halang
 {
@@ -72,11 +73,11 @@ namespace halang
 				PUSH(std::move(*GET_VAR(current->getParam())));
 				break;
 			case VM_CODE::LOAD_UPVAL:
-				{
-					auto _upval = reinterpret_cast<UpValue*>(GET_UPVAL(current->getParam())->value.gc);
-					PUSH(_upval->getVal());
-				}
+			{
+				auto _upval = reinterpret_cast<UpValue*>(GET_UPVAL(current->getParam())->value.gc);
+				PUSH(_upval->getVal());
 				break;
+			}
 			case VM_CODE::LOAD_C:
 				PUSH(GET_CON(current->getParam()));
 				break;
@@ -84,12 +85,28 @@ namespace halang
 				SET_VAR(current->getParam(), std::move(*POP()));
 				break;
 			case VM_CODE::STORE_UPVAL:
-				{
-					auto _id = current->getParam();
-					auto _upval = reinterpret_cast<UpValue*>(GET_UPVAL(_id)->value.gc);
-					_upval->setVal(*POP());
-				}
+			{
+				auto _id = current->getParam();
+				auto _upval = reinterpret_cast<UpValue*>(GET_UPVAL(_id)->value.gc);
+				_upval->setVal(*POP());
 				break;
+			}
+			case VM_CODE::SET_VAL:
+			{
+				auto value = *POP();
+				auto key = *POP();
+				auto dict = reinterpret_cast<Dict*>((POP())->value.gc);
+				dict->SetValue(key, value);
+				PUSH(Object(dict));
+				break;
+			}
+			case VM_CODE::GET_VAL:
+			{
+				auto key = *POP();
+				auto dict = reinterpret_cast<Dict*>((POP())->value.gc);
+				PUSH(dict->GetValue(key));
+				break;
+			}
 			case VM_CODE::PUSH_INT:
 				PUSH(Object(current->getParam()));
 				break;

@@ -40,6 +40,7 @@ namespace halang
 		Node*				parseStatement();
 		Node*				parseAssignment(IdentifierNode* = nullptr);
 		Node*				parseExpression();
+		Node*				parseInvokeExpression(Node* src = nullptr);
 		Node*				parseVarStmt();
 		VarSubExprNode*		parseVarSubExpr();
 		ListExprNode*		parseListExpr();

@@ -43,12 +43,13 @@ namespace std
 namespace halang
 {
 
-	class HashMap : public GCObject
+	class Dict : public GCObject
 	{
+	public:
 
-		HashMap();
-		HashMap(const HashMap&);
-		HashMap(const std::unordered_map<Object, Object>&);
+		Dict();
+		Dict(const Dict&);
+		Dict(const std::unordered_map<Object, Object>&);
 
 		void SetValue(Object, Object);
 		Object GetValue(Object);

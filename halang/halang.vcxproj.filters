@@ -78,7 +78,10 @@
     <ClInclude Include="array.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="hashmap.h">
+    <ClInclude Include="GernericObjcet.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Dict.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -116,7 +119,7 @@
     <ClCompile Include="array.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="hashmap.cpp">
+    <ClCompile Include="Dict.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
