@@ -27,6 +27,7 @@ namespace halang
 
 #define TOKEN_LIST(V) \
 	V(DOT) \
+	V(AT) \
 	V(COMMA) \
 	V(SEMICOLON) \
 	V(ILLEGAL) \
@@ -45,6 +46,7 @@ namespace halang
 	V(CLOSE_SQUARE_BRAKET) \
 	V(NUMBER) \
 	V(VAR) \
+	V(CLASS) \
 	V(FUNC) \
 	V(RETURN) \
 	V(PRINT) \

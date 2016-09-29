@@ -3,7 +3,6 @@
 #include "function.h"
 #include "upvalue.h"
 #include "string.h"
-#include "Dict.h"
 
 namespace halang
 {
@@ -95,15 +94,15 @@ namespace halang
 			{
 				auto value = *POP();
 				auto key = *POP();
-				auto dict = reinterpret_cast<Dict*>((POP())->value.gc);
-				dict->SetValue(key, value);
-				PUSH(Object(dict));
+				auto _map = reinterpret_cast<Map*>((POP())->value.gc);
+				_map->SetValue(key, value);
+				PUSH(Object(_map, Object::TYPE::MAP));
 				break;
 			}
 			case VM_CODE::GET_VAL:
 			{
 				auto key = *POP();
-				auto dict = reinterpret_cast<Dict*>((POP())->value.gc);
+				auto dict = reinterpret_cast<Map*>((POP())->value.gc);
 				PUSH(dict->GetValue(key));
 				break;
 			}

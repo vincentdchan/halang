@@ -1,17 +1,17 @@
 #pragma once
-#include <map>
+#include <unordered_map>
 #include <cmath>
 #include <ostream>
 #include <string>
+#include <exception>
+#include <vector>
 #include "halang.h"
 #include "string.h"
-
 
 namespace halang
 {
 	/*
 	Object:
-
 		 - Immutable Object
 			- small int
 			- double
@@ -19,17 +19,15 @@ namespace halang
 				- Imutable String		// for string constang, string splice and so on
 				- Big Integer
 
-		- Mutable Object				// GC Object
+		- GC Object
 			- CodePack
-			- Function
-			- HashMap
-				- GenericObject
+			- Map // an hash map
+				- General Object
+					- Class				// to generate general object
 					- Array
-					- Class
-
-			- Mutable String			// for string to edit
-				- String
-				- pointer to Immutable String	// from String Pool
+					- HashMap
+					- Function
+					- StringBuilder
 
 	*/
 
@@ -37,8 +35,9 @@ namespace halang
 	V(NUL) \
 	V(GC) \
 	V(UPVALUE) \
-	V(DICT) \
 	V(STRING) \
+	V(MAP) \
+	V(ARRAY) \
 	V(CODE_PACK) \
 	V(FUNCTION) \
 	V(SMALL_INT) \
@@ -46,6 +45,10 @@ namespace halang
 	V(BOOL)
 
 	class Object;
+	class Class;
+	class IString;
+	class Map;
+	class Array;
 
 	class GCObject
 	{
@@ -90,7 +93,7 @@ namespace halang
 		explicit Object(GCObject* _object, TYPE _t) : type(_t) { value.gc = _object; }
 		explicit Object(TSmallInt _int) : type(TYPE::SMALL_INT) { value.si = _int; }
 		explicit Object(TNumber _num) : type(TYPE::NUMBER) { value.number = _num; }
-		explicit Object(TBool _bl) : type(TYPE::BOOL) { value.bl = _bl; }
+		// explicit Object(TBool _bl) : type(TYPE::BOOL) { value.bl = _bl; }
 		// explicit Object(const char *_Str) { value.str = new IString(_Str); }
 		explicit Object(IString _isp) : type(TYPE::STRING) { value.str = new IString(_isp); }
 		Object& operator=(const Object&);
@@ -98,7 +101,8 @@ namespace halang
 
 		inline bool isNul() const { return type == TYPE::NUL; }
 		inline bool isGCObject() const { return type == TYPE::GC; }
-		inline bool isDict() const { return type == TYPE::DICT; }
+		inline bool isMap() const { return type == TYPE::MAP; }
+		inline bool isArray() const { return type == TYPE::ARRAY; }
 		inline bool isString() const { return type == TYPE::STRING; }
 		inline bool isSmallInt() const { return type == TYPE::SMALL_INT; }
 		inline bool isNumber() const { return type == TYPE::NUMBER; }
@@ -113,11 +117,11 @@ namespace halang
 			}
 		}
 
-		inline void setNull() 
-		{ 
+		inline void setNull()
+		{
 			check_delete_str();
 			value.gc = nullptr;
-			type = TYPE::NUL; 
+			type = TYPE::NUL;
 		}
 
 		inline void setGCObject(GCObject* _obj)
@@ -224,26 +228,136 @@ namespace halang
 	{
 		return Object();
 	}
+}
 
-	class StateObject : public GCObject
+namespace std
+{
+
+	template<>
+	struct hash<halang::Object>
+	{
+
+		std::size_t operator()(const halang::Object& obj) const
+		{
+			switch (obj.type)
+			{
+			case halang::Object::TYPE::STRING:
+			{
+				auto str = reinterpret_cast<halang::IString*>(obj.value.str);
+				return std::hash<halang::IString>()(*str);
+			}
+			case halang::Object::TYPE::SMALL_INT:
+			{
+				auto i = obj.value.si;
+				return std::hash<halang::TSmallInt>()(i);
+			}
+			case halang::Object::TYPE::NUMBER:
+			{
+				auto num = obj.value.number;
+				return std::hash<halang::TNumber>()(num);
+			}
+			default:
+				throw std::runtime_error("You can only calculate hash for ");
+			}
+		}
+	};
+
+}
+
+namespace halang
+{
+
+	/// <summary>
+	/// A map is a base data structure in halang
+	/// it's used inner to be the base of the GeneralObject
+	/// </summary>
+	class Map : public GCObject
 	{
 	public:
-		StateObject() : gc_root(nullptr)
-		{}
-		std::map<std::string, Object> variables;
-		GCObject* gc_root;
 
-		~StateObject()
-		{
-			iteratorRelease(gc_root);
-		}
+		Map();
+		Map(const Map&);
+		Map(const std::unordered_map<Object, Object>&);
+
+		void SetValue(Object, Object);
+		Object GetValue(Object);
+		bool Exists(Object);
+
 	private:
-		void iteratorRelease(GCObject* tree)
-		{
-			if (tree == nullptr) return;
-			iteratorRelease(tree->next);
-			delete tree;
-		}
+
+		std::unordered_map<Object, Object> inner_map;
+
+	};
+
+	/// <summary>
+	/// Generalized Object must have a dict typed prototype
+	/// but generialed obect itself may not be a dict.
+	/// </summary>
+	class IGeneralObject
+	{
+		virtual Map* GetPrototype() = 0;
+		virtual void SetPrototype(Map*) = 0;
+	};
+
+	/// <summary>
+	/// A general obect is base on the Map
+	/// </summary>
+	class GeneralObject :
+		public IGeneralObject, public Map
+	{
+	public:
+		
+
+		GeneralObject();
+		GeneralObject(const GeneralObject& _obj);
+
+		virtual Map* GetPrototype() override;
+		virtual void SetPrototype(Map* pt) override;
+
+	};
+
+	class StackVM;
+
+	/// <summary>
+	/// An array support bellow operation;
+	///		- GetLength
+	///		- At
+	///		- Push
+	///		- SetValue
+	///		- GetValue
+	///		- Pop
+	///		- RemoveAt
+	///	
+	///	This version of Array is implemented by the std::vector
+	/// </summary>
+	class Array : 
+		public IGeneralObject, public Map, private std::vector<Object>
+	{
+	public:
+
+		static Array* Concat(StackVM* vm, Array* a, Array* b);
+		static Array* Slice(StackVM* vm, Array*, 
+			std::size_t begin, std::size_t end);
+
+		Array():
+			_proto(nullptr)
+		{}
+
+		inline std::size_t GetLength() { return this->size(); }
+		inline Object At(std::size_t index) { return this->operator[](index); }
+
+		void Push(Object obj);
+		void SetValue(std::size_t index, Object);
+		Object Pop();
+		void RemoveAt(std::size_t);
+
+		virtual Map* GetPrototype() override { return _proto; }
+		virtual void SetPrototype(Map* pt) override { _proto = reinterpret_cast<GeneralObject*>(pt); }
+
+	private:
+
+		GeneralObject* _proto;
+
 	};
 
 }

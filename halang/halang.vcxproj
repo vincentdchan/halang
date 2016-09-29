@@ -150,10 +150,7 @@
     <ClInclude Include="codegen.h" />
     <ClInclude Include="function.h" />
     <ClInclude Include="functions.h" />
-    <ClInclude Include="GernericObjcet.h" />
     <ClInclude Include="halang.h" />
-    <ClInclude Include="array.h" />
-    <ClInclude Include="Dict.h" />
     <ClInclude Include="table.h" />
     <ClInclude Include="lex.h" />
     <ClInclude Include="object.h" />
@@ -174,9 +171,7 @@
     <ClCompile Include="ast.cpp" />
     <ClCompile Include="codegen.cpp" />
     <ClCompile Include="halang.cpp" />
-    <ClCompile Include="Dict.cpp" />
     <ClCompile Include="lex.cpp" />
-    <ClCompile Include="array.cpp" />
     <ClCompile Include="object.cpp" />
     <ClCompile Include="parser.cpp" />
     <ClCompile Include="stdafx.cpp" />

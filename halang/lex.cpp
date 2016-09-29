@@ -62,6 +62,9 @@ namespace halang
 			case '!':
 				PUSH_TOKEN(NOT);
 				++iter; break;
+			case '@':
+				PUSH_TOKEN(AT);
+				++iter; break;
 			case '.':
 				PUSH_TOKEN(DOT);
 				++iter; break;
@@ -208,55 +211,62 @@ namespace halang
 		// check reserved
 		switch (buffer[iter])
 		{
-			case 'v': //  var
-				if (match = swallow("var"))
-				{
-					loc.length = 3;
-					PUSH_TOKEN(VAR);
-				}
-				break;
-			case 'i': // if
-				if (match = swallow("if"))
-				{
-					loc.length = 2;
-					PUSH_TOKEN(IF);
-				}
-				break;
-			case 'e': // else
-				if (match = swallow("else"))
-				{
-					loc.length = 4;
-					PUSH_TOKEN(ELSE);
-				}
-				break;
-			case 'w': // while
-				if (match = swallow("while"))
-				{
-					loc.length = 5;
-					PUSH_TOKEN(WHILE);
-				}
-				break;
-			case 'f': // func
-				if (match = swallow("func"))
-				{
-					loc.length = 4;
-					PUSH_TOKEN(FUNC);
-				}
-				break;
-			case 'r': // return
-				if (match = swallow("return"))
-				{
-					loc.length = 6;
-					PUSH_TOKEN(RETURN);
-				}
-				break;
-			case 'p': //print
-				if (match = swallow("print"))
-				{
-					loc.length = 5;
-					PUSH_TOKEN(PRINT);
-				}
-				break;
+		case 'c':
+			if (match == swallow("class"))
+			{
+				loc.length = 5;
+				PUSH_TOKEN(CLASS);
+			}
+			break;
+		case 'v': //  var
+			if (match = swallow("var"))
+			{
+				loc.length = 3;
+				PUSH_TOKEN(VAR);
+			}
+			break;
+		case 'i': // if
+			if (match = swallow("if"))
+			{
+				loc.length = 2;
+				PUSH_TOKEN(IF);
+			}
+			break;
+		case 'e': // else
+			if (match = swallow("else"))
+			{
+				loc.length = 4;
+				PUSH_TOKEN(ELSE);
+			}
+			break;
+		case 'w': // while
+			if (match = swallow("while"))
+			{
+				loc.length = 5;
+				PUSH_TOKEN(WHILE);
+			}
+			break;
+		case 'f': // func
+			if (match = swallow("func"))
+			{
+				loc.length = 4;
+				PUSH_TOKEN(FUNC);
+			}
+			break;
+		case 'r': // return
+			if (match = swallow("return"))
+			{
+				loc.length = 6;
+				PUSH_TOKEN(RETURN);
+			}
+			break;
+		case 'p': //print
+			if (match = swallow("print"))
+			{
+				loc.length = 5;
+				PUSH_TOKEN(PRINT);
+			}
+			break;
 		}
 		if (!match)
 			match = scanIdentifier();

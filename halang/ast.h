@@ -25,6 +25,7 @@ namespace halang
 	V(BreakStmt) \
 	V(ReturnStmt) \
 	V(PrintStmt) \
+	V(ClassDef) \
 	V(FuncDef) \
 	V(FuncDefParam)\
 	V(FuncCall) \
@@ -66,6 +67,7 @@ namespace halang
 		virtual WhileStmtNode* asWhileStmt() { return nullptr; }
 		virtual BreakStmtNode* asBreakStmt() { return nullptr; }
 		virtual ReturnStmtNode* asReturnStmt() { return nullptr; }
+		virtual ClassDefNode* asClassDef() { return nullptr; }
 		virtual FuncDefNode* asFuncDef() { return nullptr; }
 		virtual FuncDefParamNode* asFuncDefParam() { return nullptr; }
 		virtual FuncCallNode* asFuncCall() { return nullptr; }
@@ -318,6 +320,21 @@ namespace halang
 		{}
 		virtual ReturnStmtNode* asReturnStmt() override { return this; }
 		Node* expression;
+
+		VISIT_OVERRIDE
+	};
+
+	class ClassDefNode : public Node
+	{
+	public:
+		ClassDefNode(IdentifierNode* _name = nullptr, IdentifierNode* _ed = nullptr) :
+			name(_name), extendName(_ed)
+		{}
+
+		virtual ClassDefNode* asClassDef() override { return this; }
+		IdentifierNode* name;
+		IdentifierNode* extendName;
+		std::vector<Node*> members;
 
 		VISIT_OVERRIDE
 	};

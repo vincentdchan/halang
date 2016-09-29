@@ -323,6 +323,11 @@ namespace halang
 			cp->instructions.push_back(Instruction(VM_CODE::RETURN, 0));
 	}
 
+	void CodeGen::visit(ClassDefNode* _node)
+	{
+
+	}
+
 	void CodeGen::visit(FuncDefNode* _node)
 	{
 		auto cp = top_cp;
