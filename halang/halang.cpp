@@ -16,6 +16,10 @@
 #include "codegen.h"
 #include "util.h"
 
+const char* VERSION_INFO =
+"Halang interpreter developint version\n"
+"v - 0.1.0\n";
+
 const char* DEFAULT_FILENAME = "source.txt";
 
 #define CHECK_ERROR(MC) do { \
@@ -47,11 +51,23 @@ int main(int argc, char** argv)
 
 	nvm = new StackVM();
 
-	char *filename;
+	string filename;
 	if (argc > 1)
-		filename = argv[1];
+	{
+		std::string arg1(argv[1]);
+		if (arg1 == "-v")
+		{
+			std::cout << VERSION_INFO;
+			return 0;
+		}
+		else
+			filename = arg1;
+	}
 	else
-		filename = const_cast<char*>(DEFAULT_FILENAME);
+	{
+		std::cout << VERSION_INFO;
+		return 0;
+	}
 
 	fstream fs;
 	fs.open(filename, fstream::in);
