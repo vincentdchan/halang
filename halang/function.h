@@ -2,6 +2,7 @@
 #include <vector>
 #include <map>
 #include <functional>
+#include <memory>
 #include "svm.h"
 #include "string.h"
 #include "object.h"
@@ -11,13 +12,16 @@
 namespace halang
 {
 
-	//
-	// A codepack is a package of codes
-	//
-	// Including :
-	//		instruction bytes
-	//		variables names to the id
-	//
+	/// <summary>
+	/// A codepack is a package of codes
+	///
+	/// Including :
+	///		instruction bytes
+	///		variables names to the id
+	///
+	/// CodePack store the envrionment.
+	///
+	/// </summary>
 	class CodePack : public GCObject
 	{
 	public:
@@ -103,36 +107,85 @@ namespace halang
 
 	class Isolate
 	{
-
-	};
-
-	template<class _ObjectType>
-	class Local final
-	{
-	};
-
-	template<>
-	class Local<IString> final
-	{
 	public:
-		static Local<IString> New(Isolate*, const IString);
-		static Local<IString> New(Isolate*, const std::string&);
+		Isolate() :
+			codepack(nullptr)
+		{}
+
+		template<typename _Type>
+		struct Constructor : std::false_type
+		{};
+
+		template<>
+		struct Constructor<TNumber>
+		{
+			Object operator()(Isolate* iso, TNumber num)
+			{
+				return Object(num);
+			}
+		};
+
+		template<>
+		struct Constructor<TSmallInt>
+		{
+			Object operator()(Isolate* iso, TSmallInt si)
+			{
+				return Object(si);
+			}
+		};
+
+		template<>
+		struct Constructor<IString>
+		{
+			Object operator()(Isolate*)
+			{
+				return Object(IString());
+			}
+
+			Object operator()(Isolate*, const IString& _str)
+			{
+				return Object(IString(_str));
+			}
+		};
+
+		template<>
+		struct Constructor<Map>
+		{
+			Object operator()(Isolate* iso)
+			{
+				auto _map = iso->vm->make_gcobject<Map>();
+			}
+		};
+
+		template<>
+		struct Constructor<Array>
+		{
+			Object operator()(Isolate* iso)
+			{
+				auto arr = iso->vm->make_gcobject<Array>();
+				return Object(arr, Object::TYPE::ARRAY);
+			}
+
+			Object operator()(Isolate* iso, Object arr)
+			{
+				Array* _arr = iso->vm->make_gcobject<Array>(*reinterpret_cast<Array*>(arr.value.gc));
+				return Object(_arr, Object::TYPE::ARRAY);
+			}
+
+		};
+
+		template<typename _Ty, typename... _Types> 
+		inline Object New(_Types&&... _Args)
+		{	
+			Constructor<_Ty> con;
+			return (con(this, std::forward<_Types>(_Args)...));
+		}
+
+		inline StackVM* GetVM() const { return vm; }
 
 	private:
-		Local();
-
-	};
-
-	template<>
-	class Local<TSmallInt> final
-	{
-
-	};
-
-	template<>
-	class Local<TNumber> final
-	{
-
+		CodePack* codepack;
+		StackVM* vm;
 	};
 
 	class FunctionCallbackInfo : GCObject
@@ -143,14 +196,19 @@ namespace halang
 			isolate(iso)
 		{}
 
-		Local<Object>& operator[](std::size_t index)
+		inline Object& operator[](std::size_t index)
 		{
 			return arguments[index];
 		}
 
-		inline Local<Object>& GetReturnObject()
+		inline Object& GetReturnObject()
 		{
 			return returnObject;
+		}
+
+		inline void SetReturnObject(Object obj)
+		{
+			returnObject = obj;
 		}
 
 		inline Isolate* GetIsolate()
@@ -161,8 +219,8 @@ namespace halang
 	private:
 
 		Isolate* isolate;
-		std::vector<Local<Object> > arguments;
-		Local<Object> returnObject;
+		std::vector<Object> arguments;
+		Object returnObject;
 
 	};
 
@@ -183,6 +241,9 @@ namespace halang
 		friend struct Environment;
 		friend class StackVM;
 
+		inline Object getThisObject() const { return thisObject; }
+		inline void setThisObject(Object _obj) { thisObject = _obj; }
+
 		void close()
 		{
 			for (auto i = upvalues.begin(); i != upvalues.end(); ++i)
@@ -195,6 +256,7 @@ namespace halang
 
 		CodePack* codepack;
 		ExternFunction *externFunction;
+		Object thisObject;
 
 		unsigned int paramsSize;
 		std::vector<UpValue*> upvalues;

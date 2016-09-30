@@ -50,6 +50,8 @@ namespace halang
 	class Map;
 	class Array;
 
+	class Isolate;
+
 	class GCObject
 	{
 	public:
@@ -157,6 +159,12 @@ namespace halang
 			check_delete_str();
 			value.bl = _bl;
 			type = TYPE::BOOL;
+		}
+
+		template<typename _Ty>
+		static _Ty* PtCast(Object obj)
+		{
+			return reinterpret_cast<*_Ty>(obj.value.gc);
 		}
 
 #define GETVALUE(OBJ) (OBJ.isSmallInt() ? OBJ.value.si : toNumber(OBJ))
@@ -344,7 +352,12 @@ namespace halang
 		{}
 
 		inline std::size_t GetLength() { return this->size(); }
-		inline Object At(std::size_t index) { return this->operator[](index); }
+		inline Object At(std::size_t index) const { return std::vector<Object>::operator[](index); }
+
+		Object operator[](std::size_t index) const
+		{
+			return std::vector<Object>::operator[](index);
+		}
 
 		void Push(Object obj);
 		void SetValue(std::size_t index, Object);
@@ -359,5 +372,229 @@ namespace halang
 		GeneralObject* _proto;
 
 	};
+
+	template<class _ObjectType>
+	class Local : std::false_type
+	{
+		Object toObject();
+		Isolate* isolte;
+	};
+
+	template<>
+	class Local<Object> final : public Object
+	{ 
+	public:
+		Local(): Object()
+		{}
+		Local(const Object& obj):
+			Object(obj)
+		{}
+
+		inline Object toObject() { return *this; }
+
+		inline Local<TNumber> asNumber();
+		inline Local<TSmallInt> asSmallInt();
+		inline Local<Array> asArray();
+		inline Local<Map> asMap();
+	private:
+		Isolate* isolate;
+	};
+
+	template<>
+	class Local<TNumber>
+	{
+	private:
+		TNumber number;
+	public:
+
+		Local(TNumber _num) :
+			number(_num)
+		{ }
+
+		Local(Object _obj) 
+		{
+			if (_obj.type != Object::TYPE::NUMBER)
+				throw std::runtime_error("local type create error.");
+			number = _obj.value.number;
+		}
+
+		inline Local<TNumber> operator+(Local<TNumber> obj) const
+		{
+			return Local<TNumber>(number + obj.number);
+		}
+
+		inline Local<TNumber> operator-(Local<TNumber> obj) const
+		{
+			return Local<TNumber>(number - obj.number);
+		}
+
+		inline Local<TNumber> operator*(Local<TNumber> obj) const
+		{
+			return Local<TNumber>(number * obj.number);
+		}
+
+		inline Local<TNumber> operator/(Local<TNumber> obj) const
+		{
+			return Local<TNumber>(number / obj.number);
+		}
+
+		inline Local<TNumber> operator=(const Local<TNumber>& obj)
+		{
+			number = obj.number;
+		}
+
+		inline bool operator==(const Local<TNumber>& obj) const
+		{
+			number == obj.number;
+		}
+
+		inline Object toObject()
+		{
+			return Object(number);
+		}
+
+	};
+
+	template<>
+	class Local<TSmallInt>
+	{
+	private:
+
+		TSmallInt si;
+
+	public:
+
+		Local(TSmallInt num) :
+			si(num)
+		{ }
+
+		Local(Object _obj) 
+		{
+			if (_obj.type != Object::TYPE::SMALL_INT)
+				throw std::runtime_error("local type create error.");
+			si = _obj.value.si;
+		}
+
+		inline Object toObject()
+		{
+			return Object(si);
+		}
+
+		inline Local<TSmallInt> operator+(Local<TSmallInt> obj) const
+		{
+			return Local<TSmallInt>(si + obj.si);
+		}
+
+		inline Local<TSmallInt> operator-(Local<TSmallInt> obj) const
+		{
+			return Local<TSmallInt>(si - obj.si);
+		}
+
+		inline Local<TSmallInt> operator*(Local<TSmallInt> obj) const
+		{
+			return Local<TSmallInt>(si * obj.si);
+		}
+
+		inline Local<TSmallInt> operator/(Local<TSmallInt> obj) const
+		{
+			return Local<TSmallInt>(si / obj.si);
+		}
+
+		inline Local<TSmallInt> operator=(const Local<TSmallInt>& obj)
+		{
+			si = obj.si;
+		}
+
+		inline bool operator==(const Local<TSmallInt>& obj) const
+		{
+			si == obj.si;
+		}
+
+	};
+
+	template<>
+	class Local<Array>
+	{
+	private:
+
+		Array* _array;
+		Isolate* isolate;
+
+	public:
+
+		Local(Isolate* iso, Array* arr): 
+			isolate(iso), _array(arr)
+		{}
+		Local(Isolate* iso, Object _obj) :
+			isolate(iso)
+		{
+			if (!_obj.isArray())
+				throw std::runtime_error("cannot bind local array to object");
+			_array = reinterpret_cast<Array*>(_obj.value.gc);
+		}
+		Local(const Local<Array>& _arr):
+			_array(_arr._array), isolate(_arr.isolate)
+		{}
+
+		inline Object toObject()
+		{
+			return Object(_array, Object::TYPE::ARRAY);
+		}
+
+		Local<Object> operator[](std::size_t index) const
+		{
+			return Local<Object>((*_array)[index]);
+		}
+
+		template<typename _Ty>
+		inline void Push(Local<_Ty> obj)
+		{
+			this->_array->Push(obj.toObject());
+		}
+
+		inline Local<Object> Pop()
+		{
+			return Local<Object>(_array->Pop());
+		}
+
+	};
+
+	template<>
+	class Local<Map>
+	{
+	private:
+		Map *map;
+		Isolate *isolate;
+	public:
+		Local(Isolate* iso, Map* _map):
+			isolate(iso), map(_map)
+		{}
+
+		Object toObject()
+		{
+			return Object(map, Object::TYPE::MAP);
+		}
+
+	};
+
+	Local<TNumber> Local<Object>::asNumber()
+	{
+		return Local<TNumber>(this->value.number);
+	}
+
+	Local<TSmallInt> Local<Object>::asSmallInt()
+	{
+		return Local<TSmallInt>(this->value.si);
+	}
+
+	Local<Array> Local<Object>::asArray()
+	{
+		return Local<Array>(this->isolate, reinterpret_cast<Array*>(this->value.gc));
+	}
+
+	Local<Map> Local<Object>::asMap()
+	{
+		return Local<Map>(this->isolate, reinterpret_cast<Map*>(this->value.gc));
+	}
 
 }
