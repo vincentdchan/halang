@@ -9,6 +9,7 @@ namespace halang
 	typedef double TNumber;
 	typedef int TSmallInt;
 	typedef bool TBool;
+	typedef std::uint16_t TChar;
 
 #define OPERATOR_LIST(V) \
 	V(ADD, "+", 10) \

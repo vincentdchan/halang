@@ -2,8 +2,10 @@
 #include <ostream>
 #include <functional>
 #include <vector>
+#include <cinttypes>
 #include "halang.h"
 #include "object.h"
+#include "context.h"
 
 namespace halang
 {
@@ -17,16 +19,20 @@ namespace halang
 		unsigned int stringType : 2;
 
 	public:
+		
+		typedef std::uint32_t size_type;
+		typedef std::uint32_t hash_type;
+
 		static String* Concat(const String&, const String&);
 		static String* Slice(const String&, unsigned int begin, unsigned int end);
 
 		virtual Object* GetPrototype() const override { return nullptr; }
 
-		virtual unsigned int Getlength() const = 0;
-		virtual unsigned int GetHash() const = 0;
-		virtual char16_t CharAt(unsigned int) const = 0;
+		virtual size_type GetLength() const = 0;
+		virtual hash_type GetHash() const = 0;
+		virtual TChar CharAt(unsigned int) const = 0;
 
-		virtual bool operator==(const String& _Str) const = 0;
+		virtual void Mark() override {}
 
 		inline bool isSimpleString() const { return stringType == 0; }
 		inline bool isRopeString() const { return stringType == 1; }
@@ -41,47 +47,177 @@ namespace halang
 
 	class SimpleString : String
 	{
+	private:
+
+		static size_type TCharLen(const TChar* str)
+		{
+			size_type size = 0;
+			while (str++ != 0) size++;
+			return size;
+		}
+		
 	public:
 
-		virtual unsigned int GetLength() const
+		virtual unsigned int GetLength() const override
 		{
 			return length;
 		}
 
-		virtual unsigned int GetHash() const
+		virtual unsigned int GetHash() const override
 		{
 			return hash;
 		}
 
+		virtual void Mark() override
+		{
+			GC::SetMark(v_array);
+		}
+
+	protected:
+
+		SimpleString(const TChar* str)
+		{
+			auto alloc_size = TCharLen(str);
+			v_array = Context::GetGc()->NewTChar(alloc_size + 1);
+			for (unsigned int i = 0; i < alloc_size; ++i)
+				v_array[i] = str[i];
+			length = alloc_size;
+
+			hash = 5381;
+			TChar c = 0;
+
+			while ((c = *v_array++))
+				hash = ((hash << 5) + hash) + c;
+
+		}
+
 	private:
-		char16_t* array;
-		unsigned int hash;
-		unsigned int length;
-		unsigned int capacity;
+
+		TChar* v_array;
+		hash_type hash;
+		size_type length;
+		size_type capacity;
 	};
 
-	class RopeString
+	class ConsString : String
 	{
+	protected:
 
-	};
+		ConsString() :
+			p_hash(nullptr), p_length(nullptr)
+		{}
 
-	class SliceString
-	{
 	public:
 
-		virtual unsigned int Getlength() const
+		virtual size_type GetLength() const override
+		{
+			if (p_length != nullptr)
+				return *p_length;
+			else
+			{
+				auto m_this = const_cast<ConsString*>(this);
+				m_this->p_length = Context::GetGc()->NewUInt32(0);
+
+				if (left != nullptr)
+					*(m_this->p_length) += left->GetLength();
+				if (right != nullptr)
+					*(m_this->p_length) += right->GetLength();
+
+				return *(m_this->p_length);
+			}
+		}
+
+		virtual TChar CharAt(unsigned int index) const override
+		{
+			if (index < GetLength())
+				throw std::runtime_error("Index out of range.");
+
+			if (left == nullptr)
+				return right->CharAt(index);
+			else
+			{
+				if (index >= left->GetLength())
+					return right->CharAt(index - left->GetHash());
+				else
+					return left->CharAt(index);
+			}
+		}
+
+		virtual hash_type GetHash() const override
+		{
+			if (p_hash != nullptr)
+				return *p_hash;
+			{
+				auto m_this = const_cast<ConsString*>(this);
+				m_this->p_hash = Context::GetGc()->NewUInt32(5381);
+
+				for (unsigned int i = 0; i < GetLength(); ++i)
+				{
+					*(m_this->p_hash) = (*(m_this->p_hash) << 5) + *(m_this->p_hash) + CharAt(i);
+				}
+
+				return *m_this->p_hash;
+			}
+
+		}
+
+		virtual void Mark() override
+		{
+			if (left != nullptr)
+				GC::SetMark(left);
+			if (right != nullptr)
+				GC::SetMark(right);
+			if (p_hash != nullptr)
+				GC::SetMark(p_hash);
+			if (p_length != nullptr)
+				GC::SetMark(p_length);
+		}
+
+
+	private:
+
+		String* left;
+		String* right;
+
+		hash_type * p_hash;
+		size_type * p_length;
+
+	};
+
+	class SliceString : String
+	{
+
+	public:
+
+		virtual unsigned int GetLength() const override
 		{
 			return end - begin;
 		}
 
-		virtual unsigned int GetHash() const
+		virtual unsigned int GetHash() const override
 		{
 			return hash;
 		}
 
-		virtual char16_t CharAt(unsigned int index) const
+		virtual TChar CharAt(unsigned int index) const override
 		{
 			return source->CharAt(this->begin + index);
+		}
+
+	protected:
+
+		SliceString(String * _src, 
+			unsigned int _begin, unsigned int _end) :
+			source(_src), begin(_begin), end(_end)
+		{
+
+			hash = 5381;
+			int c = 0;
+
+			auto len = GetLength();
+			for (unsigned int i = 0; i < len; ++i)
+				hash = ((hash << 5) + hash) + CharAt(i);
+
 		}
 
 	private:
@@ -91,66 +227,16 @@ namespace halang
 		unsigned int end;
 	};
 
-	class IString // ImmutableString
-	{
-	public:
-		static unsigned int calculateHash(const char*);
-
-		IString();
-		IString(const char*);
-		IString(const IString&);
-		IString(IString&&);
-		IString(const std::string&);
-		IString& operator=(IString _is);
-
-		IString operator+(IString _is) const;
-		IString operator+(const char*) const;
-
-		struct ReferData;
-		std::string getStdString() const;
-		inline unsigned int getHash() const { return _hash; }
-		inline unsigned int getLength() const { return _length; }
-		const char * c_str() { return _str; }
-
-		friend class String;
-		friend bool operator==(const IString& _s1, const IString& _s2);
-		friend std::ostream& operator<<(std::ostream&, const IString& _Str);
-		~IString();
-	private:
-		ReferData* _ref_data;
-		char* _str;
-		unsigned int _hash;
-		unsigned int _length;
-	};
-
-	struct IString::ReferData
-	{
-		ReferData(unsigned int _cnt = 1) : count(_cnt)
-		{}
-		unsigned int count;
-	};
-
-	inline std::ostream& operator<<(std::ostream& _ost, const IString& _Str)
-	{
-		_ost << _Str._str;
-		return _ost;
-	}
-
-	inline bool operator==(const IString& _s1, const IString& _s2)
-	{
-		return (_s1._length == _s2._length) && (_s1._hash == _s2._hash);
-	}
-
 };
 
 namespace std
 {
 	template<>
-	struct hash<halang::IString>
+	struct hash<halang::String>
 	{
-		unsigned int operator()(halang::IString _Str)
+		unsigned int operator()(const halang::String& _Str)
 		{
-			return _Str.getHash();
+			return _Str.GetHash();
 		}
 	};
 };

@@ -57,6 +57,7 @@ namespace halang
 		Object() : typeId(TypeId::Null), typeFlag(TypeFlag::Normal) { }
 
 		virtual Object* GetPrototype() const = 0;
+		virtual void Mark() {}
 
 		inline bool isNul() const { return typeId == TypeId::Null; }
 		inline bool isGCObject() const { return typeId >= TypeId::GCObject; }
