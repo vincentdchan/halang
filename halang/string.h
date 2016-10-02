@@ -3,9 +3,93 @@
 #include <functional>
 #include <vector>
 #include "halang.h"
+#include "object.h"
 
 namespace halang
 {
+
+	class String : Object
+	{
+	protected:
+		// 00 for simple string
+		// 01 for rope string
+		// 10 for slice string
+		unsigned int stringType : 2;
+
+	public:
+		static String* Concat(const String&, const String&);
+		static String* Slice(const String&, unsigned int begin, unsigned int end);
+
+		virtual Object* GetPrototype() const override { return nullptr; }
+
+		virtual unsigned int Getlength() const = 0;
+		virtual unsigned int GetHash() const = 0;
+		virtual char16_t CharAt(unsigned int) const = 0;
+
+		virtual bool operator==(const String& _Str) const = 0;
+
+		inline bool isSimpleString() const { return stringType == 0; }
+		inline bool isRopeString() const { return stringType == 1; }
+		inline bool isSliceString() const { return stringType == 2; }
+		
+	};
+
+	static bool operator==(const String& str1, const String& str2)
+	{
+		return str1.GetHash() == str2.GetHash();
+	}
+
+	class SimpleString : String
+	{
+	public:
+
+		virtual unsigned int GetLength() const
+		{
+			return length;
+		}
+
+		virtual unsigned int GetHash() const
+		{
+			return hash;
+		}
+
+	private:
+		char16_t* array;
+		unsigned int hash;
+		unsigned int length;
+		unsigned int capacity;
+	};
+
+	class RopeString
+	{
+
+	};
+
+	class SliceString
+	{
+	public:
+
+		virtual unsigned int Getlength() const
+		{
+			return end - begin;
+		}
+
+		virtual unsigned int GetHash() const
+		{
+			return hash;
+		}
+
+		virtual char16_t CharAt(unsigned int index) const
+		{
+			return source->CharAt(this->begin + index);
+		}
+
+	private:
+		String* source;
+		unsigned int hash;
+		unsigned int begin;
+		unsigned int end;
+	};
 
 	class IString // ImmutableString
 	{

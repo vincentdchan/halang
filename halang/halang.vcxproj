@@ -148,8 +148,10 @@
   <ItemGroup>
     <ClInclude Include="ast.h" />
     <ClInclude Include="codegen.h" />
+    <ClInclude Include="context.h" />
     <ClInclude Include="function.h" />
     <ClInclude Include="functions.h" />
+    <ClInclude Include="GC.h" />
     <ClInclude Include="halang.h" />
     <ClInclude Include="table.h" />
     <ClInclude Include="lex.h" />
@@ -163,6 +165,7 @@
     <ClInclude Include="svm_codes.h" />
     <ClInclude Include="targetver.h" />
     <ClInclude Include="token.h" />
+    <ClInclude Include="type.h" />
     <ClInclude Include="upvalue.h" />
     <ClInclude Include="util.h" />
     <ClInclude Include="visitor.h" />
