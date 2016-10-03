@@ -5,12 +5,13 @@
 #include <cinttypes>
 #include "halang.h"
 #include "object.h"
+#include "type.h"
 #include "context.h"
 
 namespace halang
 {
 
-	class String : Object
+	class String : public Object
 	{
 	protected:
 		// 00 for simple string
@@ -18,13 +19,31 @@ namespace halang
 		// 10 for slice string
 		unsigned int stringType : 2;
 
+		String() 
+		{
+			typeId = TypeId::String;
+		}
+
 	public:
+
+		friend class GC;
+
+		String* FromU16String(const std::u16string&);
+
+		// From UTF-8 Multi-Bytes format to UTF-16 
+		String* FromCStr(const char*);
+		String* FromStdString(const std::string&);
 		
 		typedef std::uint32_t size_type;
 		typedef std::uint32_t hash_type;
 
 		static String* Concat(const String&, const String&);
 		static String* Slice(const String&, unsigned int begin, unsigned int end);
+		static String* Cast(Object * obj)
+		{
+			return reinterpret_cast<String*>(obj);
+		}
+
 
 		virtual Object* GetPrototype() const override { return nullptr; }
 
@@ -45,7 +64,7 @@ namespace halang
 		return str1.GetHash() == str2.GetHash();
 	}
 
-	class SimpleString : String
+	class SimpleString : public String
 	{
 	private:
 
@@ -57,6 +76,8 @@ namespace halang
 		}
 		
 	public:
+
+		friend class GC;
 
 		virtual unsigned int GetLength() const override
 		{
@@ -99,7 +120,7 @@ namespace halang
 		size_type capacity;
 	};
 
-	class ConsString : String
+	class ConsString : public String
 	{
 	protected:
 

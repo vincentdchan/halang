@@ -84,15 +84,18 @@
     <ClInclude Include="context.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="Array.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Dict.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="codegen.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="lex.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="object.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="parser.cpp">
@@ -117,6 +120,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="GC.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Dict.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

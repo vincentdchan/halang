@@ -10,14 +10,12 @@ namespace halang
 	// **********************************************
 	// **********************************************
 
-	Object* GC::NewObject()
+	Object** GC::NewObjectPointerArray(size_type _size)
 	{
-		return NewObjectArray(1);
-	}
-
-	Object* GC::NewObjectArray(size_type _size)
-	{
-		return reinterpret_cast<Object*>(Alloc(_size * sizeof(Object*)));
+		size_type total_size = _size * sizeof(Object*);
+		auto ptr = reinterpret_cast<Object**>(Alloc(total_size));
+		memset(ptr, 0, total_size);
+		return ptr;
 	}
 
 	SmallInt* GC::NewSmallInt(int v)
@@ -70,21 +68,55 @@ namespace halang
 		slice->_mark = 0;
 	}
 
-	void* GC::Alloc(unsigned int size)
+	void GC::SweepYoung()
+	{
+
+		for (auto i = old_ptrs.begin();
+			i != old_ptrs.end(); )
+		{
+			if (WhiteMarked(i->first))
+			{
+				Dealloc(i->first, i->second);
+				i = old_ptrs.erase(i);
+			}
+			else
+				i++;
+		}
+
+	}
+
+	void GC::SweepAll()
+	{
+		SweepYoung();
+		for (auto i = old_ptrs.begin();
+			i != old_ptrs.end(); )
+		{
+			if (WhiteMarked(i->first))
+			{
+				Dealloc(i->first, i->second);
+				i = old_ptrs.erase(i);
+			}
+			else
+				i++;
+		}
+	}
+
+	void* GC::Alloc(size_type size)
 	{
 		auto total_size = sizeof(MemorySlice) + size;
 
 		
-		auto ptr = reinterpret_cast<MemorySlice*>(malloc(sizeof(MemorySlice) + size));
-		ptr->_mark = 0;
-		ptr->_generation = 0;
-		ptr->_gc_obj_type = 0;
+		auto ptr = reinterpret_cast<MemorySlice*>(std::malloc(sizeof(MemorySlice) + size));
 
 		if (ptr != nullptr)
 		{
+			ptr->_mark = 0;
+			ptr->_generation = 0;
+			ptr->_gc_obj_type = 0;
+
 			young_space_size += total_size;
 			young_ptrs.push_back(std::make_pair(ptr, total_size));
-			return reinterpret_cast<void*>(ptr + sizeof(MemorySlice));
+			return reinterpret_cast<void*>(ptr->that);
 		}
 		else
 			throw std::runtime_error("memory out.");
@@ -95,6 +127,21 @@ namespace halang
 		auto ms = MemorySlice::FromPtr(ptr);
 		free(ms);
 		young_space_size -= size;
+	}
+
+	GC::GC()
+	{
+		Context::gc = this;
+	}
+
+
+	GC::~GC()
+	{
+		for (auto i = young_ptrs.begin(); i != young_ptrs.end(); ++i)
+			Dealloc(i->first, i->second);
+		for (auto i = old_ptrs.begin(); i != young_ptrs.end(); ++i)
+			Dealloc(i->first, i->second);
+		Context::gc = nullptr;
 	}
 
 }

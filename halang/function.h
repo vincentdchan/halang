@@ -22,19 +22,21 @@ namespace halang
 	/// CodePack store the envrionment.
 	///
 	/// </summary>
-	class CodePack : public GCObject
+	class CodePack : public Object
 	{
 	public:
 		CodePack() :
 			prev(nullptr), param_size(0), isGlobal(false)
-		{}
+		{
+			typeId = TypeId::CodePack;
+		}
 
 		/// <summary>
 		/// Find the id in the var tables and
 		/// return id of variable in table, return 0 if id is not found.
 		/// </summary>
 		/// <returns>return id of variable in table, return 0 if id is not found</returns>
-		int findVarId(IString _name)
+		int findVarId(String * _name)
 		{
 			int _var_size = static_cast<int>(var_names.size());
 			int _up_size = static_cast<int>(upvalue_names.size());
@@ -224,15 +226,44 @@ namespace halang
 
 	};
 
-	typedef std::function<void (const FunctionCallbackInfo&)> ExternFunction;
 
-	class Function : public GCObject
+	class HaFunction : public Object
+	{
+	public:
+		friend class GC;
+
+		class FunctionArgs;
+		class ReturnValue;
+
+		typedef std::function<void (const FunctionCallbackInfo&)> ExternFunction;
+
+		// how to call a hafunction
+		void Call(Object* target, const FunctionArgs&, const ReturnValue&);
+
+	protected:
+		HaFunction();
+
+	private:
+
+		String* name;
+
+		union 
+		{
+			CodePack* cp;
+			ExternFunction* externfun;
+		};
+
+	};
+
+	class Function : public Object
 	{
 	public:
 
 		Function(ExternFunction* fun, unsigned int _ps = 0) :
 			paramsSize(_ps), externFunction(fun), isExtern(true)
-		{}
+		{
+			typeId = TypeId::Function;
+		}
 
 		Function(CodePack* cp, unsigned int _ps = 0) :
 			codepack(cp), paramsSize(_ps), isExtern(false)

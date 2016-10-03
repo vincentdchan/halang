@@ -1,6 +1,5 @@
 #pragma once
-#include "GC.h"
-#include "svm.h"
+#include "object.h"
 
 namespace halang
 {
@@ -12,10 +11,15 @@ namespace halang
 
 		static GC* GetGc() { return gc; }
 		static StackVM* GetVM() { return vm; }
+
+		friend class StackVM;
+		friend class GC;
 		
 	private:
+
 		static GC* gc;
 		static StackVM* vm;
+
 	};
 
 };

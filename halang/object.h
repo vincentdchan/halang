@@ -13,6 +13,10 @@
 // Everything is Object
 // ******************************************
 
+#define DEFINE_CAST(NAME) static NAME* Cast(Object* obj) { \
+	return reinterpret_cast<NAME*>(obj); \
+}
+
 namespace halang
 {
 
@@ -32,30 +36,24 @@ namespace halang
 	class Object;
 	class GCObject;
 	class Class;
-	class IString;
-	class Map;
+	class String;
 	class Array;
+	class Dict;
 
 	class Isolate;
 
-
-	union _Value
-	{
-		GCObject* gc;
-		IString *str;
-		TSmallInt si;		// small int
-		TNumber number;
-		TBool bl;
-	};
-
 	class Object
 	{
-	public:
+	protected:
 		TypeId typeId;
 		TypeFlag typeFlag;
 
+	public:
+
 		Object() : typeId(TypeId::Null), typeFlag(TypeFlag::Normal) { }
 
+		inline TypeId GetTypeId() const { return typeId; }
+		inline TypeFlag GetTypeFlag() const { return typeFlag; }
 		virtual Object* GetPrototype() const = 0;
 		virtual void Mark() {}
 
@@ -83,12 +81,23 @@ namespace halang
 
 		virtual Object* GetPrototype() const override { return nullptr; }
 
+		DEFINE_CAST(SmallInt)
+
 	protected:
+
 		SmallInt(int32_t v) : value(v)
-		{}
+		{
+			typeId = TypeId::SmallInt;
+		}
 
 	private:
-		int32_t value;
+
+		TSmallInt value;
+
+	public:
+
+		inline TSmallInt GetValue() const { return value; }
+
 	};
 
 	class Number : public Object
@@ -98,19 +107,21 @@ namespace halang
 
 		virtual Object* GetPrototype() const override { return nullptr; }
 
+		DEFINE_CAST(Number)
+
 	protected:
-		Number(double num) : value(num) {}
+
+		Number(double num) : value(num) 
+		{
+			typeId = TypeId::Number;
+		}
 
 	private:
-		double value;
-	};
+		TNumber value;
 
-	/// <summary>
-	/// A map is a base data structure in halang
-	/// it's used inner to be the base of the GeneralObject
-	/// </summary>
-	class Map : public Object
-	{
+	public:
+
+		inline TNumber GetValue() const { return value; }
 
 	};
 

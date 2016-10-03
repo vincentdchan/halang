@@ -146,9 +146,11 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="Array.h" />
     <ClInclude Include="ast.h" />
     <ClInclude Include="codegen.h" />
     <ClInclude Include="context.h" />
+    <ClInclude Include="Dict.h" />
     <ClInclude Include="function.h" />
     <ClInclude Include="functions.h" />
     <ClInclude Include="GC.h" />
@@ -173,10 +175,10 @@
   <ItemGroup>
     <ClCompile Include="ast.cpp" />
     <ClCompile Include="codegen.cpp" />
+    <ClCompile Include="Dict.cpp" />
     <ClCompile Include="GC.cpp" />
     <ClCompile Include="halang.cpp" />
     <ClCompile Include="lex.cpp" />
-    <ClCompile Include="object.cpp" />
     <ClCompile Include="parser.cpp" />
     <ClCompile Include="stdafx.cpp" />
     <ClCompile Include="string.cpp" />
