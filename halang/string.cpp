@@ -4,6 +4,7 @@
 #include <locale>
 #include "string.h"
 #include "context.h"
+#include "GC.h"
 
 namespace halang
 {

@@ -1,5 +1,7 @@
 #pragma once
 #include "object.h"
+#include "GC.h"
+#include "svm.h"
 
 namespace halang
 {

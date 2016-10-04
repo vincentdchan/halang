@@ -1,5 +1,7 @@
 #pragma once
+#include "halang.h"
 #include "object.h"
+#include "context.h"
 
 namespace halang
 {
@@ -12,43 +14,60 @@ namespace halang
 	/// After the upvalue is closed, upvalue construct a new
 	/// Object and own it.
 	/// </summary>
-	class UpValue : public GCObject
+	class UpValue : public Object
 	{
+	protected:
+		union
+		{
+			Object *value;
+			Object** refer;
+		};
+
+		bool _closed;
+
+		UpValue()
+		{
+			typeId = TypeId::UpValue;
+		}
+
 	public:
-		UpValue(Object* _re = nullptr) : value(_re), _closed(false)
+		UpValue(Object** _re = nullptr) : refer(_re), _closed(false)
 		{}
 
-		virtual ~UpValue() 
+		inline Object* getVal() const
 		{
-			if (_closed)
-				delete value;
+			if (!_closed)
+				return *refer;
+			else
+				return value;
 		}
 
-		Object getVal() const
+		inline void setVal(Object* _obj)
 		{
-			return *value;
-		}
-
-		void setVal(const Object& _obj)
-		{
-			*value = _obj;
+			if (!_closed)
+				*refer = _obj;
+			else
+				value = _obj;
 		}
 
 		void close()
 		{
 			if (!_closed) 
 			{
-				value = new Object(*value);
+				value = *refer;
 				_closed = true;
 			}
 		}
 
 		inline bool closed() const { return _closed; }
 
-	private:
-
-		Object *value;
-		bool _closed;
+		virtual void Mark() override
+		{
+			if (!_closed)
+				(*refer)->Mark();
+			else
+				value->Mark();
+		}
 
 	};
 

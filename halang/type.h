@@ -10,6 +10,7 @@ namespace halang
 		Bool,
 		SmallInt,
 		Number,
+		ScriptContext,
 		GCObject,
 		UpValue,
 		String,

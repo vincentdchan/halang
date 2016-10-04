@@ -58,7 +58,7 @@ namespace halang
 		virtual void Mark() {}
 
 		inline bool isNul() const { return typeId == TypeId::Null; }
-		inline bool isGCObject() const { return typeId >= TypeId::GCObject; }
+		inline bool isScriptContext() const { return typeId == TypeId::ScriptContext; }
 		inline bool isMap() const { return typeId == TypeId::Map; }
 		inline bool isDict() const { return typeId == TypeId::Dict; }
 		inline bool isArray() const { return typeId == TypeId::Array; }
