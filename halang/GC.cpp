@@ -18,6 +18,14 @@ namespace halang
 		return ptr;
 	}
 
+	Instruction* GC::NewInstructionArray(size_type _size)
+	{
+		size_type total_size = _size * sizeof(Instruction);
+		auto ptr = reinterpret_cast<Instruction*>(Alloc(total_size));
+		memset(ptr, 0, total_size);
+		return ptr;
+	}
+
 	SmallInt* GC::NewSmallInt(int v)
 	{
 		return new(Alloc(sizeof(SmallInt))) SmallInt(v);

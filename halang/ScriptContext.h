@@ -22,6 +22,10 @@ namespace halang
 
 	private:
 
+		Object** constant_table;
+		String** constant_names;
+		size_type constant_len;
+
 		Object** var_table;
 		String** var_names;
 		size_type var_len;
@@ -42,7 +46,7 @@ namespace halang
 	protected:
 
 		ScriptContext(ScriptContext* _prev = nullptr, ScriptContext* _next = nullptr);
-		void initialize(size_type _var_size, size_type _upval_size);
+		void initialize(size_type const_size, size_type _var_size, size_type _upval_size);
 
 		void SetVariable(unsigned int, Object*);
 		void SetUpValue(unsigned int, UpValue*);
@@ -53,6 +57,7 @@ namespace halang
 
 		void Push(Object*);
 		Object* Pop();
+		Object* GetConstant(unsigned int);
 		Object* GetVariable(unsigned int);
 		UpValue* GetUpValue(unsigned int);
 

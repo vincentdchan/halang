@@ -27,15 +27,15 @@ namespace halang
 	public:
 
 		friend class GC;
-
-		String* FromU16String(const std::u16string&);
-
-		// From UTF-8 Multi-Bytes format to UTF-16 
-		String* FromCStr(const char*);
-		String* FromStdString(const std::string&);
 		
 		typedef std::uint32_t size_type;
 		typedef std::uint32_t hash_type;
+
+		static String* FromU16String(const std::u16string&);
+
+		// From UTF-8 Multi-Bytes format to UTF-16 
+		static String* FromCStr(const char*);
+		static String* FromStdString(const std::string&);
 
 		static String* Concat(const String&, const String&);
 		static String* Slice(const String&, unsigned int begin, unsigned int end);

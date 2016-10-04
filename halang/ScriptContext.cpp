@@ -6,8 +6,9 @@ namespace halang
 {
 
 		ScriptContext::ScriptContext(ScriptContext* _prev = nullptr, ScriptContext* _next = nullptr) :
-			prev(_prev), next(_next), var_len(0),
-			var_table(nullptr), var_names(nullptr), stack_base(nullptr),
+			prev(_prev), next(_next),  
+			constant_table(nullptr), constant_names(nullptr), constant_len(0),
+			var_len(0), var_table(nullptr), var_names(nullptr), stack_base(nullptr),
 			upval_table(nullptr), upval_names(nullptr), upval_len(0),
 			stack_ptr(0), frame_ptr(0)
 		{
@@ -16,8 +17,12 @@ namespace halang
 			stack_base = Context::GetGc()->NewObjectPointerArray(STACK_SIZE);
 		}
 
-		void ScriptContext::initialize(size_type _var_size, size_type _upval_size)
+		void ScriptContext::initialize(size_type _const_size, size_type _var_size, size_type _upval_size)
 		{
+			constant_table = Context::GetGc()->NewObjectPointerArray(_const_size);
+			constant_names = reinterpret_cast<String**>(Context::GetGc()->NewObjectPointerArray(_const_size));
+			constant_len = _const_size;
+
 			var_table = Context::GetGc()->NewObjectPointerArray(_var_size);
 			var_names = reinterpret_cast<String**>(Context::GetGc()->NewObjectPointerArray(_var_size));
 			var_len = _var_size;

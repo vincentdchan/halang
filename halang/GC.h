@@ -3,6 +3,7 @@
 #include <cinttypes>
 #include <list>
 #include <memory>
+#include "svm.h"
 #include "object.h"
 #include "string.h"
 #include "context.h"
@@ -72,6 +73,7 @@ namespace halang
 
 		Object* NewNull();
 		Object** NewObjectPointerArray(size_type);
+		Instruction* NewInstructionArray(size_type);
 		SmallInt* NewSmallInt(int v = 0);
 		Number* NewNumber(double num = 0.0);
 		uc32* NewUInt32(uc32 v = 0);
