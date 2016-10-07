@@ -148,8 +148,10 @@
   <ItemGroup>
     <ClInclude Include="ast.h" />
     <ClInclude Include="codegen.h" />
+    <ClInclude Include="context.h" />
     <ClInclude Include="function.h" />
     <ClInclude Include="functions.h" />
+    <ClInclude Include="GC.h" />
     <ClInclude Include="halang.h" />
     <ClInclude Include="table.h" />
     <ClInclude Include="lex.h" />
@@ -170,6 +172,7 @@
   <ItemGroup>
     <ClCompile Include="ast.cpp" />
     <ClCompile Include="codegen.cpp" />
+    <ClCompile Include="GC.cpp" />
     <ClCompile Include="halang.cpp" />
     <ClCompile Include="lex.cpp" />
     <ClCompile Include="object.cpp" />

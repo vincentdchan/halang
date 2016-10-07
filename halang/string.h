@@ -2,71 +2,79 @@
 #include <ostream>
 #include <functional>
 #include <vector>
+#include <cinttypes>
+#include <string>
+#include "object.h"
 #include "halang.h"
 
 namespace halang
 {
 
-	class IString // ImmutableString
+	class String : public GCObject
 	{
 	public:
-		static unsigned int calculateHash(const char*);
 
-		IString();
-		IString(const char*);
-		IString(const IString&);
-		IString(IString&&);
-		IString(const std::string&);
-		IString& operator=(IString _is);
+		static String* FromU16String(const std::u16string&);
+		static String* FromStdString(const std::string&);
+		static String* FromCharArray(const char*);
+		static String* Slice(String*, unsigned int begin, unsigned int end);
+		static String* Concat(String*, String*);
 
-		IString operator+(IString _is) const;
-		IString operator+(const char*) const;
+		virtual Value GetValue() override { return Value(this, TypeId::String); }
+		virtual char16_t CharAt(unsigned int) const = 0;
+		virtual unsigned int GetHash() const = 0;
 
-		struct ReferData;
-		std::string getStdString() const;
-		inline unsigned int getHash() const { return _hash; }
-		inline unsigned int getLength() const { return _length; }
-		const char * c_str() { return _str; }
+	};
 
-		friend class String;
-		friend bool operator==(const IString& _s1, const IString& _s2);
-		friend std::ostream& operator<<(std::ostream&, const IString& _Str);
-		~IString();
+	class SimpleString : 
+		public String, private std::u16string
+	{
 	private:
-		ReferData* _ref_data;
-		char* _str;
+
 		unsigned int _hash;
-		unsigned int _length;
-	};
 
-	struct IString::ReferData
-	{
-		ReferData(unsigned int _cnt = 1) : count(_cnt)
+	protected:
+
+		SimpleString()
+		{
+			_hash = std::hash<std::u16string>()(*this);
+		}
+
+		SimpleString(const std::u16string _str) :
+			u16string(_str)
+		{
+			_hash = std::hash<std::u16string>()(*this);
+		}
+
+		SimpleString(const SimpleString& _str) :
+			u16string(_str), _hash(_str._hash)
 		{}
-		unsigned int count;
+
+	public:
+
+		virtual char16_t CharAt(unsigned int index) const override 
+		{
+			return std::u16string::at(index);
+		}
+
+		virtual unsigned int GetHash() const override
+		{
+			return _hash;
+		}
+
 	};
 
-	inline std::ostream& operator<<(std::ostream& _ost, const IString& _Str)
-	{
-		_ost << _Str._str;
-		return _ost;
-	}
-
-	inline bool operator==(const IString& _s1, const IString& _s2)
-	{
-		return (_s1._length == _s2._length) && (_s1._hash == _s2._hash);
-	}
 
 };
 
 namespace std
 {
 	template<>
-	struct hash<halang::IString>
+	struct hash<halang::String>
 	{
-		unsigned int operator()(halang::IString _Str)
+		unsigned int operator()(const halang::String& _Str)
 		{
-			return _Str.getHash();
+			return _Str.GetHash();
 		}
 	};
 };

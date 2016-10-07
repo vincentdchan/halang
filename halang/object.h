@@ -11,15 +11,14 @@
 namespace halang
 {
 	/*
-	Object:
-		 - Immutable Object
-			- small int
-			- double
-			- Refer Count Object
-				- Imutable String		// for string constang, string splice and so on
-				- Big Integer
+	Value:
+		- null
+		- bool
+		- small int
+		- double
 
 		- GC Object
+			- String
 			- CodePack
 			- Map // an hash map
 				- General Object
@@ -52,12 +51,31 @@ namespace halang
 
 	class Isolate;
 
+	struct Value;
+
 	class GCObject
 	{
 	public:
+
+		friend class GC;
+
+	protected:
+
 		GCObject* next;
 		bool marked;
-		virtual ~GCObject() {};
+
+		virtual Value GetValue() { return Value(); };
+		virtual void Mark() {}
+		virtual ~GCObject() {}
+	};
+
+	enum class TypeId {
+		Null,
+		Bool,
+		SmallInt,
+		Number,
+		GCObject,
+		String,
 	};
 
 	union _Value
@@ -69,211 +87,39 @@ namespace halang
 		TBool bl;
 	};
 
-	/********************************/
-	/*  do not use virtual method   */
-	/*  i don't want to generate a  */
-	/*  v-tables                    */
-	/********************************/
-
-	TNumber toNumber(Object _obj);
-
-	class Object
+	struct Value 
 	{
 	public:
-#define E(NAME) NAME##,
-		enum class TYPE
-		{
-			OBJ_LIST(E)
-		};
-#undef E
+
 		_Value value;
-		TYPE type;
+		TypeId type;
 
-		Object() : type(TYPE::NUL) { value.gc = nullptr; }
-		Object(const Object&);
-		Object(Object&&);
-		explicit Object(GCObject* _object, TYPE _t) : type(_t) { value.gc = _object; }
-		explicit Object(TSmallInt _int) : type(TYPE::SMALL_INT) { value.si = _int; }
-		explicit Object(TNumber _num) : type(TYPE::NUMBER) { value.number = _num; }
-		// explicit Object(TBool _bl) : type(TYPE::BOOL) { value.bl = _bl; }
-		// explicit Object(const char *_Str) { value.str = new IString(_Str); }
-		explicit Object(IString _isp) : type(TYPE::STRING) { value.str = new IString(_isp); }
-		Object& operator=(const Object&);
-		Object& operator=(Object&&);
-
-		inline bool isNul() const { return type == TYPE::NUL; }
-		inline bool isGCObject() const { return type == TYPE::GC; }
-		inline bool isMap() const { return type == TYPE::MAP; }
-		inline bool isArray() const { return type == TYPE::ARRAY; }
-		inline bool isString() const { return type == TYPE::STRING; }
-		inline bool isSmallInt() const { return type == TYPE::SMALL_INT; }
-		inline bool isNumber() const { return type == TYPE::NUMBER; }
-		inline bool isBool() const { return type == TYPE::BOOL; }
-
-		inline void check_delete_str()
-		{
-			if (type == TYPE::STRING)
-			{
-				delete value.str;
-				type = TYPE::NUL;
-			}
-		}
-
-		inline void setNull()
-		{
-			check_delete_str();
+		explicit Value() : type(TypeId::Null) {
 			value.gc = nullptr;
-			type = TYPE::NUL;
 		}
 
-		inline void setGCObject(GCObject* _obj)
-		{
-			check_delete_str();
-			value.gc = _obj;
-			type = TYPE::GC;
+		explicit Value(TSmallInt i) : type(TypeId::SmallInt) {
+			value.si = i;
 		}
 
-		inline void setString(const IString& _str)
-		{
-			check_delete_str();
-			value.str = new IString(_str);
-			type = TYPE::STRING;
+		explicit Value(TNumber n) : type(TypeId::Number) {
+			value.number = n;
 		}
 
-		inline void setNumber(TNumber num)
-		{
-			check_delete_str();
-			value.number = num;
-			type = TYPE::NUMBER;
+		explicit Value(bool n) : type(TypeId::Bool) {
+			value.bl = n;
 		}
 
-		inline void setSmallInt(TSmallInt num)
-		{
-			check_delete_str();
-			value.si = num;
-			type = TYPE::SMALL_INT;
+		explicit Value(GCObject* gc, TypeId t) : type(t) {
+			value.gc = gc;
 		}
 
-		inline void setBool(TBool _bl)
-		{
-			check_delete_str();
-			value.bl = _bl;
-			type = TYPE::BOOL;
-		}
-
-		template<typename _Ty>
-		static _Ty* PtCast(Object obj)
-		{
-			return reinterpret_cast<*_Ty>(obj.value.gc);
-		}
-
-#define GETVALUE(OBJ) (OBJ.isSmallInt() ? OBJ.value.si : toNumber(OBJ))
-		Object applyOperator(OperatorType op, Object that = Object()) const
-		{
-			switch (op)
-			{
-			case OperatorType::NOT:
-				return Object(!static_cast<bool>(*this));
-			case OperatorType::ADD:
-				return Object(GETVALUE((*this)) + GETVALUE(that));
-			case OperatorType::SUB:
-				return Object(GETVALUE((*this)) - GETVALUE(that));
-			case OperatorType::MUL:
-				return Object(GETVALUE((*this)) * GETVALUE(that));
-			case OperatorType::DIV:
-				return Object(GETVALUE((*this)) / GETVALUE(that));
-			case OperatorType::MOD:
-				if (isSmallInt() && that.isSmallInt())
-					return Object(value.si % that.value.si);
-				else if ((isSmallInt() || isNumber()) && (that.isSmallInt() || that.isNumber()))
-					return Object(fmod(toNumber(*this), toNumber(that)));
-				break;
-			case OperatorType::POW:
-				if ((isSmallInt() || isNumber()) && (that.isSmallInt() || that.isNumber()))
-					return Object(pow(toNumber(*this), toNumber(that)));
-				break;
-			case OperatorType::GT:
-				return Object(GETVALUE((*this)) > GETVALUE(that));
-			case OperatorType::LT:
-				return Object(GETVALUE((*this)) < GETVALUE(that));
-			case OperatorType::GTEQ:
-				return Object(GETVALUE((*this)) >= GETVALUE(that));
-			case OperatorType::LTEQ:
-				return Object(GETVALUE((*this)) <= GETVALUE(that));
-			case OperatorType::EQ:
-				return Object(GETVALUE((*this)) == GETVALUE(that));
-			}
-			return Object();
-		}
-
-		operator bool() const
-		{
-			if (isBool())
-				return value.bl;
-			else if (isSmallInt())
-				return value.si != 0;
-			else if (isNumber())
-				return abs(value.number) > 0.0000001;
-			else if (isNul())
-				return false;
-			else
-				return true;
-		}
-
-		~Object()
-		{
-			if (type == TYPE::STRING)
-				delete value.str;
-		}
+		inline bool isNull() const { return type == TypeId::Null; }
+		inline bool isBool() const { return type == TypeId::Bool; }
+		inline bool isSmallInt() const { return type == TypeId::SmallInt; }
+		inline bool isNumber() const { return type == TypeId::Number; }
 
 	};
-
-	static const char* STRUE = "True";
-	static const char* SFALSE = "False";
-	std::ostream& operator<<(std::ostream& _ost, Object _obj);
-
-	inline Object make_null()
-	{
-		return Object();
-	}
-}
-
-namespace std
-{
-
-	template<>
-	struct hash<halang::Object>
-	{
-
-		std::size_t operator()(const halang::Object& obj) const
-		{
-			switch (obj.type)
-			{
-			case halang::Object::TYPE::STRING:
-			{
-				auto str = reinterpret_cast<halang::IString*>(obj.value.str);
-				return std::hash<halang::IString>()(*str);
-			}
-			case halang::Object::TYPE::SMALL_INT:
-			{
-				auto i = obj.value.si;
-				return std::hash<halang::TSmallInt>()(i);
-			}
-			case halang::Object::TYPE::NUMBER:
-			{
-				auto num = obj.value.number;
-				return std::hash<halang::TNumber>()(num);
-			}
-			default:
-				throw std::runtime_error("You can only calculate hash for ");
-			}
-		}
-	};
-
-}
-
-namespace halang
-{
 
 	/// <summary>
 	/// A map is a base data structure in halang
@@ -282,6 +128,10 @@ namespace halang
 	class Map : public GCObject
 	{
 	public:
+
+		friend class GC;
+
+	protected:
 
 		Map();
 		Map(const Map&);
