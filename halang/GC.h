@@ -47,6 +47,9 @@ namespace halang
 
 		void* Alloc(size_type);
 	private:
+
+		Object * default_null;
+
 		void Dealloc(void*, size_type);
 
 
@@ -67,8 +70,21 @@ namespace halang
 		template<class _Ty, class... _Types> 
 		inline _Ty* New(_Types&&... _Args)
 		{	
-			auto space = Alloc(sizeof(MemorySlice) + sizeof(_Ty));
-			return new(space) _Ty(std::forward<_Types>(_Args)...));
+			auto space = reinterpret_cast<_Ty*>(Alloc(sizeof(_Ty)));
+			new(space) _Ty(std::forward<_Types>(_Args)...));
+
+			return space;
+		}
+
+		template<class _Ty, class... _Types> 
+		inline _Ty* NewArray(unsigned int len, _Types&&... _Args)
+		{	
+			auto space = reinterpret_cast<_Ty*>Alloc(sizeof(_Ty) * len);
+
+			for (unsigned int i = 0; i < len; ++i)
+				new(space + i) _Ty(std::forward<_Types>(_Args)...);
+
+			return space;
 		}
 
 		Object* NewNull();

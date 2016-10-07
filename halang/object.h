@@ -49,8 +49,13 @@ namespace halang
 		TypeFlag typeFlag;
 
 	public:
+		friend class CodeGen;
 
-		Object() : typeId(TypeId::Null), typeFlag(TypeFlag::Normal) { }
+		Object(TypeId _ti = TypeId::Null) : 
+			typeId(_ti), typeFlag(TypeFlag::Normal) { }
+		Object(const Object& obj) :
+			typeId(obj.typeId), typeFlag(obj.typeFlag)
+		{}
 
 		inline TypeId GetTypeId() const { return typeId; }
 		inline TypeFlag GetTypeFlag() const { return typeFlag; }

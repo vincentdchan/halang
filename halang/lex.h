@@ -11,7 +11,7 @@ namespace halang
 {
 	using namespace std;
 
-	class Lexer final: public utils::_MessageContainer<std::string>
+	class Lexer final: public utils::_MessageContainer<std::u16string>
 	{
 	public:
 		typedef shared_ptr<string> pString;
@@ -24,8 +24,8 @@ namespace halang
 		{
 			return _end;
 		}
-		static bool isDigit(uc32 t);
-		static bool isAlphabet(uc32 t);
+		static bool isDigit(TChar t);
+		static bool isAlphabet(TChar t);
 		~Lexer()
 		{
 			for (auto i = _literal_list.begin(); i != _literal_list.end(); ++i)
@@ -41,7 +41,7 @@ namespace halang
 		bool scanLiteral();
 		bool scanIdentifier();
 		bool scanNumber();
-		bool swallow(const char* _str);
+		bool swallow(const char16_t* _str);
 
 		queue<Token> token_q;
 		// queue<string> literal_q;
@@ -50,16 +50,16 @@ namespace halang
 		// stream
 		istream &ist;
 
-		string buffer;
+		std::u16string buffer;
 		std::size_t iter;
 		Location loc;
 
-		std::list<std::string*> _literal_list;
+		std::list<std::u16string*> _literal_list;
 
 		template<typename... _Types>
-		inline std::string* make_literal(_Types... Args)
+		inline std::u16string* make_literal(_Types... Args)
 		{
-			std::string* _str = new std::string(std::forward<_Types>(Args)...);
+			std::u16string* _str = new std::u16string(std::forward<_Types>(Args)...);
 			_literal_list.push_back(_str);
 			return _str;
 		}

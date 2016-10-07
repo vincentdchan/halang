@@ -221,7 +221,7 @@ namespace halang
 		if (!_id)
 		{
 			expect(Token::TYPE::IDENTIFIER);
-			string _str = *lookahead._literal;
+			auto _str = *lookahead._literal;
 			nextToken();
 			_id = make_object<IdentifierNode>(_str);
 		}
@@ -265,7 +265,7 @@ namespace halang
 		Node *_node = nullptr,
 			*exp = nullptr;
 		Token _tk;
-		std::string _id_name;
+		std::u16string _id_name;
 		switch (lookahead.type)
 		{
 		case Token::TYPE::ADD:

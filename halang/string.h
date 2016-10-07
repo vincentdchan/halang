@@ -11,6 +11,8 @@
 namespace halang
 {
 
+	class SimpleString;
+
 	class String : public Object
 	{
 	protected:
@@ -19,23 +21,22 @@ namespace halang
 		// 10 for slice string
 		unsigned int stringType : 2;
 
-		String() 
-		{
-			typeId = TypeId::String;
-		}
+		String() : Object(TypeId::String)
+		{ }
 
 	public:
 
 		friend class GC;
+		friend class CodeGen;
 		
 		typedef std::uint32_t size_type;
 		typedef std::uint32_t hash_type;
 
-		static String* FromU16String(const std::u16string&);
+		static SimpleString* FromU16String(const std::u16string&);
 
 		// From UTF-8 Multi-Bytes format to UTF-16 
-		static String* FromCStr(const char*);
-		static String* FromStdString(const std::string&);
+		static SimpleString* FromCStr(const char*);
+		static SimpleString* FromStdString(const std::string&);
 
 		static String* Concat(const String&, const String&);
 		static String* Slice(const String&, unsigned int begin, unsigned int end);
@@ -78,6 +79,12 @@ namespace halang
 	public:
 
 		friend class GC;
+		friend class CodeGen;
+
+		virtual TChar CharAt(unsigned int index) const
+		{
+			return v_array[index];
+		}
 
 		virtual unsigned int GetLength() const override
 		{

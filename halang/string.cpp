@@ -10,7 +10,7 @@ namespace halang
 {
 
 	// return a Simple String
-	String* String::FromU16String(const std::u16string& str)
+	SimpleString* String::FromU16String(const std::u16string& str)
 	{
 		auto gc = Context::GetGc();
 
@@ -19,14 +19,14 @@ namespace halang
 	}
 
 	// From UTF-8 Multi-Bytes format to UTF-16 
-	String* String::FromCStr(const char* _cstr)
+	SimpleString* String::FromCStr(const char* _cstr)
 	{
 		std::u16string utf16 = 
 			std::wstring_convert<std::codecvt_utf8_utf16<char16_t>, char16_t>{}.from_bytes(_cstr);
 		return FromU16String(utf16);
 	}
 
-	String* String::FromStdString(const std::string& str)
+	SimpleString* String::FromStdString(const std::string& str)
 	{
 		std::u16string utf16 = std::wstring_convert<std::codecvt_utf8_utf16<char16_t>, char16_t>{}.from_bytes(str.data());
 		return FromU16String(utf16);

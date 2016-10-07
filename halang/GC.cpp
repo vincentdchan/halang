@@ -8,13 +8,20 @@ namespace halang
 	// **********************************************
 	// New Something
 	// **********************************************
-	// **********************************************
+
+	Object* GC::NewNull()
+	{
+		if (default_null == nullptr)
+			default_null = New<Object>();
+		return default_null;
+	}
 
 	Object** GC::NewObjectPointerArray(size_type _size)
 	{
 		size_type total_size = _size * sizeof(Object*);
 		auto ptr = reinterpret_cast<Object**>(Alloc(total_size));
-		memset(ptr, 0, total_size);
+		for (size_type i = 0; i < _size; ++i)
+			ptr[i] = NewNull();
 		return ptr;
 	}
 
@@ -139,6 +146,7 @@ namespace halang
 
 	GC::GC()
 	{
+		default_null = nullptr;
 		Context::gc = this;
 	}
 
