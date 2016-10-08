@@ -4,16 +4,17 @@
 
 namespace halang {
 
-	class GC
+	class GC final
 	{
 
 	private:
 
-		GCObject* gc;
+		GCObject* objects;
 
 	protected:
 
 		GC();
+		~GC();
 
 	public:
 
@@ -21,10 +22,14 @@ namespace halang {
 		inline _Ty* New(_Types&&... _Args)
 		{	
 			_Ty* new_obj = new _Ty(std::forward<_Types>(_Args)...);
-			new_obj->next = gc;
-			gc = new_obj;
+			new_obj->next = objects;
+			objects = new_obj;
 			return new_obj;
 		}
+
+	private:
+
+		GCObject* Erase(GCObject* obj);
 
 	};
 

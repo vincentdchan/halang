@@ -7,9 +7,10 @@ namespace halang
 	class Context final
 	{
 	public:
+
 		friend class GC;
 
-		inline GC* GetGC() { return gc; }
+		static GC* GetGC() { return gc; }
 
 	private:
 		
