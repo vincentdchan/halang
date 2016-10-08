@@ -14,9 +14,15 @@ namespace halang
 	/// </summary>
 	class UpValue : public GCObject
 	{
-	public:
-		UpValue(Object* _re = nullptr) : value(_re), _closed(false)
+	protected:
+
+		UpValue(Value* _re = nullptr) : value(_re), _closed(false)
 		{}
+
+	public:
+
+		friend class GC;
+		friend class StackVM;
 
 		virtual ~UpValue() 
 		{
@@ -24,21 +30,21 @@ namespace halang
 				delete value;
 		}
 
-		Object getVal() const
+		Value GetVal() const
 		{
 			return *value;
 		}
 
-		void setVal(const Object& _obj)
+		void SetVal(Value _v)
 		{
-			*value = _obj;
+			*value = _v;
 		}
 
 		void close()
 		{
 			if (!_closed) 
 			{
-				value = new Object(*value);
+				value = new Value(*value);
 				_closed = true;
 			}
 		}
@@ -47,7 +53,7 @@ namespace halang
 
 	private:
 
-		Object *value;
+		Value *value;
 		bool _closed;
 
 	};

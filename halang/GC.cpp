@@ -17,6 +17,19 @@ namespace halang
 		return _next;
 	}
 
+	void GC::SweepAll()
+	{
+		GCObject** ptr = &objects;
+
+		while (*ptr != nullptr)
+		{
+			if (!(*ptr)->marked)
+				*ptr = Erase(*ptr);
+			else
+				ptr = &((*ptr)->next);
+		}
+	}
+
 	GC::~GC()
 	{
 		// clear all objects

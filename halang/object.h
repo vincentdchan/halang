@@ -44,10 +44,9 @@ namespace halang
 	V(BOOL)
 
 	class Object;
-	class Class;
-	class IString;
-	class Map;
+	class String;
 	class Array;
+	class Dict;
 
 	class Isolate;
 
@@ -58,6 +57,8 @@ namespace halang
 	public:
 
 		friend class GC;
+
+		Dict* GetPrototype();
 
 	protected:
 
@@ -81,7 +82,7 @@ namespace halang
 	union _Value
 	{
 		GCObject* gc;
-		IString *str;
+		String *str;
 		TSmallInt si;		// small int
 		TNumber number;
 		TBool bl;
@@ -93,6 +94,8 @@ namespace halang
 
 		_Value value;
 		TypeId type;
+
+		Dict* GetPrototype();
 
 		explicit Value() : type(TypeId::Null) {
 			value.gc = nullptr;

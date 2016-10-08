@@ -31,6 +31,8 @@ namespace halang {
 
 		GCObject* Erase(GCObject* obj);
 
+		void SweepAll();
+
 	};
 
 }
