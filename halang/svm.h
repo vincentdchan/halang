@@ -4,10 +4,7 @@
 #include <cinttypes>
 #include <utility>
 #include <map>
-#include "string_pool.h"
-#include "svm_codes.h"
-#include "object.h"
-#include "upvalue.h"
+#include "GC.h"
 
 #define PRE(POINTER) ((POINTER) - 1)
 
@@ -40,24 +37,24 @@ namespace halang
 
 		Environment(CodePack* cp);
 		Environment* prev;
-		Object* stack;
-		Object* sptr;
+		Value* stack;
+		Value* sptr;
 
 		bool cp;
 		InstIter iter;
-		Object* variables;
-		Object* upvalues;
+		Value* variables;
+		Value* upvalues;
 		CodePack* codepack;
 		std::vector<UpValue*> upval_local;
 		unsigned int index;
-		inline Object* top(int i = 0);
-		inline Object* pop();
-		inline void push(Object&& obj);
-		inline Object* getVar(unsigned int i);
-		inline Object* getUpVal(unsigned int i);
-		inline void setVar(unsigned int i, Object obj);
-		inline void setUpVal(unsigned int i, Object obj);
-		inline Object getConstant(unsigned int i);
+		inline Value top(int i = 0);
+		inline Value pop();
+		inline void push(Value obj);
+		inline Value getVar(unsigned int i);
+		inline Value getUpVal(unsigned int i);
+		inline void setVar(unsigned int i, Value obj);
+		inline void setUpVal(unsigned int i, Value obj);
+		inline Value getConstant(unsigned int i);
 		void closeLoaclUpval();
 		~Environment();
 	};
@@ -69,58 +66,27 @@ namespace halang
 
 		StackVM() : env(nullptr)
 		{
-			string_pool = new StringPool();
 		}
 
-		/*
-		StackVM(StackVM&& _svm)
-		{
-			this->objStackBase_ = _svm.objStackBase_;
-			this->objStack = _svm.objStack;
-			inst = _svm.inst;
-
-			this->objStack = nullptr;
-			this->objStackBase_ = nullptr;
-		}
-		*/
 		StackVM(const StackVM&) = delete;
 		StackVM& operator=(const StackVM&) = delete;
 		void execute();
 		Environment* createEnvironment(CodePack *);
 		void quitEnvironment();
 
-		template<typename _Type, typename... _AT>
-		_Type* make_gcobject(_AT&&... args)
-		{
-			_Type* obj = new _Type(std::forward<_AT>(args)...);
-			obj->next = gcobj_list;
-			gcobj_list = obj;
-			return obj;
-		}
-
 		~StackVM()
 		{
 			if (env)
 				delete env;
-			delete string_pool;
-
-			GCObject* optr = gcobj_list;
-			while (optr)
-			{
-				auto next = optr->next;
-				delete optr;
-				optr = next;
-			}
 		}
 
-		StringPool* string_pool;
 	private:
 		InstIter inst;
-		Object* ptr;
-		GCObject* gcobj_list;
+		Value* ptr;
+
+		GC gc;
 
 		Environment* env;
-		// State* state;
 	};
 
 }

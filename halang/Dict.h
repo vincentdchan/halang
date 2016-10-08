@@ -20,6 +20,7 @@ namespace halang
 
 	public:
 
+		Value toValue() override;
 		Value GetValue(Value key);
 		void SetValue(Value key, Value value);
 		bool Exist(Value key);

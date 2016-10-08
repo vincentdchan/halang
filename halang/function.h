@@ -4,7 +4,8 @@
 #include <functional>
 #include <memory>
 #include "svm.h"
-#include "string.h"
+#include "String.h"
+#include "Array.h"
 #include "object.h"
 #include "upvalue.h"
 #include "svm_codes.h"
@@ -25,8 +26,17 @@ namespace halang
 	class CodePack : public GCObject
 	{
 	public:
+
+		friend class VM;
+		friend class CodeGen;
+		friend class StackVM;
+		friend class Function;
+
+		typedef unsigned int size_type;
+
+	protected:
 		CodePack() :
-			prev(nullptr), param_size(0), isGlobal(false)
+			prev(nullptr), param_size(0)
 		{}
 
 		/// <summary>
@@ -34,6 +44,7 @@ namespace halang
 		/// return id of variable in table, return 0 if id is not found.
 		/// </summary>
 		/// <returns>return id of variable in table, return 0 if id is not found</returns>
+		/*
 		int findVarId(IString _name)
 		{
 			int _var_size = static_cast<int>(var_names.size());
@@ -55,54 +66,45 @@ namespace halang
 
 			return -1;
 		}
+		*/
 
-		/// <summary>
-		/// Add a variable name to the variable table and
-		/// return the id of the new variable.
-		/// </summary>
-		/// <returns>return the id of the new variable</returns>
-		inline std::size_t addVar(IString s)
-		{
-			auto id = var_names.size();
-			var_names.push_back(s);
-			return id;
-		}
-
-		/// <summary>
-		/// Add a upvalue name to the upvalue table and
-		/// return the id of the new upvalue.
-		/// </summary>
-		/// <returns>return the id of the new upvalue.</returns>
-		inline std::size_t addUpValue(IString s)
-		{
-			auto id = upvalue_names.size();
-			upvalue_names.push_back(s);
-			return id;
-		}
-
-		inline std::size_t VarSize() const
-		{
-			return var_names.size();
-		}
-
-		inline std::size_t UpValueSize() const
-		{
-			return upvalue_names.size();
-		}
-
-		friend class CodeGen;
-		friend class StackVM;
-		friend struct Environment;
 	private:
-		IString name;
+
 		CodePack* prev;
+		String* name;
 		std::size_t param_size;
-		std::vector<Object> constant;
-		std::vector<Instruction> instructions;
-		std::vector<IString> var_names;
-		std::vector<IString> upvalue_names;
-		std::vector<int> require_upvalues;
-		bool isGlobal;
+
+		Value* _constants;
+		size_type _const_size;
+
+		Instruction* _instructions;
+		size_type _instructions_size;
+
+		int* _require_upvalues;
+		size_type _require_upvales_size;
+
+		// GC Object
+
+		String* _var_names;
+		size_type _var_names_size;
+
+		String* _upval_names;
+		size_type _upval_names_size;
+
+	public:
+
+		virtual Value toValue() override
+		{
+			return Value(this, TypeId::CodePack);
+		}
+
+		~CodePack()
+		{
+			delete[] _constants;
+			delete[] _instructions;
+			delete[] _require_upvalues;
+		}
+
 	};
 
 	class Isolate
@@ -119,67 +121,45 @@ namespace halang
 		template<>
 		struct Constructor<TNumber>
 		{
-			Object operator()(Isolate* iso, TNumber num)
+			Value operator()(Isolate* iso, TNumber num)
 			{
-				return Object(num);
+				return Value(num);
 			}
 		};
 
 		template<>
 		struct Constructor<TSmallInt>
 		{
-			Object operator()(Isolate* iso, TSmallInt si)
+			Value operator()(Isolate* iso, TSmallInt si)
 			{
-				return Object(si);
+				return Value(si);
 			}
 		};
 
 		template<>
-		struct Constructor<IString>
+		struct Constructor<String>
 		{
-			Object operator()(Isolate*)
+			Value operator()(Isolate*)
 			{
-				return Object(IString());
+				return Context::GetGC()->New<String>()->toValue();
 			}
 
-			Object operator()(Isolate*, const IString& _str)
+			Value operator()(Isolate*, String* _str)
 			{
-				return Object(IString(_str));
-			}
-		};
-
-		template<>
-		struct Constructor<Map>
-		{
-			Object operator()(Isolate* iso)
-			{
-				auto _map = iso->vm->make_gcobject<Map>();
+				return _str->toValue();
 			}
 		};
 
 		template<>
 		struct Constructor<Array>
 		{
-			Object operator()(Isolate* iso)
+			Value operator()(Isolate* iso)
 			{
-				auto arr = iso->vm->make_gcobject<Array>();
-				return Object(arr, Object::TYPE::ARRAY);
-			}
-
-			Object operator()(Isolate* iso, Object arr)
-			{
-				Array* _arr = iso->vm->make_gcobject<Array>(*reinterpret_cast<Array*>(arr.value.gc));
-				return Object(_arr, Object::TYPE::ARRAY);
+				auto arr = Context::GetGC()->New<Array>();
+				return arr->toValue();;
 			}
 
 		};
-
-		template<typename _Ty, typename... _Types> 
-		inline Object New(_Types&&... _Args)
-		{	
-			Constructor<_Ty> con;
-			return (con(this, std::forward<_Types>(_Args)...));
-		}
 
 		inline StackVM* GetVM() const { return vm; }
 
@@ -196,17 +176,17 @@ namespace halang
 			isolate(iso)
 		{}
 
-		inline Object& operator[](std::size_t index)
+		inline Value& operator[](std::size_t index)
 		{
 			return arguments[index];
 		}
 
-		inline Object& GetReturnObject()
+		inline Value& GetReturnObject()
 		{
 			return returnObject;
 		}
 
-		inline void SetReturnObject(Object obj)
+		inline void SetReturnObject(Value obj)
 		{
 			returnObject = obj;
 		}
@@ -219,8 +199,8 @@ namespace halang
 	private:
 
 		Isolate* isolate;
-		std::vector<Object> arguments;
-		Object returnObject;
+		std::vector<Value> arguments;
+		Value returnObject;
 
 	};
 
@@ -230,21 +210,23 @@ namespace halang
 	{
 	public:
 
-		Function(ExternFunction* fun, unsigned int _ps = 0) :
+		friend class GC;
+		friend class StackVM;
+		friend struct Environment;
+
+		typedef unsigned int size_type;
+
+	protected:
+
+		Function(ExternFunction fun, unsigned int _ps = 0) :
 			paramsSize(_ps), externFunction(fun), isExtern(true)
 		{}
 
 		Function(CodePack* cp, unsigned int _ps = 0) :
 			codepack(cp), paramsSize(_ps), isExtern(false)
 		{}
-		friend class CodeGen;
-		friend struct Environment;
-		friend class StackVM;
 
-		inline Object getThisObject() const { return thisObject; }
-		inline void setThisObject(Object _obj) { thisObject = _obj; }
-
-		void close()
+		void Close()
 		{
 			for (auto i = upvalues.begin(); i != upvalues.end(); ++i)
 				(*i)->close();
@@ -254,12 +236,28 @@ namespace halang
 
 		bool isExtern;
 
-		CodePack* codepack;
-		ExternFunction *externFunction;
-		Object thisObject;
+		union 
+		{
+			CodePack* codepack;
+			ExternFunction externFunction;
+		};
 
-		unsigned int paramsSize;
+		String * name;
+		Value thisOne;
+
+		size_type paramsSize;
 		std::vector<UpValue*> upvalues;
+
+		inline void SetThisObject(Value _obj) { thisOne = _obj; }
+
+	public:
+
+		inline Value GetThis() const { return thisOne; }
+
+		virtual ~Function()
+		{
+
+		}
 
 	};
 

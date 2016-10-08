@@ -82,11 +82,11 @@ namespace halang
 	class StringNode : public Node
 	{
 	public:
-		StringNode(IString _content) : content(_content)
+		StringNode(const std::u16string& _content) : content(_content)
 		{}
 
 		virtual StringNode* asString() override { return this; }
-		IString content;
+		std::u16string content;
 
 		VISIT_OVERRIDE
 	};
@@ -113,11 +113,11 @@ namespace halang
 	class IdentifierNode : public Node
 	{
 	public:
-		IdentifierNode(const std::string& _str) : name(_str)
+		IdentifierNode(const std::u16string& _str) : name(_str)
 		{}
 		virtual IdentifierNode* asIdentifier() override { return this; }
 
-		std::string name;
+		std::u16string name;
 
 		VISIT_OVERRIDE
 	};
@@ -365,7 +365,7 @@ namespace halang
 		FuncDefParamNode()
 		{}
 		virtual FuncDefParamNode* asFuncDefParam() override { return this; }
-		std::string name;
+		std::u16string name;
 
 		VISIT_OVERRIDE
 	};

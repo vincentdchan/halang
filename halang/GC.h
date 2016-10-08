@@ -18,6 +18,8 @@ namespace halang {
 
 	public:
 
+		friend class StackVM;
+
 		template<class _Ty, class... _Types> 
 		inline _Ty* New(_Types&&... _Args)
 		{	

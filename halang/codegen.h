@@ -16,6 +16,7 @@ namespace halang
 		public utils::_MessageContainer<std::string>, public Visitor
 	{
 	public:
+
 		class GenState;
 		class VarType;
 
@@ -29,7 +30,7 @@ namespace halang
 
 		void load();
 
-		static VarType findVar(CodePack*, IString);
+		static VarType FindVar(GenState*, const std::u16string&);
 
 		virtual void visit(Node*) override;
 #define VISIT_METHOD(NAME) void visit(NAME##Node*);
@@ -39,39 +40,77 @@ namespace halang
 
 	private:
 
+		bool _var_statement;
+
 		StackVM* vm;
 		Parser* parser;
 		CodePack *top_cp, *global_cp;
 		GenState* state;
+
+		void AddInst(Instruction i);
 
 	};
 
 	class CodeGen::GenState
 	{
 	public:
-		GenState() : _var_statement(false)
+
+		friend class CodeGen;
+
+		typedef unsigned int size_type;
+
+		GenState(GenState* _prev = nullptr):
+			prev(_prev)
 		{}
-		inline bool varStatement() { return _var_statement; }
-		inline void setVarStatement(bool _vl) { _var_statement = _vl; }
+
 	private:
-		bool _var_statement;
+
+		GenState* prev;
+
+		size_type params_size;
+		std::vector<Value> constant;
+		std::vector<std::u16string> var_names;
+		std::vector<std::u16string> upvalue_names;
+		std::vector<int> require_upvalues;
+		std::vector<Instruction> instructions;
+
+	public:
+
+		size_type AddVariable(const std::u16string& name)
+		{
+			size_type i = var_names.size();
+			var_names.push_back(name);
+			return i;
+		}
+
+		size_type AddUpValue(const std::u16string& name)
+		{
+			size_type i = upvalue_names.size();
+			upvalue_names.push_back(name);
+			return i;
+		}
+
 	};
 
 	class CodeGen::VarType
 	{
 	public:
-		enum TYPE
+
+		enum class TYPE
 		{
 			LOCAL,
 			GLOBAL,
 			UPVAL,
 			NONE
 		};
-		VarType(TYPE _t = NONE, int _d = 0) : _type(_t), _id(_d)
+
+		VarType(TYPE _t = TYPE::NONE, int _d = 0): 
+			_type(_t), _id(_d)
 		{}
 
 		inline TYPE type() const { return _type; }
 		inline int id() const { return _id; }
+
 	private:
 		TYPE _type;
 		int _id;

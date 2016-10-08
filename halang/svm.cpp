@@ -3,6 +3,8 @@
 #include "function.h"
 #include "upvalue.h"
 #include "string.h"
+#include "GC.h"
+#include "Dict.h"
 
 namespace halang
 {
@@ -10,19 +12,19 @@ namespace halang
 		prev(nullptr), sptr(nullptr), stack(nullptr)
 		, codepack(cp), index(0)
 	{
-		sptr = stack = new Object[STACK_SIZE];
-		variables = new Object[cp->VarSize()];
-		upvalues = new Object[cp->UpValueSize()];
+		sptr = stack = new Value[STACK_SIZE];
+		variables = new Value[cp->VarSize()];
+		upvalues = new Value[cp->UpValueSize()];
 	}
 
-	Object* Environment::top(int i) { return sptr - i - 1; }
-	Object* Environment::pop() { return --sptr; }
-	void Environment::push(Object&& obj) { *(sptr++) = obj; }
-	Object* Environment::getVar(unsigned int i) { return variables + i; }
-	Object* Environment::getUpVal(unsigned int i) { return upvalues + i; }
-	void Environment::setVar(unsigned int i, Object obj) { variables[i] = obj; }
-	void Environment::setUpVal(unsigned int i, Object obj) { upvalues[i] = obj; }
-	Object Environment::getConstant(unsigned int i) { return codepack->constant[i]; }
+	Value Environment::top(int i) { return *(sptr - i - 1); }
+	Value Environment::pop() { return *(--sptr); }
+	void Environment::push(Value obj) { *(sptr++) = obj; }
+	Value Environment::getVar(unsigned int i) { return variables[i]; }
+	Value Environment::getUpVal(unsigned int i) { return upvalues[i]; }
+	void Environment::setVar(unsigned int i, Value obj) { variables[i] = obj; }
+	void Environment::setUpVal(unsigned int i, Value obj) { upvalues[i] = obj; }
+	Value Environment::getConstant(unsigned int i) { return codepack->constant[i]; }
 
 	void Environment::closeLoaclUpval()
 	{
@@ -63,54 +65,54 @@ namespace halang
 
 			if (current->getCode() == VM_CODE::STOP)
 				break;
-			Object t1;
+			Value t1;
 			Function* func;
 			Environment *new_env;
 			switch (current->getCode())
 			{
 			case VM_CODE::LOAD_V:
-				PUSH(std::move(*GET_VAR(current->getParam())));
+				PUSH(GET_VAR(current->getParam()));
 				break;
 			case VM_CODE::LOAD_UPVAL:
 			{
-				auto _upval = reinterpret_cast<UpValue*>(GET_UPVAL(current->getParam())->value.gc);
-				PUSH(_upval->getVal());
+				auto _upval = reinterpret_cast<UpValue*>(GET_UPVAL(current->getParam()).value.gc);
+				PUSH(_upval->toValue());
 				break;
 			}
 			case VM_CODE::LOAD_C:
 				PUSH(GET_CON(current->getParam()));
 				break;
 			case VM_CODE::STORE_V:
-				SET_VAR(current->getParam(), std::move(*POP()));
+				SET_VAR(current->getParam(), POP());
 				break;
 			case VM_CODE::STORE_UPVAL:
 			{
 				auto _id = current->getParam();
-				auto _upval = reinterpret_cast<UpValue*>(GET_UPVAL(_id)->value.gc);
-				_upval->setVal(*POP());
+				auto _upval = reinterpret_cast<UpValue*>(GET_UPVAL(_id).value.gc);
+				_upval->SetVal(POP());
 				break;
 			}
 			case VM_CODE::SET_VAL:
 			{
-				auto value = *POP();
-				auto key = *POP();
-				auto _map = reinterpret_cast<Map*>((POP())->value.gc);
-				_map->SetValue(key, value);
-				PUSH(Object(_map, Object::TYPE::MAP));
+				auto value = POP();
+				auto key = POP();
+				auto _dict = reinterpret_cast<Dict*>((POP()).value.gc);
+				_dict->SetValue(key, value);
+				PUSH(_dict->toValue());
 				break;
 			}
 			case VM_CODE::GET_VAL:
 			{
-				auto key = *POP();
-				auto dict = reinterpret_cast<Map*>((POP())->value.gc);
+				auto key = POP();
+				auto dict = reinterpret_cast<Dict*>((POP()).value.gc);
 				PUSH(dict->GetValue(key));
 				break;
 			}
 			case VM_CODE::PUSH_INT:
-				PUSH(Object(current->getParam()));
+				PUSH(Value(current->getParam()));
 				break;
 			case VM_CODE::PUSH_BOOL:
-				PUSH(Object(current->getParam() != 0));
+				PUSH(Value(current->getParam() != 0));
 				break;
 			case VM_CODE::POP:
 				POP();
@@ -119,7 +121,7 @@ namespace halang
 				inst += current->getParam() - 1;
 				break;
 			case VM_CODE::CLOSURE:
-				t1 = *POP();
+				t1 = POP();
 				func = reinterpret_cast<Function*>(t1.value.gc);
 				do {
 					CodePack* cp = func->codepack;
@@ -129,41 +131,41 @@ namespace halang
 					{
 						if (*i >= 0)
 						{
-							_upval = make_gcobject<UpValue>(env->variables + *i);
+							_upval = gc.New<UpValue>(env->variables + *i);
 							env->upval_local.push_back(_upval);
 						}
 						else
-							_upval = make_gcobject<UpValue>(env->upvalues + (-1 - *i));
+							_upval = gc.New<UpValue>(env->upvalues + (-1 - *i));
 						func->upvalues.push_back(_upval);
 					}
 				} while (0);
-				PUSH(Object(func, Object::TYPE::FUNCTION));
+				PUSH(Value(func, TypeId::Function));
 				break;
 			case VM_CODE::CALL:
-				t1 = *POP();
+				t1 = POP();
 				func = reinterpret_cast<Function*>(t1.value.gc);
 				env->iter = inst;
 				new_env = createEnvironment(func->codepack);
 
 				// copy parameters
 				for (int i = func->paramsSize - 1; i >= 0; --i)
-					new_env->variables[i] = *new_env->prev->pop();
+					new_env->variables[i] = new_env->prev->pop();
 				// copy upvalues
 				for (unsigned int i = 0; i < func->codepack->UpValueSize(); ++i)
 				{
-					new_env->upvalues[i] = Object(func->upvalues[i], Object::TYPE::UPVALUE);
+					new_env->upvalues[i] = Value(func->upvalues[i], TypeId::UpValue);
 				}
 				break;
 			case VM_CODE::RETURN:
 				if (current->getParam() != 0)
 				{
-					env->prev->push(std::move(*env->pop()));
+					env->prev->push(env->pop());
 				}
 				quitEnvironment();
 				inst = env->iter;
 				break;
 			case VM_CODE::IFNO:
-				if (!*(POP()))
+				if (!POP())
 					inst += current->getParam() - 1;
 				break;
 			case VM_CODE::NOT:

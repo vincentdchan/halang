@@ -51,6 +51,11 @@ namespace halang
 
 		inline bool closed() const { return _closed; }
 
+		virtual Value toValue() override
+		{
+			return Value(this, TypeId::UpValue);
+		}
+
 	private:
 
 		Value *value;

@@ -3,6 +3,11 @@
 namespace halang
 {
 
+	Value Dict::toValue()
+	{
+		return Value(this, TypeId::Dict);
+	}
+
 	void Dict::SetValue(Value key, Value value)
 	{
 		unordered_map<Value, Value>::operator[](key) = value;
