@@ -72,6 +72,7 @@ namespace halang
 		SmallInt,
 		Number,
 		GCObject,
+		ScriptContext,
 		CodePack,
 		Function,
 		UpValue,
@@ -122,6 +123,13 @@ namespace halang
 		inline bool isBool() const { return type == TypeId::Bool; }
 		inline bool isSmallInt() const { return type == TypeId::SmallInt; }
 		inline bool isNumber() const { return type == TypeId::Number; }
+		inline bool isString() const { return type == TypeId::String; }
+		inline bool isScriptContext() const { return type == TypeId::ScriptContext; }
+		inline bool isCodePack() const { return type == TypeId::CodePack; }
+		inline bool isFunction() const { return type == TypeId::Function; }
+		inline bool isUpValue() const { return type == TypeId::UpValue; }
+		inline bool isArray() const { return type == TypeId::Array; }
+		inline bool isDict() const { return type == TypeId::Dict; }
 
 	};
 

@@ -155,6 +155,7 @@
     <ClInclude Include="functions.h" />
     <ClInclude Include="GC.h" />
     <ClInclude Include="halang.h" />
+    <ClInclude Include="ScriptContext.h" />
     <ClInclude Include="table.h" />
     <ClInclude Include="lex.h" />
     <ClInclude Include="object.h" />
@@ -180,6 +181,7 @@
     <ClCompile Include="lex.cpp" />
     <ClCompile Include="object.cpp" />
     <ClCompile Include="parser.cpp" />
+    <ClCompile Include="ScriptContext.cpp" />
     <ClCompile Include="stdafx.cpp" />
     <ClCompile Include="string.cpp" />
     <ClCompile Include="string_poll.cpp" />

@@ -33,6 +33,7 @@ namespace halang
 
 	struct Environment
 	{
+
 		const static unsigned int STACK_SIZE = 255;
 
 		Environment(CodePack* cp);

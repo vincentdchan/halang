@@ -40,11 +40,12 @@ namespace halang
 
 	private:
 
+		std::u16string* name;
+
 		bool _var_statement;
 
 		StackVM* vm;
 		Parser* parser;
-		CodePack *top_cp, *global_cp;
 		GenState* state;
 
 		void AddInst(Instruction i);
@@ -62,6 +63,8 @@ namespace halang
 		GenState(GenState* _prev = nullptr):
 			prev(_prev)
 		{}
+
+		static CodePack* GenerateCodePack(GenState*);
 
 	private:
 

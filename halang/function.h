@@ -85,10 +85,10 @@ namespace halang
 
 		// GC Object
 
-		String* _var_names;
+		String** _var_names;
 		size_type _var_names_size;
 
-		String* _upval_names;
+		String** _upval_names;
 		size_type _upval_names_size;
 
 	public:
@@ -213,6 +213,7 @@ namespace halang
 		friend class GC;
 		friend class StackVM;
 		friend struct Environment;
+		friend class CodeGen;
 
 		typedef unsigned int size_type;
 

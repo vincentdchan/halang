@@ -10,6 +10,39 @@
 namespace halang
 {
 
+	CodePack* CodeGen::GenState::GenerateCodePack(GenState* gs)
+	{
+		auto cp = Context::GetGC()->New<CodePack>();
+
+		cp->_require_upvales_size = gs->require_upvalues.size();
+		std::copy(gs->require_upvalues.begin(), gs->require_upvalues.end(), cp->_require_upvalues);
+
+		cp->_const_size = gs->constant.size();
+		cp->_constants = new Value[cp->_const_size];
+		std::copy(gs->constant.begin(), gs->constant.end(), cp->_constants);
+
+		cp->_var_names_size = gs->var_names.size();
+		cp->_var_names = new String*[cp->_var_names_size];
+		for (unsigned int i = 0;
+			i < cp->_var_names_size; ++i)
+		{
+			cp->_var_names[i] = String::FromU16String(gs->var_names[i]);
+		}
+
+		cp->_upval_names_size = gs->upvalue_names.size();
+		cp->_upval_names = new String*[cp->_upval_names_size];
+		for (unsigned int i = 0;
+			i < cp->_upval_names_size; ++i)
+		{
+			cp->_upval_names[i] = String::FromU16String(gs->upvalue_names[i]);
+		}
+
+		cp->_upval_names_size = gs->upvalue_names.size();
+
+		return cp;
+
+	}
+
 	/// <summary>
 	/// Find the variable name in the codepack
 	/// if it isn't exist, find it in the upvalue table
@@ -55,10 +88,11 @@ namespace halang
 	}
 
 	CodeGen::CodeGen(StackVM* _vm) : 
-		vm(_vm), parser(nullptr)
+		vm(_vm), parser(nullptr), name(nullptr)
 	{ 
-		top_cp = global_cp = vm->make_gcobject<CodePack>();
-		state = new GenState();
+		auto new_state = new GenState();
+		new_state->prev = state;
+		state = new_state;
 	}
 
 	void CodeGen::AddInst(Instruction inst)
@@ -71,7 +105,7 @@ namespace halang
 		parser = p;
 
 		visit(parser->getRoot());
-		global_cp->instructions.push_back(Instruction(VM_CODE::STOP, 0));
+		AddInst(Instruction(VM_CODE::STOP, 0));
 	}
 
 	void CodeGen::visit(Node* _node)
@@ -105,17 +139,15 @@ namespace halang
 
 	void CodeGen::visit(UnaryExprNode* _node)
 	{
-		auto cp = top_cp;
-
 		visit(_node->child);
 		switch (_node->op)
 		{
 		case OperatorType::SUB:
-			cp->instructions.push_back(Instruction(VM_CODE::PUSH_INT, -1));
-			cp->instructions.push_back(Instruction(VM_CODE::MUL, 0));
+			AddInst(Instruction(VM_CODE::PUSH_INT, -1));
+			AddInst(Instruction(VM_CODE::MUL, 0));
 			break;
 		case OperatorType::NOT:
-			cp->instructions.push_back(Instruction(VM_CODE::NOT, 0));
+			AddInst(Instruction(VM_CODE::NOT, 0));
 			break;
 		}
 	}
@@ -255,7 +287,6 @@ namespace halang
 
 	void CodeGen::visit(VarStmtNode* _node)
 	{
-		auto cp = top_cp;
 		_var_statement = true;
 		for (auto i = _node->children.begin(); i != _node->children.end(); ++i)
 			visit(*i);
@@ -330,35 +361,37 @@ namespace halang
 
 	void CodeGen::visit(FuncDefNode* _node)
 	{
-		auto cp = top_cp;
+		auto c_state = state;
 		int var_id = -1;
 		if (_node->name)
-			var_id = cp->addVar(IString(_node->name->name));
-		auto new_pack = vm->make_gcobject<CodePack>();
-		auto new_func = vm->make_gcobject<Function>(new_pack, _node->parameters.size());
+			var_id = state->AddVariable(_node->name->name);
 
-		// Push
-		new_pack->prev = top_cp;
-		top_cp = new_pack;
+		auto new_state = new GenState();
+		auto new_fun = Context::GetGC()->New<Function>();
+
+		new_state->prev = state;
+		state = new_state;
 
 		for (auto i = _node->parameters.begin();
 			i != _node->parameters.end(); ++i)
 			visit(*i);
 
 		visit(_node->block);
-		new_pack->instructions.push_back(Instruction(VM_CODE::RETURN, 0));
+		AddInst(Instruction(VM_CODE::RETURN, 0));
 
-		// Pop
-		top_cp = new_pack->prev;
+		state = new_state->prev;
+		new_fun->codepack = GenState::GenerateCodePack(new_state);
+		new_fun->paramsSize = _node->parameters.size();
 
-		new_func->codepack = new_pack;
-		int _id = cp->constant.size();
-		cp->constant.push_back(Object(new_func, Object::TYPE::CODE_PACK));
-		cp->instructions.push_back(Instruction(VM_CODE::LOAD_C, _id));
-		cp->instructions.push_back(Instruction(VM_CODE::CLOSURE, 0));
+		delete new_state;
+
+		int const_id = state->constant.size();
+		state->constant.push_back(new_fun->toValue());
+		AddInst(Instruction(VM_CODE::LOAD_C, const_id));
+		AddInst(Instruction(VM_CODE::CLOSURE, 0));
 
 		if (var_id >= 0)
-			cp->instructions.push_back(Instruction(VM_CODE::STORE_V, var_id));
+			AddInst(Instruction(VM_CODE::STORE_V, var_id));
 	}
 
 	void CodeGen::visit(FuncDefParamNode* _node)
@@ -389,6 +422,8 @@ namespace halang
 
 	CodeGen::~CodeGen()
 	{
+		if (name != nullptr)
+			delete name;
 		delete state;
 	}
 
