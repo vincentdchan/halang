@@ -27,12 +27,16 @@ namespace halang
 		virtual char16_t CharAt(unsigned int) const = 0;
 		virtual unsigned int GetHash() const = 0;
 		virtual size_type GetLength() const = 0;
+		virtual Dict* GetPrototype() override { return nullptr; }
 		virtual ~String() {}
 
 	};
 
 	class SimpleString : public String
 	{
+	public:
+
+		friend class GC;
 
 	private:
 

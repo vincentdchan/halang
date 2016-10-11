@@ -25,25 +25,13 @@ namespace halang
 
 	*/
 
-#define OBJ_LIST(V) \
-	V(NUL) \
-	V(GC) \
-	V(UPVALUE) \
-	V(STRING) \
-	V(MAP) \
-	V(ARRAY) \
-	V(CODE_PACK) \
-	V(FUNCTION) \
-	V(SMALL_INT) \
-	V(NUMBER) \
-	V(BOOL)
-
 	class Object;
 	class String;
 	class ConsString;
 	class SliceString;
 	class Array;
 	class Dict;
+	class Function;
 
 	struct Value;
 

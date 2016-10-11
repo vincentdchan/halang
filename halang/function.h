@@ -103,7 +103,7 @@ namespace halang
 
 	};
 
-	typedef std::function<Value (FunctionArgs * )> ExternFunction;
+	typedef std::function<Value (Value, FunctionArgs * )> ExternFunction;
 
 	class Function : public GCObject
 	{
@@ -149,18 +149,11 @@ namespace halang
 		std::vector<UpValue*> upvalues;
 
 		inline void SetThisObject(Value _obj) { thisOne = _obj; }
+		virtual Dict* GetPrototype() override { return nullptr; }
 
 	public:
 
 		inline Value GetThis() const { return thisOne; }
-
-		Value Call(StackVM* svm, ScriptContext* sc, FunctionArgs* args)
-		{
-			if (isExtern)
-				return externFunction(args);
-			
-
-		}
 
 		virtual ~Function()
 		{

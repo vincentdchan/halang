@@ -212,7 +212,7 @@ namespace halang
 	void CodeGen::visit(StringNode* _node)
 	{
 		auto index = state->constant.size();
-		state->constant.push_back(Value(String::FromU16String(_node->content)));
+		state->constant.push_back(Value(String::FromU16String(_node->content), TypeId::String));
 
 		AddInst(Instruction(VM_CODE::LOAD_C, index));
 	}

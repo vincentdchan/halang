@@ -37,7 +37,7 @@ namespace halang
 		union
 		{
 			double _double;
-			std::string* _literal;
+			std::u16string* _literal;
 		};
 
 		Token(): type(ILLEGAL), maybeInt(false)
