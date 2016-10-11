@@ -1,6 +1,7 @@
 #pragma once
 #include <string>
 #include <vector>
+#include <utility>
 #include "halang.h"
 
 namespace halang
@@ -41,7 +42,7 @@ namespace halang
 
 		friend class GC;
 
-		virtual Dict* GetPrototype() = 0;
+		virtual Dict* GetPrototype() { return nullptr; }
 		virtual Value toValue();
 		virtual void Mark() {}
 		virtual ~GCObject() {}

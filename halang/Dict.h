@@ -1,6 +1,7 @@
 #pragma once
 #include "halang.h"
 #include "object.h"
+#include "string.h"
 #include <utility>
 #include <unordered_map>
 

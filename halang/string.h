@@ -122,12 +122,39 @@ namespace halang
 
 namespace std
 {
+	using namespace halang;
+
 	template<>
 	struct hash<halang::String>
 	{
-		unsigned int operator()(const halang::String& _Str)
+		unsigned int operator()(const halang::String& _Str) const
 		{
 			return _Str.GetHash();
 		}
 	};
+
+	template<>
+	struct hash<Value>
+	{
+
+		unsigned int operator()(const Value& v) const
+		{
+			switch (v.type)
+			{
+			case TypeId::Null:
+				return 0;
+			case TypeId::SmallInt:
+				return hash<TSmallInt>{}(v.value.si);
+			case TypeId::Number:
+				return hash<TNumber>{}(v.value.number);
+			case TypeId::String:
+				return hash<halang::String>{}(*reinterpret_cast<String*>(v.value.si));
+			default:
+				throw std::runtime_error("do hash to wrong type");
+				return 0;
+			}
+		}
+
+	};
+
 };

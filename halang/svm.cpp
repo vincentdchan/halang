@@ -113,6 +113,8 @@ namespace halang
 					else
 						_upval = Context::GetGC()->New<UpValue>(sc->upvals + (-1 - cp->_require_upvalues[i]));
 
+					func->upvalues.push_back(_upval);
+
 				}
 				PUSH(func->toValue());
 				break;
@@ -142,7 +144,7 @@ namespace halang
 
 				if (func->isExtern)
 				{
-					func->externFunction(args);
+					func->externFunction(Value(), args);
 					sc = sc->prev;
 				}
 				else

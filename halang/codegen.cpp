@@ -14,13 +14,23 @@ namespace halang
 	{
 		auto cp = Context::GetGC()->New<CodePack>();
 
-		cp->_require_upvales_size = gs->require_upvalues.size();
-		std::copy(gs->require_upvalues.begin(), gs->require_upvalues.end(), cp->_require_upvalues);
+		// copy require_upvalues;
+		auto needed_size = gs->require_upvalues.size();
+		cp->_require_upvalues = new int[needed_size]();
+		cp->_require_upvales_size = 0;
+		for (auto i = gs->require_upvalues.begin();
+			i != gs->require_upvalues.end(); ++i)
+			cp->_require_upvalues[cp->_require_upvales_size++] = *i;
 
-		cp->_const_size = gs->constant.size();
-		cp->_constants = new Value[cp->_const_size];
-		std::copy(gs->constant.begin(), gs->constant.end(), cp->_constants);
+		// copy constants
+		needed_size = gs->constant.size();
+		cp->_const_size = 0;
+		cp->_constants = new Value[needed_size]();
+		for (auto i = gs->constant.begin();
+			i != gs->constant.end(); ++i)
+			cp->_constants[cp->_const_size++] = *i;
 
+		// copy varnames;
 		cp->_var_names_size = gs->var_names.size();
 		cp->_var_names = new String*[cp->_var_names_size];
 		for (unsigned int i = 0;
@@ -29,6 +39,7 @@ namespace halang
 			cp->_var_names[i] = String::FromU16String(gs->var_names[i]);
 		}
 
+		// copy upval names;
 		cp->_upval_names_size = gs->upvalue_names.size();
 		cp->_upval_names = new String*[cp->_upval_names_size];
 		for (unsigned int i = 0;
@@ -36,8 +47,6 @@ namespace halang
 		{
 			cp->_upval_names[i] = String::FromU16String(gs->upvalue_names[i]);
 		}
-
-		cp->_upval_names_size = gs->upvalue_names.size();
 
 		return cp;
 
@@ -367,7 +376,6 @@ namespace halang
 			var_id = state->AddVariable(_node->name->name);
 
 		auto new_state = new GenState();
-		auto new_fun = Context::GetGC()->New<Function>();
 
 		new_state->prev = state;
 		state = new_state;
@@ -380,8 +388,9 @@ namespace halang
 		AddInst(Instruction(VM_CODE::RETURN, 0));
 
 		state = new_state->prev;
-		new_fun->codepack = GenState::GenerateCodePack(new_state);
-		new_fun->paramsSize = _node->parameters.size();
+
+		auto new_fun = Context::GetGC()->New<Function>(GenState::GenerateCodePack(new_state), 
+			_node->parameters.size());
 
 		delete new_state;
 
