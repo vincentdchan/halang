@@ -3,6 +3,8 @@
 #include <tuple>
 #include <list>
 #include <string>
+#include <codecvt>
+#include <locale>
 #include <memory>
 #include <utility>
 #include "token.h"
@@ -161,16 +163,107 @@ namespace halang
 		// why should I use 'inline' ?
 		// http://stackoverflow.com/questions/6964819/function-already-defined-error-in-c
 
-	};
+#if _MSC_VER == 1900
 
+		static std::string UTF16_to_UTF8(std::u16string utf16_string)
+		{
+			std::wstring_convert<std::codecvt_utf8_utf16<int16_t>, int16_t> convert;
+			auto p = reinterpret_cast<const int16_t *>(utf16_string.data());
+			return convert.to_bytes(p, p + utf16_string.size());
+		}
+
+
+#else
+
+		static std::string utf16_to_utf8(std::u16string utf16_string)
+		{
+			std::wstring_convert<std::codecvt_utf8_utf16<char16_t>, char16_t> convert;
+			return convert.to_bytes(utf16_string);
+		}
+
+#endif
+
+		static std::u16string utf8_to_utf16(const std::string& utf8)
+		{
+			std::vector<unsigned long> _unicode;
+			size_t i = 0;
+			while (i < utf8.size())
+			{
+				unsigned long uni;
+				size_t todo;
+				bool error = false;
+				unsigned char ch = utf8[i++];
+				if (ch <= 0x7F)
+				{
+					uni = ch;
+					todo = 0;
+				}
+				else if (ch <= 0xBF)
+				{
+					throw std::logic_error("not a UTF-8 string");
+				}
+				else if (ch <= 0xDF)
+				{
+					uni = ch & 0x1F;
+					todo = 1;
+				}
+				else if (ch <= 0xEF)
+				{
+					uni = ch & 0x0F;
+					todo = 2;
+				}
+				else if (ch <= 0xF7)
+				{
+					uni = ch & 0x07;
+					todo = 3;
+				}
+				else
+				{
+					throw std::logic_error("not a UTF-8 string");
+				}
+				for (size_t j = 0; j < todo; ++j)
+				{
+					if (i == utf8.size())
+						throw std::logic_error("not a UTF-8 string");
+					unsigned char ch = utf8[i++];
+					if (ch < 0x80 || ch > 0xBF)
+						throw std::logic_error("not a UTF-8 string");
+					uni <<= 6;
+					uni += ch & 0x3F;
+				}
+				if (uni >= 0xD800 && uni <= 0xDFFF)
+					throw std::logic_error("not a UTF-8 string");
+				if (uni > 0x10FFFF)
+					throw std::logic_error("not a UTF-8 string");
+				_unicode.push_back(uni);
+			}
+			std::u16string utf16;
+			for (size_t i = 0; i < _unicode.size(); ++i)
+			{
+				unsigned long uni = _unicode[i];
+				if (uni <= 0xFFFF)
+				{
+					utf16 += (char16_t)uni;
+				}
+				else
+				{
+					uni -= 0x10000;
+					utf16 += (char16_t)((uni >> 10) + 0xD800);
+					utf16 += (char16_t)((uni & 0x3FF) + 0xDC00);
+				}
+			}
+			return utf16;
+		}
+
+	};
 
 };
 
 namespace std
 {
-		template<typename _MsgType>
-		inline std::ostream& operator<<(std::ostream& _os,
-			const typename halang::utils::_MessageContainer<_MsgType>::Message& _msg)
+	template<typename _MsgType>
+	inline std::ostream& operator<<(std::ostream& _os,
+		const typename halang::utils::_MessageContainer<_MsgType>::Message& _msg)
 		{
 			switch (_msg.flag)
 			{

@@ -13,7 +13,7 @@ namespace halang
 {
 
 	class CodeGen final : 
-		public utils::_MessageContainer<std::string>, public Visitor
+		public utils::_MessageContainer<std::u16string>, public Visitor
 	{
 	public:
 

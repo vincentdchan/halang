@@ -2,8 +2,8 @@
 #include <cinttypes>
 #include <vector>
 #include <memory>
+#include <string>
 #include "token.h"
-#include "string.h"
 
 namespace halang
 {

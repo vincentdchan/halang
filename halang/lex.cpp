@@ -1,8 +1,6 @@
 #include "stdafx.h"
 #include <cstring>
 #include <string>
-#include <locale>
-#include <codecvt>
 #include "lex.h"
 
 namespace halang
@@ -42,7 +40,7 @@ namespace halang
 
 		std::string _buf;
 		std::getline(ist, _buf);
-		buffer = std::wstring_convert<std::codecvt_utf8_utf16<char16_t>, char16_t>{}.from_bytes(_buf.data());
+		buffer = utils::utf8_to_utf16(_buf);
 
 		iter = 0;
 		while (iter < buffer.size() && result)
@@ -159,7 +157,7 @@ namespace halang
 	{
 		std::size_t len = 0;
 		const char16_t * _tmp = _str;
-		while (*_tmp++ != u'\t') len++;
+		while (*_tmp++ != u'\0') len++;
 
 		bool result = true;
 		for (std::size_t i = 0; i < len; ++i)
@@ -322,8 +320,6 @@ namespace halang
 		std::u16string num;
 		if (isDigit(buffer[ic]))
 		{
-			std::wstring_convert<std::codecvt_utf8_utf16<char16_t>, char16_t> convert;
-
 			t.type = Token::TYPE::NUMBER;
 			// t.pLiteral.reset(new string());
 			num.push_back(buffer[ic++]);
@@ -339,7 +335,7 @@ namespace halang
 							num.push_back(buffer[ic++]);
 							++loc.length;
 						}
-						t._double = std::stod(convert.to_bytes(num));
+						t._double = std::stod(utils::UTF16_to_UTF8(num));
 						t.location = loc;
 						token_q.push(t);
 
@@ -360,7 +356,7 @@ namespace halang
 				}
 			}
 			t.maybeInt = true;
-			t._double = std::stod(convert.to_bytes(num));
+			t._double = std::stod(utils::UTF16_to_UTF8(num));
 			t.location = loc;
 			token_q.push(t);
 		}

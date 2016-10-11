@@ -47,15 +47,15 @@ namespace halang
 
 	public:
 
-		inline Value Top(int i = 0);
-		inline Value Pop();
-		inline void Push(Value v);
-		inline Value GetConstant(unsigned int i);
-		inline Value GetVariable(unsigned int i);
-		inline UpValue* GetUpValue(unsigned int i);
-		inline void PushUpValue(UpValue*);
-		inline void SetVariable(unsigned int i, Value);
-		inline void SetUpValue(unsigned int i, UpValue*);
+		Value Top(int i = 0);
+		Value Pop();
+		void Push(Value v);
+		// Value GetConstant(unsigned int i);
+		Value GetVariable(unsigned int i);
+		UpValue* GetUpValue(unsigned int i);
+		void PushUpValue(UpValue*);
+		void SetVariable(unsigned int i, Value);
+		void SetUpValue(unsigned int i, UpValue*);
 		void CloseAllUpValue();
 
 		virtual ~ScriptContext();

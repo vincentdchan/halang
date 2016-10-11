@@ -4,8 +4,7 @@
 #include "String.h"
 #include "context.h"
 #include <string>
-#include <codecvt>
-#include <locale>
+#include "util.h"
 
 namespace halang
 {
@@ -242,7 +241,7 @@ namespace halang
 			AddInst(Instruction(VM_CODE::LOAD_UPVAL, _var.id()));
 			break;
 		case VarType::TYPE::NONE:
-			ReportError(std::string("variables not found"));
+			ReportError(std::u16string(u"<Identifier>Variables not found: ") + _node->name);
 			break;
 		}
 	}
@@ -287,7 +286,7 @@ namespace halang
 			else
 			{
 				// i don't know how to fix it, fuck you.
-				ReportError(std::string("Identifier: not found."));
+				ReportError(std::u16string(u"<Assignment>Identifier not found: ") + _id_node->name);
 			}
 			break;
 		}

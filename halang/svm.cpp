@@ -36,33 +36,33 @@ namespace halang
 
 #endif // DEBUG
 
-			if (current->getCode() == VM_CODE::STOP)
+			if (current->GetCode() == VM_CODE::STOP)
 				break;
 			Value t1;
 			Function* func;
-			switch (current->getCode())
+			switch (current->GetCode())
 			{
 			case VM_CODE::LOAD_V:
-				PUSH(GET_VAR(current->getParam()));
+				PUSH(GET_VAR(current->GetParam()));
 				break;
 			case VM_CODE::LOAD_UPVAL:
 			{
-				auto _upval = GET_UPVAL(current->getParam());
+				auto _upval = GET_UPVAL(current->GetParam());
 				PUSH(_upval->toValue());
 				break;
 			}
 			case VM_CODE::LOAD_C:
 			{
 				func = sc->function;
-				PUSH(func->codepack->_constants[current->getParam()]);
+				PUSH(func->codepack->_constants[current->GetParam()]);
 				break;
 			}
 			case VM_CODE::STORE_V:
-				SET_VAR(current->getParam(), POP());
+				SET_VAR(current->GetParam(), POP());
 				break;
 			case VM_CODE::STORE_UPVAL:
 			{
-				auto _id = current->getParam();
+				auto _id = current->GetParam();
 				auto _upval = GET_UPVAL(_id);
 				_upval->SetVal(POP());
 				break;
@@ -84,16 +84,16 @@ namespace halang
 				break;
 			}
 			case VM_CODE::PUSH_INT:
-				PUSH(Value(current->getParam()));
+				PUSH(Value(current->GetParam()));
 				break;
 			case VM_CODE::PUSH_BOOL:
-				PUSH(Value(current->getParam() != 0));
+				PUSH(Value(current->GetParam() != 0));
 				break;
 			case VM_CODE::POP:
 				POP();
 				break;
 			case VM_CODE::JMP:
-				inst += current->getParam() - 1;
+				inst += current->GetParam() - 1;
 				break;
 			case VM_CODE::CLOSURE:
 			{
@@ -111,7 +111,7 @@ namespace halang
 						sc->PushUpValue(_upval);
 					}
 					else
-						_upval = Context::GetGC()->New<UpValue>(sc->upvals + (-1 - cp->_require_upvalues[i]));
+						_upval = sc->upvals[(-1 - cp->_require_upvalues[i])];
 
 					func->upvalues.push_back(_upval);
 
@@ -156,14 +156,14 @@ namespace halang
 
 			}
 			case VM_CODE::RETURN:
-				if (current->getParam() != 0)
+				if (current->GetParam() != 0)
 					sc->prev->Push(sc->Pop());
 				sc = sc->prev;
 				inst = sc->saved_ptr;
 				break;
 			case VM_CODE::IFNO:
 				if (!POP())
-					inst += current->getParam() - 1;
+					inst += current->GetParam() - 1;
 				break;
 			case VM_CODE::NOT:
 				PUSH(String::FromCharArray("__not__")->toValue());

@@ -24,5 +24,11 @@ namespace halang
 	{
 		return _num_proto;
 	}
+		
+	GC* Context::gc = nullptr;
+	Dict* Context::_null_proto = nullptr;
+	Dict* Context::_bool_proto = nullptr;
+	Dict* Context::_si_proto = nullptr;
+	Dict* Context::_num_proto = nullptr;
 
 }

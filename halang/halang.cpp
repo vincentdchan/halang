@@ -34,6 +34,18 @@ const char* DEFAULT_FILENAME = "source.txt";
 	} \
 } while(0)
 
+#define CHECK_ERROR_16(MC) do { \
+	if (MC->hasError()) \
+	{			\
+		for (auto i = MC->getMessages().begin();  \
+				i != MC->getMessages().end(); ++i) \
+		{ \
+			utils:: _MessageContainer<std::u16string>::OutputMsg(std::cout, *i); \
+		} \
+		goto CLEAR_AND_EXIT; \
+	} \
+} while(0)
+
 #define CLEAR_PTR(PTR) if ((PTR) != nullptr) \
 	{ \
 		delete (PTR); \
@@ -88,7 +100,15 @@ int main(int argc, char** argv)
 
 	cg = new CodeGen(nvm);
 	cg->generate(parser);
-	CHECK_ERROR(cg);
+	if (cg->hasError())
+	{
+		for (auto i = cg->getMessages().begin(); 
+				i != cg->getMessages().end(); ++i)
+		{
+			std::cout << utils::UTF16_to_UTF8(i->msg) << std::endl;
+		}
+		goto CLEAR_AND_EXIT; 
+	}
 
 	cg->load();
 	CLEAR_PTR(lexer);

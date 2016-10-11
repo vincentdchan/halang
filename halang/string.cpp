@@ -3,9 +3,8 @@
 #include "context.h"
 #include "GC.h"
 #include "string.h"
+#include "util.h"
 #include <string>
-#include <locale>
-#include <codecvt>
 
 namespace halang
 {
@@ -17,14 +16,13 @@ namespace halang
 
 	String* String::FromCharArray(const char* _str)
 	{
-		std::u16string utf16 = std::wstring_convert<std::codecvt_utf8_utf16<char16_t>, char16_t>{}.from_bytes(_str);
-		return FromU16String(utf16);
+		std::string str(_str);
+		return FromStdString(str);
 	}
 
 	String* String::FromStdString(const std::string& _str)
 	{
-		std::u16string utf16 = std::wstring_convert<std::codecvt_utf8_utf16<char16_t>, char16_t>{}.from_bytes(_str.data());
-		return FromU16String(utf16);
+		return FromU16String(utils::utf8_to_utf16(_str));
 	}
 
 	String* String::Concat(String* a, String* b)
