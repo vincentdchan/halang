@@ -184,7 +184,6 @@
     <ClCompile Include="ScriptContext.cpp" />
     <ClCompile Include="stdafx.cpp" />
     <ClCompile Include="string.cpp" />
-    <ClCompile Include="string_poll.cpp" />
     <ClCompile Include="svm.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

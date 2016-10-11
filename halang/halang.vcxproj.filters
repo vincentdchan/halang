@@ -116,9 +116,6 @@
     <ClCompile Include="string.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="string_poll.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="GC.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>

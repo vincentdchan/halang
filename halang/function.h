@@ -3,7 +3,6 @@
 #include <map>
 #include <functional>
 #include <memory>
-#include "svm.h"
 #include "String.h"
 #include "Array.h"
 #include "object.h"
@@ -27,10 +26,11 @@ namespace halang
 	{
 	public:
 
-		friend class VM;
+		friend class GC;
 		friend class CodeGen;
 		friend class StackVM;
 		friend class Function;
+		friend class ScriptContext;
 
 		typedef unsigned int size_type;
 
@@ -38,35 +38,6 @@ namespace halang
 		CodePack() :
 			prev(nullptr), param_size(0)
 		{}
-
-		/// <summary>
-		/// Find the id in the var tables and
-		/// return id of variable in table, return 0 if id is not found.
-		/// </summary>
-		/// <returns>return id of variable in table, return 0 if id is not found</returns>
-		/*
-		int findVarId(IString _name)
-		{
-			int _var_size = static_cast<int>(var_names.size());
-			int _up_size = static_cast<int>(upvalue_names.size());
-
-			for (int i = 0; i < _var_size; ++i)
-				if (var_names[i] == _name)
-					return i;
-
-			for (int i = 0; i < _up_size; ++i)
-				if (upvalue_names[i] == _name)
-					return -2 - i;
-			if (prev)
-			{
-				auto _prev_id = prev->findVarId(_name);
-				addUpValue(name);
-				require_upvalues.push_back(_prev_id);
-			}
-
-			return -1;
-		}
-		*/
 
 	private:
 
@@ -93,12 +64,17 @@ namespace halang
 
 	public:
 
+		virtual Dict* GetPrototype() override
+		{
+			return nullptr;
+		}
+
 		virtual Value toValue() override
 		{
 			return Value(this, TypeId::CodePack);
 		}
 
-		~CodePack()
+		virtual ~CodePack()
 		{
 			delete[] _constants;
 			delete[] _instructions;
@@ -107,104 +83,27 @@ namespace halang
 
 	};
 
-	class Isolate
-	{
-	public:
-		Isolate() :
-			codepack(nullptr)
-		{}
-
-		template<typename _Type>
-		struct Constructor : std::false_type
-		{};
-
-		template<>
-		struct Constructor<TNumber>
-		{
-			Value operator()(Isolate* iso, TNumber num)
-			{
-				return Value(num);
-			}
-		};
-
-		template<>
-		struct Constructor<TSmallInt>
-		{
-			Value operator()(Isolate* iso, TSmallInt si)
-			{
-				return Value(si);
-			}
-		};
-
-		template<>
-		struct Constructor<String>
-		{
-			Value operator()(Isolate*)
-			{
-				return Context::GetGC()->New<String>()->toValue();
-			}
-
-			Value operator()(Isolate*, String* _str)
-			{
-				return _str->toValue();
-			}
-		};
-
-		template<>
-		struct Constructor<Array>
-		{
-			Value operator()(Isolate* iso)
-			{
-				auto arr = Context::GetGC()->New<Array>();
-				return arr->toValue();;
-			}
-
-		};
-
-		inline StackVM* GetVM() const { return vm; }
-
-	private:
-		CodePack* codepack;
-		StackVM* vm;
-	};
-
-	class FunctionCallbackInfo : GCObject
+	class FunctionArgs : public Array
 	{
 	public:
 
-		FunctionCallbackInfo(Isolate* iso) :
-			isolate(iso)
-		{}
-
-		inline Value& operator[](std::size_t index)
-		{
-			return arguments[index];
-		}
-
-		inline Value& GetReturnObject()
-		{
-			return returnObject;
-		}
-
-		inline void SetReturnObject(Value obj)
-		{
-			returnObject = obj;
-		}
-
-		inline Isolate* GetIsolate()
-		{
-			return isolate;
-		}
+		friend class GC;
+		friend class StackVM;
 
 	private:
 
-		Isolate* isolate;
-		std::vector<Value> arguments;
-		Value returnObject;
+		ScriptContext * scriptContext;
+
+	protected:
+
+		FunctionArgs(ScriptContext * sc) 
+		{
+			scriptContext = sc;
+		}
 
 	};
 
-	typedef std::function<void (const FunctionCallbackInfo&)> ExternFunction;
+	typedef std::function<Value (FunctionArgs * )> ExternFunction;
 
 	class Function : public GCObject
 	{
@@ -212,8 +111,8 @@ namespace halang
 
 		friend class GC;
 		friend class StackVM;
-		friend struct Environment;
 		friend class CodeGen;
+		friend class ScriptContext;
 
 		typedef unsigned int size_type;
 
@@ -254,6 +153,14 @@ namespace halang
 	public:
 
 		inline Value GetThis() const { return thisOne; }
+
+		Value Call(StackVM* svm, ScriptContext* sc, FunctionArgs* args)
+		{
+			if (isExtern)
+				return externFunction(args);
+			
+
+		}
 
 		virtual ~Function()
 		{

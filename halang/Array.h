@@ -24,6 +24,11 @@ namespace halang
 
 		}
 
+		Array(unsigned int i):
+			std::vector<Value>(i)
+		{
+		}
+
 	public:
 
 		virtual Value toValue() override
@@ -58,6 +63,16 @@ namespace halang
 			if (index >= GetLength())
 				throw std::runtime_error("<Array>index out of range");
 			std::vector<Value>::operator[](index) = _v;
+		}
+
+		inline void Resize(unsigned int _size)
+		{
+			std::vector<Value>::resize(_size);
+		}
+
+		Value& operator[](unsigned int i)
+		{
+			return std::vector<Value>::operator[](i);
 		}
 
 	};

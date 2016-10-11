@@ -417,7 +417,6 @@ namespace halang
 
 	void CodeGen::load()
 	{
-		vm->createEnvironment(global_cp);
 	}
 
 	CodeGen::~CodeGen()

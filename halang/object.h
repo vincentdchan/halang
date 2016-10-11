@@ -2,7 +2,6 @@
 #include <string>
 #include <vector>
 #include "halang.h"
-#include "string.h"
 
 namespace halang
 {
@@ -41,10 +40,10 @@ namespace halang
 
 	class Object;
 	class String;
+	class ConsString;
+	class SliceString;
 	class Array;
 	class Dict;
-
-	class Isolate;
 
 	struct Value;
 
@@ -55,15 +54,15 @@ namespace halang
 		friend class GC;
 
 		virtual Dict* GetPrototype() = 0;
+		virtual Value toValue();
+		virtual void Mark() {}
+		virtual ~GCObject() {}
 
 	protected:
 
 		GCObject* next;
 		bool marked;
 
-		virtual Value toValue() { return Value(); };
-		virtual void Mark() {}
-		virtual ~GCObject() {}
 	};
 
 	enum class TypeId {
@@ -94,7 +93,14 @@ namespace halang
 	{
 	public:
 
-		_Value value;
+		union
+		{
+			GCObject* gc;
+			String *str;
+			TSmallInt si;		// small int
+			TNumber number;
+			TBool bl;
+		} value;
 		TypeId type;
 
 		Dict* GetPrototype();
@@ -130,6 +136,31 @@ namespace halang
 		inline bool isUpValue() const { return type == TypeId::UpValue; }
 		inline bool isArray() const { return type == TypeId::Array; }
 		inline bool isDict() const { return type == TypeId::Dict; }
+
+		inline operator bool() const
+		{
+			switch (type)
+			{
+			case halang::TypeId::Null:
+				return false;
+			case halang::TypeId::Bool:
+				return value.bl;
+			case halang::TypeId::SmallInt:
+				return value.si == 0;
+			case halang::TypeId::Number:
+				return value.number == 0;
+			case halang::TypeId::GCObject:
+			case halang::TypeId::ScriptContext:
+			case halang::TypeId::CodePack:
+			case halang::TypeId::Function:
+			case halang::TypeId::UpValue:
+			case halang::TypeId::String:
+			case halang::TypeId::Array:
+			case halang::TypeId::Dict:
+			default:
+				return false;
+			}
+		}
 
 	};
 

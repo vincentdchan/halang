@@ -7,6 +7,10 @@
 
 namespace halang
 {
+	Value GCObject::toValue() 
+	{ 
+		return Value(); 
+	}
 
 	Dict* Value::GetPrototype()
 	{

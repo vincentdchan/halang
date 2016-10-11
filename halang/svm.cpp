@@ -5,52 +5,25 @@
 #include "string.h"
 #include "GC.h"
 #include "Dict.h"
+#include "context.h"
 
 namespace halang
 {
-	Environment::Environment(CodePack* cp) :
-		prev(nullptr), sptr(nullptr), stack(nullptr)
-		, codepack(cp), index(0)
+	void StackVM::ChangeContext(ScriptContext* new_sc)
 	{
-		sptr = stack = new Value[STACK_SIZE];
-		variables = new Value[cp->VarSize()];
-		upvalues = new Value[cp->UpValueSize()];
+		if (!new_sc->function->isExtern)
+			sc->saved_ptr = inst;
+		new_sc->prev = sc;
+		sc = new_sc;
 	}
 
-	Value Environment::top(int i) { return *(sptr - i - 1); }
-	Value Environment::pop() { return *(--sptr); }
-	void Environment::push(Value obj) { *(sptr++) = obj; }
-	Value Environment::getVar(unsigned int i) { return variables[i]; }
-	Value Environment::getUpVal(unsigned int i) { return upvalues[i]; }
-	void Environment::setVar(unsigned int i, Value obj) { variables[i] = obj; }
-	void Environment::setUpVal(unsigned int i, Value obj) { upvalues[i] = obj; }
-	Value Environment::getConstant(unsigned int i) { return codepack->constant[i]; }
-
-	void Environment::closeLoaclUpval()
-	{
-		for (auto i = upval_local.begin(); i != upval_local.end(); ++i)
-			(*i)->close();
-	}
-
-	Environment::~Environment()
-	{
-		closeLoaclUpval();
-		if (stack)
-			delete[] stack;
-		if (variables)
-			delete[] variables;
-		if (upvalues)
-			delete[] upvalues;
-	}
-
-#define TOP(INDEX) env->top(INDEX) 
-#define POP() env->pop()
-#define PUSH(VAL) env->push(VAL)
-#define GET_VAR(INDEX) env->getVar(INDEX)
-#define GET_UPVAL(INDEX) env->getUpVal(INDEX)
-#define SET_VAR(INDEX, VAL) env->setVar(INDEX, VAL)
-#define SET_UPVAL(INDEX, VAL) env->setUpVal(INDEX, VAL)
-#define GET_CON(INDEX) env->getConstant(INDEX)
+#define TOP(INDEX) sc->Top(INDEX) 
+#define POP() sc->Pop()
+#define PUSH(VAL) sc->Push(VAL)
+#define GET_VAR(INDEX) sc->GetVariable(INDEX)
+#define GET_UPVAL(INDEX) sc->GetUpValue(INDEX)
+#define SET_VAR(INDEX, VAL) sc->SetVariable(INDEX, VAL)
+#define SET_UPVAL(INDEX, VAL) sc->SetUpValue(INDEX, VAL)
 
 	void StackVM::execute()
 	{
@@ -67,7 +40,6 @@ namespace halang
 				break;
 			Value t1;
 			Function* func;
-			Environment *new_env;
 			switch (current->getCode())
 			{
 			case VM_CODE::LOAD_V:
@@ -75,20 +47,23 @@ namespace halang
 				break;
 			case VM_CODE::LOAD_UPVAL:
 			{
-				auto _upval = reinterpret_cast<UpValue*>(GET_UPVAL(current->getParam()).value.gc);
+				auto _upval = GET_UPVAL(current->getParam());
 				PUSH(_upval->toValue());
 				break;
 			}
 			case VM_CODE::LOAD_C:
-				PUSH(GET_CON(current->getParam()));
+			{
+				func = sc->function;
+				PUSH(func->codepack->_constants[current->getParam()]);
 				break;
+			}
 			case VM_CODE::STORE_V:
 				SET_VAR(current->getParam(), POP());
 				break;
 			case VM_CODE::STORE_UPVAL:
 			{
 				auto _id = current->getParam();
-				auto _upval = reinterpret_cast<UpValue*>(GET_UPVAL(_id).value.gc);
+				auto _upval = GET_UPVAL(_id);
 				_upval->SetVal(POP());
 				break;
 			}
@@ -121,125 +96,110 @@ namespace halang
 				inst += current->getParam() - 1;
 				break;
 			case VM_CODE::CLOSURE:
-				t1 = POP();
+			{
+				Value v1 = POP();
 				func = reinterpret_cast<Function*>(t1.value.gc);
-				do {
-					CodePack* cp = func->codepack;
-					UpValue * _upval = nullptr;
-					for (auto i = cp->require_upvalues.begin();
-						i != cp->require_upvalues.end(); ++i)
-					{
-						if (*i >= 0)
-						{
-							_upval = gc.New<UpValue>(env->variables + *i);
-							env->upval_local.push_back(_upval);
-						}
-						else
-							_upval = gc.New<UpValue>(env->upvalues + (-1 - *i));
-						func->upvalues.push_back(_upval);
-					}
-				} while (0);
-				PUSH(Value(func, TypeId::Function));
-				break;
-			case VM_CODE::CALL:
-				t1 = POP();
-				func = reinterpret_cast<Function*>(t1.value.gc);
-				env->iter = inst;
-				new_env = createEnvironment(func->codepack);
 
-				// copy parameters
-				for (int i = func->paramsSize - 1; i >= 0; --i)
-					new_env->variables[i] = new_env->prev->pop();
-				// copy upvalues
-				for (unsigned int i = 0; i < func->codepack->UpValueSize(); ++i)
+				CodePack* cp = func->codepack;
+				UpValue* _upval = nullptr;
+				for (unsigned int i = 0; i < cp->_require_upvales_size; ++i)
 				{
-					new_env->upvalues[i] = Value(func->upvalues[i], TypeId::UpValue);
+
+					if (cp->_require_upvalues[i] >= 0)
+					{
+						_upval = Context::GetGC()->New<UpValue>(sc->variables + cp->_require_upvalues[i]);
+						sc->PushUpValue(_upval);
+					}
+					else
+						_upval = Context::GetGC()->New<UpValue>(sc->upvals + (-1 - cp->_require_upvalues[i]));
+
 				}
+				PUSH(func->toValue());
 				break;
+
+			}
+			case VM_CODE::CALL:
+			{
+
+				t1 = POP();
+				func = reinterpret_cast<Function*>(t1.value.gc);
+
+				sc->saved_ptr = inst;
+
+				auto new_sc = Context::GetGC()->New<ScriptContext>(func);
+
+
+				FunctionArgs * args = Context::GetGC()->New<FunctionArgs>(new_sc);
+
+				for (int i = 0; i < func->paramsSize; ++i)
+					args->Push(sc->Pop());
+
+				for (unsigned int i = 0;
+					i < func->codepack->_upval_names_size; ++i)
+					new_sc->upvals[i] = func->upvalues[i];
+				
+				ChangeContext(new_sc);
+
+				if (func->isExtern)
+				{
+					func->externFunction(args);
+					sc = sc->prev;
+				}
+				else
+				{
+					inst = new_sc->function->codepack->_instructions;
+				}
+
+				break;
+
+			}
 			case VM_CODE::RETURN:
 				if (current->getParam() != 0)
-				{
-					env->prev->push(env->pop());
-				}
-				quitEnvironment();
-				inst = env->iter;
+					sc->prev->Push(sc->Pop());
+				sc = sc->prev;
+				inst = sc->saved_ptr;
 				break;
 			case VM_CODE::IFNO:
 				if (!POP())
 					inst += current->getParam() - 1;
 				break;
 			case VM_CODE::NOT:
-				PUSH(POP()->applyOperator(OperatorType::NOT));
+				PUSH(String::FromCharArray("__not__")->toValue());
+				break;
 			case VM_CODE::ADD:
-				*TOP(1) = TOP(1)->applyOperator(OperatorType::ADD, *TOP(0));
-				POP();
+				PUSH(String::FromCharArray("__add__")->toValue());
 				break;
 			case VM_CODE::SUB:
-				*TOP(1) = TOP(1)->applyOperator(OperatorType::SUB, *TOP(0));
-				POP();
+				PUSH(String::FromCharArray("__sub__")->toValue());
 				break;
 			case VM_CODE::MUL:
-				*TOP(1) = TOP(1)->applyOperator(OperatorType::MUL, *TOP(0));
-				POP();
+				PUSH(String::FromCharArray("__mul__")->toValue());
 				break;
 			case VM_CODE::DIV:
-				*TOP(1) = TOP(1)->applyOperator(OperatorType::DIV, *TOP(0));
-				POP();
+				PUSH(String::FromCharArray("__mul__")->toValue());
 				break;
 			case VM_CODE::MOD:
-				*TOP(1) = TOP(1)->applyOperator(OperatorType::MOD, *TOP(0));
-				POP();
+				PUSH(String::FromCharArray("__mod__")->toValue());
 				break;
 			case VM_CODE::GT:
-				*TOP(1) = TOP(1)->applyOperator(OperatorType::GT, *TOP(0));
-				POP();
+				PUSH(String::FromCharArray("__gt__")->toValue());
 				break;
 			case VM_CODE::LT:
-				*TOP(1) = TOP(1)->applyOperator(OperatorType::LT, *TOP(0));
-				POP();
+				PUSH(String::FromCharArray("__lt__")->toValue());
 				break;
 			case VM_CODE::GTEQ:
-				*TOP(1) = TOP(1)->applyOperator(OperatorType::GTEQ, *TOP(0));
-				POP();
+				PUSH(String::FromCharArray("__gteq__")->toValue());
 				break;
 			case VM_CODE::LTEQ:
-				*TOP(1) = TOP(1)->applyOperator(OperatorType::LTEQ, *TOP(0));
-				POP();
+				PUSH(String::FromCharArray("__gteq__")->toValue());
 				break;
 			case VM_CODE::EQ:
-				*TOP(1) = TOP(1)->applyOperator(OperatorType::EQ, *TOP(0));
-				POP();
+				PUSH(String::FromCharArray("__eq__")->toValue());
 				break;
 			case VM_CODE::OUT:
-				std::cout << *POP() << std::endl;
 				break;
 			}
 		}
-	}
-
-	Environment* StackVM::createEnvironment(CodePack* cp)
-	{
-		if (env && env->index >= ENV_MAX)
-			throw "Stack Full";
-
-		auto new_env = new Environment(cp);
-		if (!env)
-			new_env->index = 0;
-		else
-			new_env->index = env->index + 1;
-
-		new_env->prev = env;
-		env = new_env;
-
-		inst = new_env->codepack->instructions.begin();
-		return new_env;
-	}
-
-	void StackVM::quitEnvironment()
-	{
-		auto current_env = env;
-		env = current_env->prev;
-		delete current_env;
 	}
 
 };
