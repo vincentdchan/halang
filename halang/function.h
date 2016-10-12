@@ -12,6 +12,11 @@
 namespace halang
 {
 
+	class ConstantTable : public GCObject
+	{
+
+	};
+
 	/// <summary>
 	/// A codepack is a package of codes
 	///
@@ -120,12 +125,12 @@ namespace halang
 
 	protected:
 
-		Function(ExternFunction fun, unsigned int _ps = 0) :
-			paramsSize(_ps), externFunction(fun), isExtern(true)
+		Function(ExternFunction fun) :
+			externFunction(fun), isExtern(true)
 		{}
 
-		Function(CodePack* cp, unsigned int _ps = 0) :
-			codepack(cp), paramsSize(_ps), isExtern(false)
+		Function(CodePack* cp) :
+			codepack(cp), isExtern(false)
 		{}
 
 		void Close()
@@ -147,7 +152,6 @@ namespace halang
 		String * name;
 		Value thisOne;
 
-		size_type paramsSize;
 		std::vector<UpValue*> upvalues;
 
 		inline void SetThisObject(Value _obj) { thisOne = _obj; }

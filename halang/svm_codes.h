@@ -16,7 +16,7 @@
 	V(PUSH_BOOL,		0x0a) \
 	V(POP,				0x0b) \
 	V(CLOSURE,			0x0c) \
-	V(INVOKE,			0x0d) \
+	V(DOT,				0x0d) \
 	V(CALL,				0x0e) \
 	V(RETURN,			0x0f) \
 	V(IFNO,				0x10) \

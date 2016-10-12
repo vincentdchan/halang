@@ -6,6 +6,8 @@
 #include <string>
 #include "util.h"
 
+#define TEXT(T) String::FromCharArray(T)->toValue()
+
 namespace halang
 {
 
@@ -114,7 +116,7 @@ namespace halang
 	CodeGen::GenState* CodeGen::GenerateDefaultState()
 	{
 		auto state = new GenState();
-		auto _print_fun_ = Context::GetGC()->New<Function>(Context::_print_ ,1);
+		auto _print_fun_ = Context::GetGC()->New<Function>(Context::_print_);
 		state->constant.push_back(_print_fun_->toValue());
 
 		auto var_id = state->AddVariable(u"print");
@@ -135,7 +137,7 @@ namespace halang
 		visit(parser->getRoot());
 		AddInst(Instruction(VM_CODE::STOP, 0));
 
-		return Context::GetGC()->New<Function>(GenState::GenerateCodePack(state), 0);
+		return Context::GetGC()->New<Function>(GenState::GenerateCodePack(state));
 	}
 
 	void CodeGen::visit(Node* _node)
@@ -167,7 +169,7 @@ namespace halang
 	{
 		visit(_node->source);
 		visit(_node->id);
-		AddInst(Instruction(VM_CODE::INVOKE, 0));
+		AddInst(Instruction(VM_CODE::DOT, 0));
 	}
 
 	void CodeGen::visit(UnaryExprNode* _node)
@@ -192,37 +194,70 @@ namespace halang
 		switch (_node->op)
 		{
 		case OperatorType::ADD:
-			AddInst(Instruction(VM_CODE::ADD, 0));
+			state->constant.push_back(TEXT("__add__"));
+			AddInst(Instruction(VM_CODE::LOAD_C, state->constant.size() - 1));
+			AddInst(Instruction(VM_CODE::DOT, 0));
+			AddInst(Instruction(VM_CODE::CALL, 1));
 			break;
 		case OperatorType::SUB:
-			AddInst(Instruction(VM_CODE::SUB, 0));
+			state->constant.push_back(TEXT("__sub__"));
+			AddInst(Instruction(VM_CODE::LOAD_C, state->constant.size() - 1));
+			AddInst(Instruction(VM_CODE::DOT, 0));
+			AddInst(Instruction(VM_CODE::CALL, 1));
 			break;
 		case OperatorType::MUL:
-			AddInst(Instruction(VM_CODE::MUL, 0));
+			state->constant.push_back(TEXT("__mul__"));
+			AddInst(Instruction(VM_CODE::LOAD_C, state->constant.size() - 1));
+			AddInst(Instruction(VM_CODE::DOT, 0));
+			AddInst(Instruction(VM_CODE::CALL, 1));
 			break;
 		case OperatorType::DIV:
-			AddInst(Instruction(VM_CODE::DIV, 0));
+			state->constant.push_back(TEXT("__div__"));
+			AddInst(Instruction(VM_CODE::LOAD_C, state->constant.size() - 1));
+			AddInst(Instruction(VM_CODE::DOT, 0));
+			AddInst(Instruction(VM_CODE::CALL, 1));
 			break;
 		case OperatorType::MOD:
-			AddInst(Instruction(VM_CODE::MOD, 0));
+			state->constant.push_back(TEXT("__mod__"));
+			AddInst(Instruction(VM_CODE::LOAD_C, state->constant.size() - 1));
+			AddInst(Instruction(VM_CODE::DOT, 0));
+			AddInst(Instruction(VM_CODE::CALL, 1));
 			break;
 		case OperatorType::POW:
-			AddInst(Instruction(VM_CODE::POW, 0));
+			state->constant.push_back(TEXT("__pow__"));
+			AddInst(Instruction(VM_CODE::LOAD_C, state->constant.size() - 1));
+			AddInst(Instruction(VM_CODE::DOT, 0));
+			AddInst(Instruction(VM_CODE::CALL, 1));
 			break;
 		case OperatorType::GT:
-			AddInst(Instruction(VM_CODE::GT, 0));
+			state->constant.push_back(TEXT("__gt__"));
+			AddInst(Instruction(VM_CODE::LOAD_C, state->constant.size() - 1));
+			AddInst(Instruction(VM_CODE::DOT, 0));
+			AddInst(Instruction(VM_CODE::CALL, 1));
 			break;
 		case OperatorType::LT:
-			AddInst(Instruction(VM_CODE::LT, 0));
+			state->constant.push_back(TEXT("__lt__"));
+			AddInst(Instruction(VM_CODE::LOAD_C, state->constant.size() - 1));
+			AddInst(Instruction(VM_CODE::DOT, 0));
+			AddInst(Instruction(VM_CODE::CALL, 1));
 			break;
 		case OperatorType::GTEQ:
-			AddInst(Instruction(VM_CODE::GTEQ, 0));
+			state->constant.push_back(TEXT("__gteq__"));
+			AddInst(Instruction(VM_CODE::LOAD_C, state->constant.size() - 1));
+			AddInst(Instruction(VM_CODE::DOT, 0));
+			AddInst(Instruction(VM_CODE::CALL, 1));
 			break;
 		case OperatorType::LTEQ:
-			AddInst(Instruction(VM_CODE::LTEQ, 0));
+			state->constant.push_back(TEXT("__lteq__"));
+			AddInst(Instruction(VM_CODE::LOAD_C, state->constant.size() - 1));
+			AddInst(Instruction(VM_CODE::DOT, 0));
+			AddInst(Instruction(VM_CODE::CALL, 1));
 			break;
 		case OperatorType::EQ:
-			AddInst(Instruction(VM_CODE::EQ, 0));
+			state->constant.push_back(TEXT("__eq__"));
+			AddInst(Instruction(VM_CODE::LOAD_C, state->constant.size() - 1));
+			AddInst(Instruction(VM_CODE::DOT, 0));
+			AddInst(Instruction(VM_CODE::CALL, 1));
 			break;
 		default:
 			// runtime error
@@ -413,8 +448,7 @@ namespace halang
 
 		state = new_state->prev;
 
-		auto new_fun = Context::GetGC()->New<Function>(GenState::GenerateCodePack(new_state), 
-			_node->parameters.size());
+		auto new_fun = Context::GetGC()->New<Function>(GenState::GenerateCodePack(new_state));
 
 		delete new_state;
 
@@ -450,3 +484,5 @@ namespace halang
 	}
 
 }
+
+#undef TEXT

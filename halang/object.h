@@ -151,6 +151,8 @@ namespace halang
 			}
 		}
 
+		bool operator==(const Value& that) const;
+
 	};
 
 }

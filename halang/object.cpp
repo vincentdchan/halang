@@ -32,4 +32,28 @@ namespace halang
 		}
 	}
 
+	bool Value::operator==(const Value& that) const
+	{
+		switch (type)
+		{
+		case halang::TypeId::Null:
+			return true;
+		case halang::TypeId::Bool:
+			return value.bl == that.value.bl;
+		case halang::TypeId::SmallInt:
+			return value.si == that.value.si;
+		case halang::TypeId::Number:
+			return value.si == that.value.number;
+		case halang::TypeId::String:
+		{
+			auto s1 = reinterpret_cast<String*>(value.gc);
+			auto s2 = reinterpret_cast<String*>(that.value.gc);
+
+			return s1->GetHash() == s1->GetHash();
+		}
+		default:
+			throw std::runtime_error("wrong type");
+		}
+	}
+
 };

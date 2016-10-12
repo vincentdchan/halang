@@ -79,6 +79,8 @@ namespace halang
 		case Token::TYPE::SEMICOLON:
 			nextToken();
 			return nullptr;
+		case Token::TYPE::IDENTIFIER:
+			return parseExpression();
 		case Token::TYPE::VAR:
 			return parseVarStmt();
 		case Token::TYPE::WHILE:
@@ -112,6 +114,8 @@ namespace halang
 			if (match(Token::TYPE::OPEN_PAREN))
 				src = parseFuncCall(src);
 		}
+		if (match(Token::TYPE::OPEN_PAREN))
+			src = parseFuncCall(src);
 		while (match(Token::TYPE::DOT))
 		{
 			nextToken();

@@ -61,6 +61,7 @@ namespace halang
 		static Value _num_str_(Value self, FunctionArgs& args);
 
 		static Value _str_str_(Value self, FunctionArgs& args);
+		static Value _str_add_(Value self, FunctionArgs& args);
 
 		static Value _print_(Value self, FunctionArgs& args);
 

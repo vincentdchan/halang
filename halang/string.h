@@ -153,7 +153,7 @@ namespace std
 			case TypeId::Number:
 				return hash<TNumber>{}(v.value.number);
 			case TypeId::String:
-				return hash<halang::String>{}(*reinterpret_cast<String*>(v.value.si));
+				return reinterpret_cast<String*>(v.value.si)->GetHash();
 			default:
 				throw std::runtime_error("do hash to wrong type");
 				return 0;

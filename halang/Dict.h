@@ -14,10 +14,18 @@ namespace halang
 
 		friend class GC;
 		friend class StackVM;
+		typedef unsigned int size_type;
+
+		static const size_type DEFAULT_ENTRY_SIZE = 32;
 
 	protected:
 
-		Dict() {}
+		Dict() :
+			std::unordered_map<Value,Value>(20)
+		{
+		}
+
+		struct Entry;
 
 	public:
 
@@ -27,4 +35,13 @@ namespace halang
 		bool Exist(Value key);
 
 	};
+
+	struct Dict::Entry
+	{
+	public:
+		unsigned int hash;
+		Value Key;
+		Value Value;
+	};
+
 }
