@@ -60,6 +60,7 @@ int main(int argc, char** argv)
 	Parser *parser = nullptr;
 	CodeGen *cg = nullptr;
 	StackVM *nvm = nullptr;
+	Function* main_fun = nullptr;
 
 	nvm = new StackVM();
 
@@ -99,7 +100,7 @@ int main(int argc, char** argv)
 	CHECK_ERROR(parser);
 
 	cg = new CodeGen(nvm);
-	cg->generate(parser);
+	main_fun = cg->generate(parser);
 	if (cg->hasError())
 	{
 		for (auto i = cg->getMessages().begin(); 
@@ -110,12 +111,12 @@ int main(int argc, char** argv)
 		goto CLEAR_AND_EXIT; 
 	}
 
-	cg->load();
 	CLEAR_PTR(lexer);
 	CLEAR_PTR(parser);
 	CLEAR_PTR(cg);
 
-	nvm->execute();
+	nvm->InitializeFunction(main_fun);
+	nvm->Execute();
 
 	CLEAR_AND_EXIT:
 

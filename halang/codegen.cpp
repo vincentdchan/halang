@@ -13,9 +13,17 @@ namespace halang
 	{
 		auto cp = Context::GetGC()->New<CodePack>();
 
+		// copy instructions
+		auto needed_size = gs->instructions.size();
+		cp->_instructions = new Instruction[needed_size];
+		cp->_instructions_size = 0;
+		for (auto i = gs->instructions.begin();
+			i != gs->instructions.end(); ++i)
+			cp->_instructions[cp->_instructions_size++] = *i;
+
 		// copy require_upvalues;
-		auto needed_size = gs->require_upvalues.size();
-		cp->_require_upvalues = new int[needed_size]();
+		needed_size = gs->require_upvalues.size();
+		cp->_require_upvalues = new int[needed_size];
 		cp->_require_upvales_size = 0;
 		for (auto i = gs->require_upvalues.begin();
 			i != gs->require_upvalues.end(); ++i)
@@ -108,12 +116,14 @@ namespace halang
 		state->instructions.push_back(inst);
 	}
 
-	void CodeGen::generate(Parser* p)
+	Function* CodeGen::generate(Parser* p)
 	{
 		parser = p;
 
 		visit(parser->getRoot());
 		AddInst(Instruction(VM_CODE::STOP, 0));
+
+		return Context::GetGC()->New<Function>(GenState::GenerateCodePack(state), 0);
 	}
 
 	void CodeGen::visit(Node* _node)
@@ -421,10 +431,6 @@ namespace halang
 	{
 		visit(_node->expression);
 		AddInst(Instruction(VM_CODE::OUT, 0));
-	}
-
-	void CodeGen::load()
-	{
 	}
 
 	CodeGen::~CodeGen()

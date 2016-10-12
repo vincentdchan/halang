@@ -176,6 +176,7 @@
     <ClCompile Include="codegen.cpp" />
     <ClCompile Include="context.cpp" />
     <ClCompile Include="Dict.cpp" />
+    <ClCompile Include="function.cpp" />
     <ClCompile Include="GC.cpp" />
     <ClCompile Include="halang.cpp" />
     <ClCompile Include="lex.cpp" />

@@ -9,6 +9,16 @@
 
 namespace halang
 {
+
+	void StackVM::InitializeFunction(Function* fun)
+	{
+		if (fun->isExtern)
+			throw std::runtime_error("Main function can not be external.");
+		auto new_sc = Context::GetGC()->New<ScriptContext>(fun);
+		sc = new_sc;
+		inst = fun->codepack->_instructions;
+	}
+
 	void StackVM::ChangeContext(ScriptContext* new_sc)
 	{
 		if (!new_sc->function->isExtern)
@@ -25,7 +35,7 @@ namespace halang
 #define SET_VAR(INDEX, VAL) sc->SetVariable(INDEX, VAL)
 #define SET_UPVAL(INDEX, VAL) sc->SetUpValue(INDEX, VAL)
 
-	void StackVM::execute()
+	void StackVM::Execute()
 	{
 		for (;;)
 		{
@@ -98,7 +108,7 @@ namespace halang
 			case VM_CODE::CLOSURE:
 			{
 				Value v1 = POP();
-				func = reinterpret_cast<Function*>(t1.value.gc);
+				func = reinterpret_cast<Function*>(v1.value.gc);
 
 				CodePack* cp = func->codepack;
 				UpValue* _upval = nullptr;
@@ -202,6 +212,11 @@ namespace halang
 				break;
 			}
 		}
+	}
+
+	void StackVM::InitalizeDefaultPrototype()
+	{
+
 	}
 
 };

@@ -49,9 +49,19 @@ namespace halang
 	{
 		std::uint16_t _content_;
 
+		Instruction()
+		{
+			_content_ = 0;
+		}
+
 		Instruction(VM_CODE _code, int param) : _content_(static_cast<std::int16_t>(_code))
 		{
 			_content_ = ((_content_ << 8) | (param & 0xFF));
+		}
+
+		Instruction(const Instruction& _another)
+		{
+			_content_ = _another._content_;
 		}
 
 		inline VM_CODE GetCode() const

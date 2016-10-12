@@ -116,6 +116,8 @@ namespace halang
 
 		typedef unsigned int size_type;
 
+		static std::string ToString(Function *);
+
 	protected:
 
 		Function(ExternFunction fun, unsigned int _ps = 0) :
@@ -153,11 +155,12 @@ namespace halang
 
 	public:
 
+		virtual Value toValue() override { return Value(this, TypeId::Function); }
+
 		inline Value GetThis() const { return thisOne; }
 
 		virtual ~Function()
 		{
-
 		}
 
 	};

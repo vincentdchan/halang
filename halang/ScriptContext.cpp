@@ -22,7 +22,7 @@ namespace halang
 	{
 
 		stack_size = VM_STACK_SIZE;
-		stack = new Value[stack_size]();
+		stack = new Value[stack_size];
 
 		sptr = stack;
 

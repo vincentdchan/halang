@@ -26,9 +26,8 @@ namespace halang
 		CodeGen& operator=(const CodeGen&) = delete;
 		CodeGen& operator=(CodeGen&&) = delete;
 		~CodeGen();
-		void generate(Parser*);
 
-		void load();
+		Function* generate(Parser*);
 
 		static VarType FindVar(GenState*, const std::u16string&);
 

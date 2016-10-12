@@ -25,7 +25,9 @@ namespace halang
 
 		StackVM(const StackVM&) = delete;
 		StackVM& operator=(const StackVM&) = delete;
-		void execute();
+
+		void InitializeFunction(Function * );
+		void Execute();
 
 		void ChangeContext(ScriptContext*);
 
@@ -33,6 +35,9 @@ namespace halang
 		{ }
 
 	private:
+
+		void InitalizeDefaultPrototype();
+
 		InstIter inst;
 		Value* ptr;
 
