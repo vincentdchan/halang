@@ -135,6 +135,8 @@ namespace halang
 			case VM_CODE::CALL:
 			{
 				t1 = POP();
+				Value This = POP();
+
 				func = reinterpret_cast<Function*>(t1.value.gc);
 
 				sc->saved_ptr = inst;
@@ -144,30 +146,31 @@ namespace halang
 
 				FunctionArgs * args = Context::GetGC()->New<FunctionArgs>(new_sc);
 
-				for (int i = 0; i < func->paramsSize; ++i)
+				for (int i = 0; i < current->GetParam(); ++i)
 					args->Push(sc->Pop());
 
-				for (unsigned int i = 0;
-					i < func->codepack->_upval_names_size; ++i)
-					new_sc->upvals[i] = func->upvalues[i];
 				
 				ChangeContext(new_sc);
 
 				if (func->isExtern)
 				{
-					Value result =func->externFunction(Value(), *args);
+					Value result =func->externFunction(This, *args);
 					sc = sc->prev;
 					sc->Push(result);
 				}
 				else
 				{
+					for (unsigned int i = 0;
+						i < func->codepack->_upval_names_size; ++i)
+						new_sc->upvals[i] = func->upvalues[i];
+
 					inst = new_sc->function->codepack->_instructions;
 				}
 
 				break;
 
 			}
-			case VM_CODE::INVOKE:
+			case VM_CODE::DOT:
 			{
 				Value vo1, vs2;
 				vs2 = POP();

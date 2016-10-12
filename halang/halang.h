@@ -51,7 +51,6 @@ namespace halang
 	V(CLASS) \
 	V(FUNC) \
 	V(RETURN) \
-	V(PRINT) \
 	V(ENDFILE) 
 
 
