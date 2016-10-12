@@ -12,7 +12,7 @@ namespace halang
 
 	GCObject* GC::Erase(GCObject* obj)
 	{
-		auto _next = obj->next;
+		GCObject* _next = obj->next;
 		delete obj;
 		return _next;
 	}

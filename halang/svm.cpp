@@ -15,6 +15,8 @@ namespace halang
 		if (fun->isExtern)
 			throw std::runtime_error("Main function can not be external.");
 		auto new_sc = Context::GetGC()->New<ScriptContext>(fun);
+		Context::InitializeDefaultPrototype();
+
 		sc = new_sc;
 		inst = fun->codepack->_instructions;
 	}
@@ -132,7 +134,6 @@ namespace halang
 			}
 			case VM_CODE::CALL:
 			{
-
 				t1 = POP();
 				func = reinterpret_cast<Function*>(t1.value.gc);
 
@@ -154,8 +155,9 @@ namespace halang
 
 				if (func->isExtern)
 				{
-					func->externFunction(Value(), args);
+					Value result =func->externFunction(Value(), *args);
 					sc = sc->prev;
+					sc->Push(result);
 				}
 				else
 				{
@@ -164,6 +166,28 @@ namespace halang
 
 				break;
 
+			}
+			case VM_CODE::INVOKE:
+			{
+				Value vo1, vs2;
+				vs2 = POP();
+				vo1 = POP();
+
+				if (vo1.isDict())
+				{
+					auto _dict = reinterpret_cast<Dict*>(vo1.value.gc);
+					if (_dict->Exist(vs2))
+					{
+						PUSH(_dict->GetValue(vs2));
+						break;
+					}
+				}
+
+				auto proto = vo1.GetPrototype();
+				auto target = proto->GetValue(vs2);;
+				PUSH(target);
+
+				break;
 			}
 			case VM_CODE::RETURN:
 				if (current->GetParam() != 0)
@@ -212,11 +236,6 @@ namespace halang
 				break;
 			}
 		}
-	}
-
-	void StackVM::InitalizeDefaultPrototype()
-	{
-
 	}
 
 };

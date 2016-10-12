@@ -103,7 +103,7 @@ namespace halang
 
 	};
 
-	typedef std::function<Value (Value, FunctionArgs * )> ExternFunction;
+	typedef std::function<Value (Value, FunctionArgs& )> ExternFunction;
 
 	class Function : public GCObject
 	{

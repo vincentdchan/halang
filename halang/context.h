@@ -12,6 +12,7 @@ namespace halang
 	public:
 
 		friend class GC;
+		friend class StackVM;
 
 		static GC* GetGC();
 

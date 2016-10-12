@@ -73,14 +73,14 @@ namespace halang
 
 	Value Context::_null_str_(Value self, FunctionArgs& args)
 	{
-		return TEXT("<NULL>");
+		return TEXT("<Null>");
 	}
 
 	Value Context::_si_add_(Value self, FunctionArgs& args)
 	{
 		// ASSERT(self.type == TypeID::SmallInt)
 		auto arg = args.At(0);
-		return Value(self.value.si + arg.value.si);
+		return Value(self . value.si + arg.value.si);
 	}
 
 	Value Context::_si_sub_(Value self, FunctionArgs& args)

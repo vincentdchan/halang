@@ -5,6 +5,7 @@
 #include "string.h"
 #include "util.h"
 #include <string>
+#include <cstdlib>
 
 namespace halang
 {
@@ -37,14 +38,16 @@ namespace halang
 
 	SimpleString::SimpleString() : length(0)
 	{
-		s_value = new char16_t[length + 1];
+		s_value = reinterpret_cast<char16_t*>(std::malloc(sizeof(char16_t) * (length+1)));
+		// s_value = new char16_t[length + 1];
 		s_value[length] = u'\0';
 
 		// calculate hash;
 		_hash = 5381;
 		int c = 0;
 
-		while ((c = *s_value++))
+		char16_t * sptr = s_value;
+		while ((c = *sptr++))
 			_hash = ((_hash << 5) + _hash) + c;
 
 	}
@@ -63,7 +66,9 @@ namespace halang
 		_hash = 5381;
 		int c = 0;
 
-		while ((c = *s_value++))
+		char16_t * sptr = s_value;
+
+		while ((c = *sptr++))
 			_hash = ((_hash << 5) + _hash) + c;
 	}
 
@@ -77,10 +82,9 @@ namespace halang
 			s_value[i] = _str.s_value[i];
 	}
 
-
 	SimpleString::~SimpleString()
 	{
-		delete s_value;
+		delete[] s_value;
 	}
 
 	char16_t SimpleString::CharAt(unsigned int index) const 

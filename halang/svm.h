@@ -36,8 +36,6 @@ namespace halang
 
 	private:
 
-		void InitalizeDefaultPrototype();
-
 		InstIter inst;
 		Value* ptr;
 

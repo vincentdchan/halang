@@ -153,6 +153,9 @@ namespace halang
 
 	void CodeGen::visit(InvokeExprNode* _node)
 	{
+		visit(_node->source);
+		visit(_node->id);
+		AddInst(Instruction(VM_CODE::INVOKE, 0));
 	}
 
 	void CodeGen::visit(UnaryExprNode* _node)
