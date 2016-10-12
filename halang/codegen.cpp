@@ -106,9 +106,21 @@ namespace halang
 	CodeGen::CodeGen(StackVM* _vm) : 
 		vm(_vm), parser(nullptr), name(nullptr)
 	{ 
-		auto new_state = new GenState();
+		auto new_state = GenerateDefaultState();
 		new_state->prev = state;
 		state = new_state;
+	}
+
+	CodeGen::GenState* CodeGen::GenerateDefaultState()
+	{
+		auto state = new GenState();
+		auto _print_fun_ = Context::GetGC()->New<Function>(Context::_print_ ,1);
+		state->constant.push_back(_print_fun_->toValue());
+
+		auto var_id = state->AddVariable(u"print");
+		state->instructions.push_back(Instruction(VM_CODE::LOAD_C, state->constant.size() - 1));
+		state->instructions.push_back(Instruction(VM_CODE::STORE_V, var_id));
+		return state;
 	}
 
 	void CodeGen::AddInst(Instruction inst)
@@ -427,13 +439,7 @@ namespace halang
 			visit(*i);
 
 		visit(_node->exp);
-		AddInst(Instruction(VM_CODE::CALL, 0));
-	}
-
-	void CodeGen::visit(PrintStmtNode* _node)
-	{
-		visit(_node->expression);
-		AddInst(Instruction(VM_CODE::OUT, 0));
+		AddInst(Instruction(VM_CODE::CALL, _node->parameters.size()));
 	}
 
 	CodeGen::~CodeGen()

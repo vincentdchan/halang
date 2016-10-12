@@ -11,6 +11,7 @@ namespace halang
 	{
 	public:
 
+		friend class CodeGen;
 		friend class GC;
 		friend class StackVM;
 
@@ -20,6 +21,7 @@ namespace halang
 		static Dict* GetBoolPrototype();
 		static Dict* GetSmallIntPrototype();
 		static Dict* GetNumberPrototype();
+		static Dict* GetStringPrototype();
 
 	private:
 		
@@ -29,6 +31,7 @@ namespace halang
 		static Dict* _bool_proto;
 		static Dict* _si_proto;
 		static Dict* _num_proto;
+		static Dict* _str_proto;
 
 		static void InitializeDefaultPrototype();
 
@@ -56,6 +59,10 @@ namespace halang
 		static Value _num_gteq_(Value self, FunctionArgs& args);
 		static Value _num_lteq_(Value self, FunctionArgs& args);
 		static Value _num_str_(Value self, FunctionArgs& args);
+
+		static Value _str_str_(Value self, FunctionArgs& args);
+
+		static Value _print_(Value self, FunctionArgs& args);
 
 	};
 

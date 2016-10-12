@@ -47,6 +47,7 @@ namespace halang
 		Parser* parser;
 		GenState* state;
 
+		GenState* GenerateDefaultState();
 		void AddInst(Instruction i);
 
 	};

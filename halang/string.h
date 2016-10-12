@@ -27,7 +27,8 @@ namespace halang
 		virtual char16_t CharAt(unsigned int) const = 0;
 		virtual unsigned int GetHash() const = 0;
 		virtual size_type GetLength() const = 0;
-		virtual Dict* GetPrototype() override { return nullptr; }
+		virtual void ToU16String(std::u16string&) = 0;
+		virtual Dict* GetPrototype() override;
 		virtual ~String() {}
 
 	};
@@ -56,10 +57,12 @@ namespace halang
 		virtual char16_t CharAt(unsigned int index) const override;
 		virtual unsigned int GetHash() const override;
 		virtual unsigned int GetLength() const override;
+		virtual void ToU16String(std::u16string&) override;
 
 	};
 
 	class ConsString : public String
+	
 	{
 	public:
 
@@ -88,6 +91,7 @@ namespace halang
 		virtual unsigned int GetHash() const override;
 		virtual char16_t CharAt(unsigned int index) const override;
 		virtual void Mark() override;
+		virtual void ToU16String(std::u16string&) override;
 		virtual ~ConsString();
 	};
 
@@ -115,6 +119,7 @@ namespace halang
 		virtual char16_t CharAt(unsigned int index) const override;
 		virtual unsigned int GetHash() const override;
 		virtual void Mark() override;
+		virtual void ToU16String(std::u16string&) override;
 
 	};
 

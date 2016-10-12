@@ -24,7 +24,6 @@ namespace halang
 	V(WhileStmt) \
 	V(BreakStmt) \
 	V(ReturnStmt) \
-	V(PrintStmt) \
 	V(ClassDef) \
 	V(FuncDef) \
 	V(FuncDefParam)\
@@ -71,7 +70,6 @@ namespace halang
 		virtual FuncDefNode* asFuncDef() { return nullptr; }
 		virtual FuncDefParamNode* asFuncDefParam() { return nullptr; }
 		virtual FuncCallNode* asFuncCall() { return nullptr; }
-		virtual PrintStmtNode* asPrintStmt() { return nullptr; }
 
 		virtual void visit(Visitor*) = 0;
 	};
@@ -383,20 +381,6 @@ namespace halang
 		virtual FuncCallNode* asFuncCall() override { return this; }
 		Node* exp; // maybe identifier, maybe another func  foo(a) foo(a)(b)(b)
 		std::vector<Node*> parameters;
-
-		VISIT_OVERRIDE
-	};
-
-	/// <summary>
-	/// PrintStatement ::= 'print' Expression
-	/// </summary>
-	class PrintStmtNode : public Node
-	{
-	public:
-		PrintStmtNode(Node * exp = nullptr) : expression(exp)
-		{}
-		virtual PrintStmtNode* asPrintStmt() override { return this; }
-		Node* expression;
 
 		VISIT_OVERRIDE
 	};

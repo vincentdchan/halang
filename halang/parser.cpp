@@ -64,7 +64,6 @@ namespace halang
 			match(Token::TYPE::IF) ||
 			match(Token::TYPE::FUNC) ||
 			match(Token::TYPE::SEMICOLON) ||
-			match(Token::TYPE::PRINT) ||
 			match(Token::TYPE::RETURN) ||
 			Token::isOperator(lookahead)
 			);
@@ -98,8 +97,6 @@ namespace halang
 			_node = parseBlock();
 			expect(nextToken(), Token::TYPE::CLOSE_BRAKET);
 			return _node;
-		case Token::TYPE::PRINT:
-			return parsePrintStmt();
 		default:
 			return parseExpression();
 		}
@@ -558,13 +555,6 @@ namespace halang
 		expect(nextToken(), Token::TYPE::RETURN);
 		auto exp = parseExpression();
 		return make_object<ReturnStmtNode>(exp);
-	}
-
-	Node* Parser::parsePrintStmt()
-	{
-		expect(nextToken(), Token::TYPE::PRINT);
-		auto exp = parseExpression();
-		return make_object<PrintStmtNode>(exp);
 	}
 
 	Parser::~Parser()

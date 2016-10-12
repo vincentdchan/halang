@@ -36,6 +36,11 @@ namespace halang
 		return Context::GetGC()->New<SliceString>(str, begin, end);
 	}
 
+	Dict* String::GetPrototype()
+	{
+		return Context::GetStringPrototype();
+	}
+
 	SimpleString::SimpleString() : length(0)
 	{
 		s_value = reinterpret_cast<char16_t*>(std::malloc(sizeof(char16_t) * (length+1)));
@@ -80,6 +85,11 @@ namespace halang
 
 		for (size_type i = 0; i < _str.length; ++i)
 			s_value[i] = _str.s_value[i];
+	}
+
+	void SimpleString::ToU16String(std::u16string& str)
+	{
+		str = std::u16string(s_value);
 	}
 
 	SimpleString::~SimpleString()
@@ -161,6 +171,24 @@ namespace halang
 			right->Mark();
 	}
 
+	void ConsString::ToU16String(std::u16string& str)
+	{
+		std::u16string buf;
+		if (left != nullptr)
+		{
+			left->ToU16String(buf);
+			if (right != nullptr)
+			{
+				std::u16string buf2;
+				right->ToU16String(buf2);
+				buf = buf + buf2;
+			}
+		}
+		else
+			right->ToU16String(buf);
+		str = buf;
+	}
+
 	ConsString::~ConsString()
 	{
 		if (_hash != nullptr)
@@ -201,6 +229,13 @@ namespace halang
 	unsigned int SliceString::GetHash() const
 	{
 		return _hash;
+	}
+
+	void SliceString::ToU16String(std::u16string& str)
+	{
+		for (String::size_type i = 0;
+			i < this->GetLength(); ++i)
+			str.push_back(this->CharAt(i));
 	}
 
 	void SliceString::Mark()

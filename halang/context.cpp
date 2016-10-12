@@ -3,7 +3,9 @@
 #include "Dict.h"
 #include "string.h"
 #include "function.h"
+#include "util.h"
 #include <sstream>
+#include <iostream>
 
 #define TEXT(T) String::FromCharArray(T)->toValue()
 #define FUN(F, A) gc->New<Function>(F, A)->toValue()
@@ -13,31 +15,22 @@ namespace halang
 
 	GC* Context::GetGC() { return gc; }
 
-	Dict* Context::GetNullPrototype()
-	{
-		return _null_proto;
-	}
+	Dict* Context::GetNullPrototype() { return _null_proto; }
 
-	Dict* Context::GetBoolPrototype()
-	{
-		return _bool_proto;
-	}
+	Dict* Context::GetBoolPrototype() { return _bool_proto; } 
 
-	Dict* Context::GetSmallIntPrototype()
-	{
-		return _si_proto;
-	}
+	Dict* Context::GetSmallIntPrototype() { return _si_proto; }
 
-	Dict* Context::GetNumberPrototype()
-	{
-		return _num_proto;
-	}
+	Dict* Context::GetNumberPrototype() { return _num_proto; }
+
+	Dict* Context::GetStringPrototype() { return _str_proto; }
 		
 	GC* Context::gc = nullptr;
 	Dict* Context::_null_proto = nullptr;
 	Dict* Context::_bool_proto = nullptr;
 	Dict* Context::_si_proto = nullptr;
 	Dict* Context::_num_proto = nullptr;
+	Dict* Context::_str_proto = nullptr;
 
 	void Context::InitializeDefaultPrototype()
 	{
@@ -68,6 +61,9 @@ namespace halang
 		_num_proto->SetValue(TEXT("__gteq__"),	FUN(_num_gteq_, 0));
 		_num_proto->SetValue(TEXT("__lteq__"),	FUN(_num_lteq_, 0));
 		_num_proto->SetValue(TEXT("__str__"),	FUN(_num_str_, 0));
+		
+		_str_proto = gc->New<Dict>();
+		_str_proto->SetValue(TEXT("__str__"),	FUN(_str_str_, 0));
 
 	}
 
@@ -203,6 +199,22 @@ namespace halang
 		std::stringstream ss;
 		ss << "<number: " << self.value.number << ">";
 		return String::FromStdString(ss.str())->toValue();
+	}
+
+	Value Context::_str_str_(Value self, FunctionArgs& args)
+	{
+		return self;
+	}
+
+	Value Context::_print_(Value self, FunctionArgs& args)
+	{
+		auto arg = args.At(0);
+		if (arg.type != TypeId::String)
+			throw std::runtime_error("You must print a string");
+		auto _str = reinterpret_cast<String*>(arg.value.gc);
+		std::u16string utf16;
+		_str->ToU16String(utf16);
+		std::cout << utils::UTF16_to_UTF8(utf16) << std::endl;
 	}
 
 }

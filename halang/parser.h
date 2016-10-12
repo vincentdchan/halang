@@ -55,7 +55,6 @@ namespace halang
 		FuncDefParamNode*	parseFuncDefParam();
 		Node*				parseFuncCall(Node* _exp = nullptr);
 		Node*				parseReturnStmt();
-		Node*				parsePrintStmt();
 		Parser() = delete;
 		Parser(const Parser&) = delete;
 		Parser& operator=(const Parser&) = delete;
