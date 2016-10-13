@@ -188,6 +188,7 @@ namespace halang
 
 				auto proto = vo1.GetPrototype();
 				auto target = proto->GetValue(vs2);;
+				PUSH(vo1); // this
 				PUSH(target);
 
 				break;

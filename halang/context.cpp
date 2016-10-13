@@ -38,19 +38,17 @@ namespace halang
 		_null_proto->SetValue(TEXT("__str__"), FUN(_null_str_));
 
 		_si_proto = gc->New<Dict>();
-		_si_proto->SetValue(TEXT("__eq__"),		FUN(_si_eq_));
-		_si_proto->SetValue(TEXT("__gt__"),		FUN(_si_gt_));
-		_si_proto->SetValue(TEXT("__lt__"),		FUN(_si_lt_));
-		_si_proto->SetValue(TEXT("__gteq__"),	FUN(_si_gteq_));
-		_si_proto->SetValue(TEXT("__lteq__"),	FUN(_si_lteq_));
 		_si_proto->SetValue(TEXT("__add__"),	FUN(_si_add_));
 		_si_proto->SetValue(TEXT("__sub__"),	FUN(_si_sub_));
 		_si_proto->SetValue(TEXT("__mul__"),	FUN(_si_mul_));
 		_si_proto->SetValue(TEXT("__div__"),	FUN(_si_div_));
 		_si_proto->SetValue(TEXT("__mod__"),	FUN(_si_mod_));
-		// _si_proto->SetValue(TEXT("__str__"),	FUN(_si_str_));
-
-		std::cout << _si_proto->max_size() << std::endl;
+		_si_proto->SetValue(TEXT("__eq__"),		FUN(_si_eq_));
+		_si_proto->SetValue(TEXT("__gt__"),		FUN(_si_gt_));
+		_si_proto->SetValue(TEXT("__lt__"),		FUN(_si_lt_));
+		_si_proto->SetValue(TEXT("__gteq__"),	FUN(_si_gteq_));
+		_si_proto->SetValue(TEXT("__lteq__"),	FUN(_si_lteq_));
+		_si_proto->SetValue(TEXT("__str__"),	FUN(_si_str_));
 
 		_num_proto = gc->New<Dict>();
 		_num_proto->SetValue(TEXT("__add__"),	FUN(_num_add_));
