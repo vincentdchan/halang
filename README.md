@@ -139,7 +139,20 @@ a(1);			// 7
 a(8);			// 15
 ```
 
+# Object-Originted Programming
 
+In `Halang`, you can use `prototype` to implement OOP, the type of prototype is usually a Dict, Dict is and internal object.
+
+Let's assume `a` is an integer, `Halang` has included the `prototype` of Integer.
+
+```
+a + 1
+```
+The expression below is equal to:
+```
+a.__add__(1)
+```
+Because the `prototype` of integer includes `__add__` method, so expression below can calculate the sum of a and 1. And you can get the `prototype` of integer and modify it, so that you can **override** the default `__add__`.
 
 # Future
 
