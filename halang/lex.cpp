@@ -1,5 +1,6 @@
 #include "stdafx.h"
 #include <cstring>
+#include <string>
 #include "lex.h"
 
 namespace halang
@@ -37,7 +38,10 @@ namespace halang
 		if (ist.eof()) return false;
 		bool result = true;
 
-		std::getline(ist, buffer);
+		std::string _buf;
+		std::getline(ist, _buf);
+		buffer = utils::utf8_to_utf16(_buf);
+
 		iter = 0;
 		while (iter < buffer.size() && result)
 		{
@@ -52,45 +56,54 @@ namespace halang
 			{
 				result = scanLiteral();
 			}
-			else if (buffer[iter] == '"')
+			else if (buffer[iter] == u'"')
 				result = scanString();
 			else switch (buffer[iter])
 			{
-			case '\t':
-			case '\n':
-			case ' ': ++iter; break;
-			case '!':
+			case u'\t':
+			case u'\n':
+			case u' ': ++iter; break;
+			case u'!':
 				PUSH_TOKEN(NOT);
 				++iter; break;
-			case '.':
+			case u'@':
+				PUSH_TOKEN(AT);
+				++iter; break;
+			case u'.':
 				PUSH_TOKEN(DOT);
 				++iter; break;
-			case ',':
+			case u',':
 				PUSH_TOKEN(COMMA);
 				++iter; break;
-			case ';':
+			case u';':
 				PUSH_TOKEN(SEMICOLON);
 				++iter; break;
-			case '(':
+			case u'(':
 				PUSH_TOKEN(OPEN_PAREN);
 				++iter; break;
-			case ')':
+			case u')':
 				PUSH_TOKEN(CLOSE_PAREN);
 				++iter; break;
-			case '{':
+			case u'{':
 				PUSH_TOKEN(OPEN_BRAKET);
 				++iter; break;
-			case '}':
+			case u'}':
 				PUSH_TOKEN(CLOSE_BRAKET);
 				++iter; break;
-			case '+':
+			case u'[':
+				PUSH_TOKEN(OPEN_SQUARE_BRAKET);
+				++iter; break;
+			case u']':
+				PUSH_TOKEN(CLOSE_SQUARE_BRAKET);
+				++iter; break;
+			case u'+':
 				PUSH_TOKEN(ADD);
 				++iter; break;
-			case '-':
+			case u'-':
 				PUSH_TOKEN(SUB);
 				++iter; break;
-			case '*':
-				if (swallow("**"))
+			case u'*':
+				if (swallow(u"**"))
 				{
 					PUSH_TOKEN(POW);
 					break;
@@ -98,14 +111,14 @@ namespace halang
 				else
 					PUSH_TOKEN(MUL);
 				++iter; break;
-			case '/':
+			case u'/':
 				PUSH_TOKEN(DIV);
 				++iter; break;
-			case '%':
+			case u'%':
 				PUSH_TOKEN(MOD);
 				++iter; break;
-			case '>':
-				if (swallow(">="))
+			case u'>':
+				if (swallow(u">="))
 				{
 					PUSH_TOKEN(GTEQ);
 					break;
@@ -113,8 +126,8 @@ namespace halang
 				else
 					PUSH_TOKEN(GT);
 				++iter; break;
-			case '<':
-				if (swallow("<="))
+			case u'<':
+				if (swallow(u"<="))
 				{
 					PUSH_TOKEN(LTEQ);
 					break;
@@ -122,8 +135,8 @@ namespace halang
 				else
 					PUSH_TOKEN(LT);
 				++iter; break;
-			case'=':
-				if (swallow("=="))
+			case u'=':
+				if (swallow(u"=="))
 				{
 					PUSH_TOKEN(EQ);
 					break;
@@ -132,7 +145,7 @@ namespace halang
 					PUSH_TOKEN(ASSIGN);
 				++iter; break;
 			default:
-				ReportError(string("Lexer error: unexpected charactor: ") + buffer[iter]);
+				ReportError(string("Lexer error: unexpected charactor: "));
 				++iter; break;
 			}
 		}
@@ -140,9 +153,12 @@ namespace halang
 		return result;
 	}
 
-	bool Lexer::swallow(const char* _str)
+	bool Lexer::swallow(const char16_t* _str)
 	{
-		auto len = std::strlen(_str);
+		std::size_t len = 0;
+		const char16_t * _tmp = _str;
+		while (*_tmp++ != u'\0') len++;
+
 		bool result = true;
 		for (std::size_t i = 0; i < len; ++i)
 		{
@@ -160,15 +176,15 @@ namespace halang
 	bool Lexer::scanString()
 	{
 		auto ic = iter;
-		if (buffer[ic++] != '"') return false;
-		std::string str;
-		while (ic < buffer.size() && buffer[ic] != '"')
+		if (buffer[ic++] != u'"') return false;
+		std::u16string str;
+		while (ic < buffer.size() && buffer[ic] != u'"')
 		{
-			if (buffer[ic] == '\\')
+			if (buffer[ic] == u'\\')
 			{
-				if (ic + 1 < buffer.size() && buffer[ic + 1] == '"')
+				if (ic + 1 < buffer.size() && buffer[ic + 1] == u'"')
 				{
-					str.push_back('"');
+					str.push_back(u'"');
 					ic += 2;
 					continue;
 				}
@@ -179,7 +195,7 @@ namespace halang
 				str.push_back(buffer[ic]);
 			ic++;
 		}
-		if (buffer[ic++] == '"')
+		if (buffer[ic++] == u'"')
 		{
 			Token t;
 			t.location = loc;
@@ -202,55 +218,55 @@ namespace halang
 		// check reserved
 		switch (buffer[iter])
 		{
-			case 'v': //  var
-				if (match = swallow("var"))
-				{
-					loc.length = 3;
-					PUSH_TOKEN(VAR);
-				}
-				break;
-			case 'i': // if
-				if (match = swallow("if"))
-				{
-					loc.length = 2;
-					PUSH_TOKEN(IF);
-				}
-				break;
-			case 'e': // else
-				if (match = swallow("else"))
-				{
-					loc.length = 4;
-					PUSH_TOKEN(ELSE);
-				}
-				break;
-			case 'w': // while
-				if (match = swallow("while"))
-				{
-					loc.length = 5;
-					PUSH_TOKEN(WHILE);
-				}
-				break;
-			case 'f': // func
-				if (match = swallow("func"))
-				{
-					loc.length = 4;
-					PUSH_TOKEN(FUNC);
-				}
-				break;
-			case 'r': // return
-				if (match = swallow("return"))
-				{
-					loc.length = 6;
-					PUSH_TOKEN(RETURN);
-				}
-				break;
-			case 'p': //print
-				if (match = swallow("print"))
-				{
-					loc.length = 5;
-					PUSH_TOKEN(PRINT);
-				}
-				break;
+		case u'c':
+			if (match == swallow(u"class"))
+			{
+				loc.length = 5;
+				PUSH_TOKEN(CLASS);
+			}
+			break;
+		case u'v': //  var
+			if (match = swallow(u"var"))
+			{
+				loc.length = 3;
+				PUSH_TOKEN(VAR);
+			}
+			break;
+		case u'i': // if
+			if (match = swallow(u"if"))
+			{
+				loc.length = 2;
+				PUSH_TOKEN(IF);
+			}
+			break;
+		case u'e': // else
+			if (match = swallow(u"else"))
+			{
+				loc.length = 4;
+				PUSH_TOKEN(ELSE);
+			}
+			break;
+		case u'w': // while
+			if (match = swallow(u"while"))
+			{
+				loc.length = 5;
+				PUSH_TOKEN(WHILE);
+			}
+			break;
+		case u'f': // func
+			if (match = swallow(u"func"))
+			{
+				loc.length = 4;
+				PUSH_TOKEN(FUNC);
+			}
+			break;
+		case u'r': // return
+			if (match = swallow(u"return"))
+			{
+				loc.length = 6;
+				PUSH_TOKEN(RETURN);
+			}
+			break;
 		}
 		if (!match)
 			match = scanIdentifier();
@@ -272,7 +288,7 @@ namespace halang
 		t.type = Token::TYPE::IDENTIFIER;
 		t._literal = make_literal();
 
-		while (isAlphabet(buffer[ic]) || buffer[ic] == '_')
+		while (isAlphabet(buffer[ic]) || buffer[ic] == u'_')
 		{
 			loc.length++;
 			t._literal->push_back(buffer[ic++]);
@@ -294,15 +310,15 @@ namespace halang
 		auto ic = iter;
 		loc.column = iter;
 
-		string num;
+		std::u16string num;
 		if (isDigit(buffer[ic]))
 		{
 			t.type = Token::TYPE::NUMBER;
 			// t.pLiteral.reset(new string());
 			num.push_back(buffer[ic++]);
-			while (isDigit(buffer[ic]) || buffer[ic] == '.')
+			while (isDigit(buffer[ic]) || buffer[ic] == u'.')
 			{
-				if (buffer[ic] == '.')
+				if (buffer[ic] == u'.')
 				{
 					t.maybeInt = false;
 					num.push_back(buffer[ic++]);
@@ -312,7 +328,7 @@ namespace halang
 							num.push_back(buffer[ic++]);
 							++loc.length;
 						}
-						t._double = std::stod(num);
+						t._double = std::stod(utils::UTF16_to_UTF8(num));
 						t.location = loc;
 						token_q.push(t);
 
@@ -333,7 +349,7 @@ namespace halang
 				}
 			}
 			t.maybeInt = true;
-			t._double = std::stod(num);
+			t._double = std::stod(utils::UTF16_to_UTF8(num));
 			t.location = loc;
 			token_q.push(t);
 		}
@@ -353,14 +369,14 @@ namespace halang
 		_end = true;
 	}
 
-	bool Lexer::isDigit(uc32 ch)
+	bool Lexer::isDigit(char16_t ch)
 	{
-		return ch >= '0' && ch <= '9' ? true : false;
+		return ch >= u'0' && ch <= u'9' ? true : false;
 	}
 
-	bool Lexer::isAlphabet(uc32 ch)
+	bool Lexer::isAlphabet(char16_t ch)
 	{
-		return (ch >= 'a' && ch <= 'z') || (ch >= 'A' && ch <= 'Z');
+		return (ch >= u'a' && ch <= u'z') || (ch >= u'A' && ch <= u'Z');
 	}
 
 }

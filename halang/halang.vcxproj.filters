@@ -60,12 +60,6 @@
     <ClInclude Include="svm.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="string.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="string_pool.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="table.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -73,6 +67,24 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="functions.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="GC.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="context.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Dict.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Array.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="string.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ScriptContext.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -104,7 +116,19 @@
     <ClCompile Include="string.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="string_poll.cpp">
+    <ClCompile Include="GC.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Dict.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="context.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="ScriptContext.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="function.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

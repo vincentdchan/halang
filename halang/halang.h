@@ -10,6 +10,8 @@ namespace halang
 	typedef int TSmallInt;
 	typedef bool TBool;
 
+#define VM_STACK_SIZE 256
+
 #define OPERATOR_LIST(V) \
 	V(ADD, "+", 10) \
 	V(SUB, "-", 10) \
@@ -27,6 +29,7 @@ namespace halang
 
 #define TOKEN_LIST(V) \
 	V(DOT) \
+	V(AT) \
 	V(COMMA) \
 	V(SEMICOLON) \
 	V(ILLEGAL) \
@@ -41,11 +44,13 @@ namespace halang
 	V(CLOSE_PAREN) \
 	V(OPEN_BRAKET) \
 	V(CLOSE_BRAKET) \
+	V(OPEN_SQUARE_BRAKET) \
+	V(CLOSE_SQUARE_BRAKET) \
 	V(NUMBER) \
 	V(VAR) \
+	V(CLASS) \
 	V(FUNC) \
 	V(RETURN) \
-	V(PRINT) \
 	V(ENDFILE) 
 
 

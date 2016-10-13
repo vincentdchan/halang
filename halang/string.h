@@ -2,71 +2,164 @@
 #include <ostream>
 #include <functional>
 #include <vector>
+#include <cinttypes>
+#include <string>
+#include "object.h"
 #include "halang.h"
 
 namespace halang
 {
 
-	class IString // ImmutableString
+	class String : public GCObject
 	{
 	public:
-		static unsigned int calculateHash(const char*);
 
-		IString();
-		IString(const char*);
-		IString(const IString&);
-		IString(IString&&);
-		IString(const std::string&);
-		IString& operator=(IString _is);
+		typedef unsigned int size_type;
 
-		IString operator+(IString _is) const;
-		IString operator+(const char*) const;
+		static String* FromU16String(const std::u16string&);
+		static String* FromStdString(const std::string&);
+		static String* FromCharArray(const char*);
+		static String* Concat(String*, String*);
+		static String* Slice(String*, unsigned int begin, unsigned int end);
 
-		struct ReferData;
-		std::string getStdString() const;
-		inline unsigned int getHash() const { return _hash; }
-		inline unsigned int getLength() const { return _length; }
-		const char * c_str() { return _str; }
+		virtual void Mark() override {}
+		virtual Value toValue() override { return Value(this, TypeId::String); }
+		virtual char16_t CharAt(unsigned int) const = 0;
+		virtual unsigned int GetHash() const = 0;
+		virtual size_type GetLength() const = 0;
+		virtual void ToU16String(std::u16string&) = 0;
+		virtual Dict* GetPrototype() override;
+		virtual ~String() {}
 
-		friend class String;
-		friend bool operator==(const IString& _s1, const IString& _s2);
-		friend std::ostream& operator<<(std::ostream&, const IString& _Str);
-		~IString();
+	};
+
+	class SimpleString : public String
+	{
+	public:
+
+		friend class GC;
+
 	private:
-		ReferData* _ref_data;
-		char* _str;
+
 		unsigned int _hash;
-		unsigned int _length;
+		char16_t* s_value;
+		size_type length;
+
+	protected:
+
+		SimpleString();
+		SimpleString(const std::u16string _str);
+		SimpleString(const SimpleString& _str);
+
+	public:
+
+		virtual ~SimpleString();
+		virtual char16_t CharAt(unsigned int index) const override;
+		virtual unsigned int GetHash() const override;
+		virtual unsigned int GetLength() const override;
+		virtual void ToU16String(std::u16string&) override;
+
 	};
 
-	struct IString::ReferData
+	class ConsString : public String
+	
 	{
-		ReferData(unsigned int _cnt = 1) : count(_cnt)
-		{}
-		unsigned int count;
+	public:
+
+		friend class GC;
+		friend class StackVM;
+
+	private:
+
+		String* left;
+		String* right;
+		unsigned int* _hash;
+		size_type _length;
+
+	protected:
+
+		ConsString(String* _left = nullptr, String* _right = nullptr);
+
+	public:
+
+		virtual size_type GetLength() const override;
+
+		/// <summay>
+		/// calculate hash
+		/// calculate when necessary
+		/// </summary>
+		virtual unsigned int GetHash() const override;
+		virtual char16_t CharAt(unsigned int index) const override;
+		virtual void Mark() override;
+		virtual void ToU16String(std::u16string&) override;
+		virtual ~ConsString();
 	};
 
-	inline std::ostream& operator<<(std::ostream& _ost, const IString& _Str)
+	class SliceString : public String
 	{
-		_ost << _Str._str;
-		return _ost;
-	}
+	public:
 
-	inline bool operator==(const IString& _s1, const IString& _s2)
-	{
-		return (_s1._length == _s2._length) && (_s1._hash == _s2._hash);
-	}
+		friend class GC;
+		friend class StackVM;
+
+	private:
+
+		String* source;
+		unsigned int begin, end;
+		unsigned int _hash;
+
+	protected:
+
+		SliceString(String* _src, unsigned int _begin, unsigned int _end);
+		SliceString(const SliceString& _str);
+
+	public:
+
+		virtual size_type GetLength() const override;
+		virtual char16_t CharAt(unsigned int index) const override;
+		virtual unsigned int GetHash() const override;
+		virtual void Mark() override;
+		virtual void ToU16String(std::u16string&) override;
+
+	};
 
 };
 
 namespace std
 {
+	using namespace halang;
+
 	template<>
-	struct hash<halang::IString>
+	struct hash<halang::String>
 	{
-		unsigned int operator()(halang::IString _Str)
+		unsigned int operator()(const halang::String& _Str) const
 		{
-			return _Str.getHash();
+			return _Str.GetHash();
 		}
 	};
+
+	template<>
+	struct hash<Value>
+	{
+
+		unsigned int operator()(const Value& v) const
+		{
+			switch (v.type)
+			{
+			case TypeId::Null:
+				return 0;
+			case TypeId::SmallInt:
+				return hash<TSmallInt>{}(v.value.si);
+			case TypeId::Number:
+				return hash<TNumber>{}(v.value.number);
+			case TypeId::String:
+				return reinterpret_cast<String*>(v.value.si)->GetHash();
+			default:
+				throw std::runtime_error("do hash to wrong type");
+				return 0;
+			}
+		}
+
+	};
+
 };

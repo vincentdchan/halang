@@ -1,90 +1,59 @@
 #include "stdafx.h"
+#include "context.h"
 #include "object.h"
+#include "string.h"
+#include "svm.h"
+
 
 namespace halang
 {
+	Value GCObject::toValue() 
+	{ 
+		return Value(); 
+	}
 
-	Object::Object(const Object& _obj)
+	Dict* Value::GetPrototype()
 	{
-		type = _obj.type;
-		if (_obj.type == TYPE::STRING)
+		switch (type)
 		{
-			value.str = new IString(*_obj.value.str);
-		}
-		else
-		{
-			value = _obj.value;
+		case halang::TypeId::Null:
+			return Context::GetNullPrototype();
+		case halang::TypeId::Bool:
+			return Context::GetBoolPrototype();
+		case halang::TypeId::SmallInt:
+			return Context::GetSmallIntPrototype();
+		case halang::TypeId::Number:
+			return Context::GetNumberPrototype();
+		case halang::TypeId::GCObject:
+		case halang::TypeId::String:
+			return value.gc->GetPrototype();
+		default:
+			throw std::runtime_error("<Value>Prototype not found.");
 		}
 	}
 
-	Object::Object(Object&& _obj)
+	bool Value::operator==(const Value& that) const
 	{
-		type = _obj.type;
-		if (_obj.type == TYPE::STRING)
+		switch (type)
 		{
-			value.str = new IString(*_obj.value.str);
+		case halang::TypeId::Null:
+			return true;
+		case halang::TypeId::Bool:
+			return value.bl == that.value.bl;
+		case halang::TypeId::SmallInt:
+			return value.si == that.value.si;
+		case halang::TypeId::Number:
+			return value.si == that.value.number;
+		case halang::TypeId::String:
+		{
+			auto s1 = reinterpret_cast<String*>(value.gc);
+			auto s2 = reinterpret_cast<String*>(that.value.gc);
+
+			return s1->GetHash() == s1->GetHash();
 		}
-		else
-		{
-			value = _obj.value;
+		default:
+			throw std::runtime_error("wrong type");
 		}
 	}
 
-	Object& Object::operator=(const Object& _obj)
-	{
-		type = _obj.type;
-		if (_obj.type == TYPE::STRING)
-		{
-			value.str = new IString(*_obj.value.str);
-		}
-		else
-		{
-			value = _obj.value;
-		}
-		return *this;
-	}
-
-	Object& Object::operator=(Object&& _obj)
-	{
-		type = _obj.type;
-		if (_obj.type == TYPE::STRING)
-		{
-			value.str = new IString(*_obj.value.str);
-		}
-		else
-		{
-			value = _obj.value;
-		}
-		return *this;
-	}
-
-	TNumber toNumber(Object _obj)
-	{
-		if (_obj.isNumber())
-			return _obj.value.number;
-		else if (_obj.isSmallInt())
-			return static_cast<TNumber>(_obj.value.si);
-		else
-			return 0.0;
-	}
-
-	std::ostream& operator<<(std::ostream& _ost, Object _obj)
-	{
-		switch (_obj.type)
-		{
-		case Object::TYPE::BOOL:
-			return _ost << (_obj.value.bl ? STRUE : SFALSE);
-		case Object::TYPE::GC:
-			return _ost << "<Object>";
-		case Object::TYPE::NUL:
-			return _ost << "null";
-		case Object::TYPE::NUMBER:
-			return _ost << _obj.value.number;
-		case Object::TYPE::SMALL_INT:
-			return _ost << _obj.value.si;
-		case Object::TYPE::STRING:
-			return _ost << *_obj.value.str;
-		}
-		return _ost;
-	}
 };

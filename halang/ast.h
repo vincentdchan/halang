@@ -2,8 +2,8 @@
 #include <cinttypes>
 #include <vector>
 #include <memory>
+#include <string>
 #include "token.h"
-#include "string.h"
 
 namespace halang
 {
@@ -13,6 +13,8 @@ namespace halang
 	V(Number) \
 	V(Identifier) \
 	V(String) \
+	V(InvokeExpr) \
+	V(ListExpr) \
 	V(BinaryExpr) \
 	V(UnaryExpr) \
 	V(BlockExpr) \
@@ -22,7 +24,7 @@ namespace halang
 	V(WhileStmt) \
 	V(BreakStmt) \
 	V(ReturnStmt) \
-	V(PrintStmt) \
+	V(ClassDef) \
 	V(FuncDef) \
 	V(FuncDefParam)\
 	V(FuncCall) \
@@ -53,6 +55,8 @@ namespace halang
 		virtual IdentifierNode* asIdentifier() { return nullptr; }
 		virtual NumberNode* asNumber() { return nullptr; }
 		virtual AssignmentNode* asAssignment() { return nullptr; }
+		virtual InvokeExprNode* asInvokeExpr() { return nullptr; }
+		virtual ListExprNode* asListExpr() { return nullptr; }
 		virtual UnaryExprNode* asUnaryExpression() { return nullptr; }
 		virtual BlockExprNode* asBlockExpression() { return nullptr; }
 		virtual BinaryExprNode* asBinaryExpression() { return nullptr; }
@@ -62,10 +66,10 @@ namespace halang
 		virtual WhileStmtNode* asWhileStmt() { return nullptr; }
 		virtual BreakStmtNode* asBreakStmt() { return nullptr; }
 		virtual ReturnStmtNode* asReturnStmt() { return nullptr; }
+		virtual ClassDefNode* asClassDef() { return nullptr; }
 		virtual FuncDefNode* asFuncDef() { return nullptr; }
 		virtual FuncDefParamNode* asFuncDefParam() { return nullptr; }
 		virtual FuncCallNode* asFuncCall() { return nullptr; }
-		virtual PrintStmtNode* asPrintStmt() { return nullptr; }
 
 		virtual void visit(Visitor*) = 0;
 	};
@@ -76,11 +80,11 @@ namespace halang
 	class StringNode : public Node
 	{
 	public:
-		StringNode(IString _content) : content(_content)
+		StringNode(const std::u16string& _content) : content(_content)
 		{}
 
 		virtual StringNode* asString() override { return this; }
-		IString content;
+		std::u16string content;
 
 		VISIT_OVERRIDE
 	};
@@ -107,11 +111,29 @@ namespace halang
 	class IdentifierNode : public Node
 	{
 	public:
-		IdentifierNode(const std::string& _str) : name(_str)
+		IdentifierNode(const std::u16string& _str) : name(_str)
 		{}
 		virtual IdentifierNode* asIdentifier() override { return this; }
 
-		std::string name;
+		std::u16string name;
+
+		VISIT_OVERRIDE
+	};
+
+	/// <summary>
+	/// InvokeExpression ::= InvokeExpression ID | ID
+	/// </summary>
+	class InvokeExprNode : public Node
+	{
+	public:
+		InvokeExprNode(Node* src = nullptr, IdentifierNode* _id = nullptr):
+			source(src), id(_id)
+		{}
+
+		virtual InvokeExprNode* asInvokeExpr() { return this; }
+
+		Node* source;
+		IdentifierNode* id;
 
 		VISIT_OVERRIDE
 	};
@@ -130,6 +152,21 @@ namespace halang
 
 		IdentifierNode* identifier;
 		Node* expression;
+
+		VISIT_OVERRIDE
+	};
+
+	/// <summary>
+	/// ListExpression ::= '[' ListExpressionChildren ']'
+	/// ListExpressionChildren ::= NULL | Expression ListExpressionChildren
+	/// </summary>
+	class ListExprNode : public Node
+	{
+	public:
+		ListExprNode() {}
+		std::vector<Node*> children;
+
+		virtual ListExprNode* asListExpr() override { return this; }
 
 		VISIT_OVERRIDE
 	};
@@ -285,6 +322,21 @@ namespace halang
 		VISIT_OVERRIDE
 	};
 
+	class ClassDefNode : public Node
+	{
+	public:
+		ClassDefNode(IdentifierNode* _name = nullptr, IdentifierNode* _ed = nullptr) :
+			name(_name), extendName(_ed)
+		{}
+
+		virtual ClassDefNode* asClassDef() override { return this; }
+		IdentifierNode* name;
+		IdentifierNode* extendName;
+		std::vector<Node*> members;
+
+		VISIT_OVERRIDE
+	};
+
 	/// <summary>
 	/// FuncDefinition ::= 'func' '(' ParamList ')' '{' { Expression } '}
 	/// ParamList ::=  Identifier ':' Identifier { ',' Identifier ':' Identifier }
@@ -311,7 +363,7 @@ namespace halang
 		FuncDefParamNode()
 		{}
 		virtual FuncDefParamNode* asFuncDefParam() override { return this; }
-		std::string name;
+		std::u16string name;
 
 		VISIT_OVERRIDE
 	};
@@ -329,20 +381,6 @@ namespace halang
 		virtual FuncCallNode* asFuncCall() override { return this; }
 		Node* exp; // maybe identifier, maybe another func  foo(a) foo(a)(b)(b)
 		std::vector<Node*> parameters;
-
-		VISIT_OVERRIDE
-	};
-
-	/// <summary>
-	/// PrintStatement ::= 'print' Expression
-	/// </summary>
-	class PrintStmtNode : public Node
-	{
-	public:
-		PrintStmtNode(Node * exp = nullptr) : expression(exp)
-		{}
-		virtual PrintStmtNode* asPrintStmt() override { return this; }
-		Node* expression;
 
 		VISIT_OVERRIDE
 	};

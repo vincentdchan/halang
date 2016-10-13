@@ -64,7 +64,6 @@ namespace halang
 			match(Token::TYPE::IF) ||
 			match(Token::TYPE::FUNC) ||
 			match(Token::TYPE::SEMICOLON) ||
-			match(Token::TYPE::PRINT) ||
 			match(Token::TYPE::RETURN) ||
 			Token::isOperator(lookahead)
 			);
@@ -80,6 +79,8 @@ namespace halang
 		case Token::TYPE::SEMICOLON:
 			nextToken();
 			return nullptr;
+		case Token::TYPE::IDENTIFIER:
+			return parseExpression();
 		case Token::TYPE::VAR:
 			return parseVarStmt();
 		case Token::TYPE::WHILE:
@@ -98,12 +99,33 @@ namespace halang
 			_node = parseBlock();
 			expect(nextToken(), Token::TYPE::CLOSE_BRAKET);
 			return _node;
-		case Token::TYPE::PRINT:
-			return parsePrintStmt();
 		default:
 			return parseExpression();
 		}
 
+	}
+
+	Node* Parser::parseInvokeExpression(Node *src)
+	{
+		if (src == nullptr)
+		{
+			expect(lookahead, Token::TYPE::IDENTIFIER);
+			src = make_object<IdentifierNode>(*nextToken()._literal);
+			if (match(Token::TYPE::OPEN_PAREN))
+				src = parseFuncCall(src);
+		}
+		if (match(Token::TYPE::OPEN_PAREN))
+			src = parseFuncCall(src);
+		while (match(Token::TYPE::DOT))
+		{
+			nextToken();
+			expect(lookahead, Token::TYPE::IDENTIFIER);
+			auto second = make_object<IdentifierNode>(*nextToken()._literal);
+			src = make_object <InvokeExprNode>(src, second);
+			if (match(Token::TYPE::OPEN_PAREN))
+				src = parseFuncCall(src);
+		}
+		return src;
 	}
 
 	// varStmt ::= VAR ID (':' TYPE)? '=' exp [ , ID (':' TYPE)? '=' EXP ]
@@ -162,16 +184,16 @@ namespace halang
 		{
 			Token _tk = nextToken();
 			auto _id = make_object<IdentifierNode>(*_tk._literal);
-			if (match(Token::TYPE::OPEN_PAREN))
+			if (match(Token::TYPE::DOT) || match(Token::TYPE::OPEN_PAREN ))
 			{
-				auto _func = parseFuncCall(_id);
+				auto _node = parseInvokeExpression(_id);
 				if (Token::isOperator(lookahead))
 				{
 					auto _op = nextToken();
-					return parseBinaryExpr(_func, _op);
+					return parseBinaryExpr(_node, _op);
 				}
 				else
-					return _func;
+					return _node;
 			}
 			else if (match(Token::TYPE::ASSIGN))
 				return parseAssignment(_id);
@@ -200,7 +222,7 @@ namespace halang
 		if (!_id)
 		{
 			expect(Token::TYPE::IDENTIFIER);
-			string _str = *lookahead._literal;
+			std::u16string _str = *lookahead._literal;
 			nextToken();
 			_id = make_object<IdentifierNode>(_str);
 		}
@@ -208,6 +230,31 @@ namespace halang
 		expect(nextToken(), Token::TYPE::ASSIGN);
 		Node* _exp = parseExpression();
 		return make_object<AssignmentNode>(_id, _exp);
+	}
+
+	ListExprNode* Parser::parseListExpr()
+	{
+		auto list = make_object<ListExprNode>();
+
+		expect(nextToken(), Token::TYPE::OPEN_SQUARE_BRAKET);
+		if (!match(Token::TYPE::CLOSE_SQUARE_BRAKET))
+		{
+			Node *node = parseExpression();
+			list->children.push_back(node);
+
+			while (match(Token::TYPE::COMMA))
+			{
+				nextToken();
+				node = parseExpression();
+				list->children.push_back(node);
+			}
+
+			expect(nextToken(), Token::TYPE::CLOSE_SQUARE_BRAKET);
+		}
+		else // ']'
+			nextToken();
+
+		return list;
 	}
 
 	/// <summary>
@@ -219,7 +266,7 @@ namespace halang
 		Node *_node = nullptr,
 			*exp = nullptr;
 		Token _tk;
-		std::string _id_name;
+		std::u16string _id_name;
 		switch (lookahead.type)
 		{
 		case Token::TYPE::ADD:
@@ -365,6 +412,68 @@ namespace halang
 		return make_object<WhileStmtNode>(_condition, _stmt);
 	}
 
+	ClassDefNode* Parser::parseClassDef()
+	{
+		expect(nextToken(), Token::TYPE::CLASS);
+		auto cl = make_object<ClassDefNode>();
+
+		expect(lookahead, Token::TYPE::IDENTIFIER);
+		cl->name = make_object<IdentifierNode>(*nextToken()._literal);
+		if (match(Token::TYPE::SEMICOLON))
+		{
+			nextToken();
+			cl->extendName = make_object<IdentifierNode>(*nextToken()._literal);
+		}
+		expect(nextToken(), Token::TYPE::OPEN_BRAKET);
+		// { ------------------------------------------
+		while (!match(Token::TYPE::CLOSE_BRAKET))
+		{
+			cl->members.push_back(parseClassMember());
+		}
+		// } ------------------------------------------
+		expect(nextToken(), Token::TYPE::CLOSE_BRAKET);
+		return cl;
+	}
+
+	Node* Parser::parseClassMember()
+	{
+		Node* result = nullptr;
+		expect(lookahead, Token::TYPE::IDENTIFIER);
+		auto id = make_object<IdentifierNode>(*nextToken()._literal);
+
+		if (match(Token::TYPE::OPEN_PAREN))
+		{
+			auto _func = make_object<FuncDefNode>();
+			_func->name = id;
+			nextToken();
+			while (!match(Token::TYPE::CLOSE_PAREN))
+			{
+				_func->parameters.push_back(parseFuncDefParam());
+				if (match(Token::TYPE::COMMA))
+				{
+					nextToken();
+					continue;
+				}
+
+				expect(nextToken(), Token::TYPE::OPEN_BRAKET);
+				_func->block = reinterpret_cast<BlockExprNode*>(parseBlock());
+				expect(nextToken(), Token::TYPE::CLOSE_BRAKET);
+			}
+			expect(nextToken(), Token::TYPE::CLOSE_PAREN);
+
+		}
+		else if (match(Token::TYPE::ASSIGN))
+		{
+			auto _expr = make_object<AssignmentNode>();
+			_expr->identifier = id;
+			_expr->expression = parseExpression();
+		}
+		else
+			this->add_error(lookahead, "<Class Member Definition>Unexpected Token");
+
+		return result;
+	}
+
 	Node* Parser::parseFuncDef()
 	{
 		// def new function
@@ -377,7 +486,7 @@ namespace halang
 		expect(nextToken(), Token::TYPE::OPEN_PAREN);
 		while (match(Token::TYPE::IDENTIFIER))
 		{
-			auto param = reinterpret_cast<FuncDefParamNode*>(parseFuncDefParam());
+			auto param = parseFuncDefParam();
 			_func->parameters.push_back(param);
 			if (match(Token::TYPE::COMMA))
 				nextToken();
@@ -394,7 +503,7 @@ namespace halang
 		return _func;
 	}
 
-	Node* Parser::parseFuncDefParam()
+	FuncDefParamNode* Parser::parseFuncDefParam()
 	{
 		auto param = make_object<FuncDefParamNode>();
 		expect(lookahead, Token::TYPE::IDENTIFIER);
@@ -450,13 +559,6 @@ namespace halang
 		expect(nextToken(), Token::TYPE::RETURN);
 		auto exp = parseExpression();
 		return make_object<ReturnStmtNode>(exp);
-	}
-
-	Node* Parser::parsePrintStmt()
-	{
-		expect(nextToken(), Token::TYPE::PRINT);
-		auto exp = parseExpression();
-		return make_object<PrintStmtNode>(exp);
 	}
 
 	Parser::~Parser()
