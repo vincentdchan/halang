@@ -472,6 +472,7 @@ namespace halang
 			i != _node->parameters.end(); ++i)
 			visit(*i);
 
+		AddInst(Instruction(VM_CODE::PUSH_NULL, 0)); // Push This
 		visit(_node->exp);
 		AddInst(Instruction(VM_CODE::CALL, _node->parameters.size()));
 	}

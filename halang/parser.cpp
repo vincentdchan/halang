@@ -479,10 +479,12 @@ namespace halang
 		// def new function
 		auto _func = make_object<FuncDefNode>();
 		expect(nextToken(), Token::TYPE::FUNC);
+
 		if (match(Token::TYPE::IDENTIFIER))
 			_func->name = make_object<IdentifierNode>(*nextToken()._literal);
 		else
 			_func->name = nullptr;
+
 		expect(nextToken(), Token::TYPE::OPEN_PAREN);
 		while (match(Token::TYPE::IDENTIFIER))
 		{
@@ -523,7 +525,7 @@ namespace halang
 
 			_node->parameters.push_back(node);
 			if (match(Token::TYPE::COMMA))
-				continue;
+				nextToken();
 			else if (match(Token::TYPE::CLOSE_PAREN))
 				break;
 			else
