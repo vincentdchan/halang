@@ -1,11 +1,14 @@
 #include "GC.h"
+#include "svm.h"
 #include "context.h"
+#include "Dict.h"
+#include <iostream>
 
 namespace halang
 {
 
 	GC::GC() :
-		objects(nullptr)
+		objects(nullptr), counter(0)
 	{
 		Context::gc = this;
 	}
@@ -17,16 +20,44 @@ namespace halang
 		return _next;
 	}
 
+	void GC::ClearAllMarks()
+	{
+		// std::cout << "full gc" << std::endl;
+		auto ptr = objects;
+		while (ptr != nullptr)
+		{
+			ptr->marked = false;
+			ptr = ptr->next;
+		}
+	}
+
 	void GC::SweepAll()
 	{
 		GCObject** ptr = &objects;
 
 		while (*ptr != nullptr)
 		{
-			if (!(*ptr)->marked)
+			if (!(*ptr)->marked && !(*ptr)->persistent)
 				*ptr = Erase(*ptr);
 			else
 				ptr = &((*ptr)->next);
+		}
+	}
+
+	void GC::FullGC()
+	{
+		ClearAllMarks();
+		if (Context::GetVM()->sc != nullptr)
+			Context::GetVM()->sc->Mark();
+		SweepAll();
+	}
+
+	void GC::CheckAndGC()
+	{
+		if (counter >= 50)
+		{
+			FullGC();
+			counter = 0;
 		}
 	}
 

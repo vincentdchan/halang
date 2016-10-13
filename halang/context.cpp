@@ -7,13 +7,14 @@
 #include <sstream>
 #include <iostream>
 
-#define TEXT(T) String::FromCharArray(T)->toValue()
-#define FUN(F) gc->New<Function>(F)->toValue()
+#define TEXT(T) CreatePersistent(T)->toValue()
+#define FUN(F) gc->NewPersistent<Function>(F)->toValue()
 
 namespace halang
 {
 
 	GC* Context::GetGC() { return gc; }
+	StackVM* Context::GetVM() { return vm; }
 
 	Dict* Context::GetNullPrototype() { return _null_proto; }
 
@@ -26,25 +27,34 @@ namespace halang
 	Dict* Context::GetStringPrototype() { return _str_proto; }
 		
 	GC* Context::gc = nullptr;
+	StackVM* Context::vm = nullptr;
+
 	Dict* Context::_null_proto = nullptr;
 	Dict* Context::_bool_proto = nullptr;
 	Dict* Context::_si_proto = nullptr;
 	Dict* Context::_num_proto = nullptr;
 	Dict* Context::_str_proto = nullptr;
 
+	String* Context::CreatePersistent(const char* _s)
+	{
+		auto s = String::FromCharArray(_s);
+		s->persistent = true;
+		return s;
+	}
+
 	void Context::InitializeDefaultPrototype()
 	{
-		_null_proto = gc->New<Dict>();
+		_null_proto = gc->NewPersistent<Dict>();
 		_null_proto->SetValue(TEXT("__str__"), FUN(_null_str_));
 
-		_bool_proto = gc->New<Dict>();
+		_bool_proto = gc->NewPersistent<Dict>();
 		_bool_proto->SetValue(TEXT("__and__"),	FUN(_bl_and_));
 		_bool_proto->SetValue(TEXT("__or__"),	FUN(_bl_or_));
 		_bool_proto->SetValue(TEXT("__not__"),	FUN(_bl_not_));
 		_bool_proto->SetValue(TEXT("__eq__"),	FUN(_bl_eq_));
 		_bool_proto->SetValue(TEXT("__str__"),	FUN(_bl_str_));
 
-		_si_proto = gc->New<Dict>();
+		_si_proto = gc->NewPersistent<Dict>();
 		_si_proto->SetValue(TEXT("__add__"),	FUN(_si_add_));
 		_si_proto->SetValue(TEXT("__sub__"),	FUN(_si_sub_));
 		_si_proto->SetValue(TEXT("__mul__"),	FUN(_si_mul_));
@@ -57,7 +67,7 @@ namespace halang
 		_si_proto->SetValue(TEXT("__lteq__"),	FUN(_si_lteq_));
 		_si_proto->SetValue(TEXT("__str__"),	FUN(_si_str_));
 
-		_num_proto = gc->New<Dict>();
+		_num_proto = gc->NewPersistent<Dict>();
 		_num_proto->SetValue(TEXT("__add__"),	FUN(_num_add_));
 		_num_proto->SetValue(TEXT("__sub__"),	FUN(_num_sub_));
 		_num_proto->SetValue(TEXT("__mul__"),	FUN(_num_mul_));
@@ -69,7 +79,7 @@ namespace halang
 		_num_proto->SetValue(TEXT("__lteq__"),	FUN(_num_lteq_));
 		_num_proto->SetValue(TEXT("__str__"),	FUN(_num_str_));
 		
-		_str_proto = gc->New<Dict>();
+		_str_proto = gc->NewPersistent<Dict>();
 		_str_proto->SetValue(TEXT("__str__"),	FUN(_str_str_));
 		_str_proto->SetValue(TEXT("__add__"),	FUN(_str_add_));
 

@@ -92,6 +92,11 @@ namespace halang
 		str = std::u16string(s_value);
 	}
 
+	void SimpleString::Mark()
+	{
+		marked = true;
+	}
+
 	SimpleString::~SimpleString()
 	{
 		delete[] s_value;
@@ -165,6 +170,7 @@ namespace halang
 
 	void ConsString::Mark()
 	{
+		marked = true;
 		if (left != nullptr)
 			left->Mark();
 		if (right != nullptr)
@@ -240,6 +246,7 @@ namespace halang
 
 	void SliceString::Mark()
 	{
+		marked = true;
 		source->Mark();
 	}
 

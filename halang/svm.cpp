@@ -10,6 +10,11 @@
 namespace halang
 {
 
+	StackVM::StackVM()
+	{
+		Context::vm = this;
+	}
+
 	void StackVM::InitializeFunction(Function* fun)
 	{
 		if (fun->isExtern)
@@ -19,6 +24,7 @@ namespace halang
 
 		sc = new_sc;
 		inst = fun->codepack->_instructions;
+
 	}
 
 	void StackVM::ChangeContext(ScriptContext* new_sc)
@@ -248,6 +254,8 @@ namespace halang
 			case VM_CODE::OUT:
 				break;
 			}
+
+			Context::GetGC()->CheckAndGC();
 		}
 	}
 

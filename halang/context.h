@@ -16,6 +16,7 @@ namespace halang
 		friend class StackVM;
 
 		static GC* GetGC();
+		static StackVM* GetVM();
 
 		static Dict* GetNullPrototype();
 		static Dict* GetBoolPrototype();
@@ -24,8 +25,11 @@ namespace halang
 		static Dict* GetStringPrototype();
 
 	private:
+
+		static String* CreatePersistent(const char*);
 		
 		static GC* gc;
+		static StackVM* vm;
 
 		static Dict* _null_proto;
 		static Dict* _bool_proto;

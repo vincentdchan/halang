@@ -55,15 +55,15 @@ namespace halang
 		upvals_size(sc.upvals_size)
 	{
 
-		stack = new Value[stack_size];
+		stack = new Value[stack_size]();
 		for (unsigned int i = 0; i < stack_size; ++i)
 			stack[i] = sc.stack[i];
 
-		variables = new Value[variable_size];
+		variables = new Value[variable_size]();
 		for (unsigned int i = 0; i < variable_size; ++i)
 			variables[i] = sc.variables[i];
 
-		upvals = new UpValue*[upvals_size];
+		upvals = new UpValue*[upvals_size]();
 		for (unsigned int i = 0; i < upvals_size; ++i)
 			upvals[i] = sc.upvals[i];
 
@@ -117,6 +117,34 @@ namespace halang
 	{
 		for (unsigned int i = 0; i < upvals_size; ++i)
 			upvals[i]->close();
+	}
+
+	void ScriptContext::Mark()
+	{
+		if (!marked)
+		{
+			marked = true;
+			function->Mark();
+
+			if (prev != nullptr)
+				prev->Mark();
+
+			Value* t = stack;
+			while (t != sptr)
+			{
+				if (t->isGCObject())
+					t->value.gc->Mark();
+				t++;
+			}
+
+			for (size_type i = 0; i < variable_size; ++i)
+				if (variables[i].isGCObject())
+					variables[i].value.gc->Mark();
+
+			for (size_type i = 0; i < upvals_size; ++i)
+				if (upvals[i] != nullptr)
+					upvals[i]->Mark();
+		}
 	}
 
 	ScriptContext::~ScriptContext()
