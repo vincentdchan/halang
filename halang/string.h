@@ -57,6 +57,7 @@ namespace halang
 		virtual char16_t CharAt(unsigned int index) const override;
 		virtual unsigned int GetHash() const override;
 		virtual unsigned int GetLength() const override;
+		virtual void Mark() override;
 		virtual void ToU16String(std::u16string&) override;
 
 	};

@@ -152,11 +152,9 @@
     <ClInclude Include="context.h" />
     <ClInclude Include="Dict.h" />
     <ClInclude Include="function.h" />
-    <ClInclude Include="functions.h" />
     <ClInclude Include="GC.h" />
     <ClInclude Include="halang.h" />
     <ClInclude Include="ScriptContext.h" />
-    <ClInclude Include="table.h" />
     <ClInclude Include="lex.h" />
     <ClInclude Include="object.h" />
     <ClInclude Include="parser.h" />

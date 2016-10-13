@@ -58,6 +58,8 @@ namespace halang
 		void SetUpValue(unsigned int i, UpValue*);
 		void CloseAllUpValue();
 
+		virtual void Mark() override;
+
 		virtual ~ScriptContext();
 	};
 

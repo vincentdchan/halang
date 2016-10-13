@@ -20,8 +20,9 @@ namespace halang
 	{
 	public:
 
-		StackVM() 
-		{ }
+		friend class GC;
+
+		StackVM();
 
 		StackVM(const StackVM&) = delete;
 		StackVM& operator=(const StackVM&) = delete;
@@ -42,6 +43,7 @@ namespace halang
 		GC gc;
 
 		ScriptContext* sc;
+
 	};
 
 }

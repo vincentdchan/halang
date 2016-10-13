@@ -16,13 +16,20 @@ namespace halang
 	{
 	protected:
 
-		UpValue(Value* _re = nullptr) : value(_re), _closed(false)
+		UpValue(Value* _re = nullptr): 
+			value(_re), _closed(false)
 		{}
 
 	public:
 
 		friend class GC;
 		friend class StackVM;
+
+		virtual void Mark() override
+		{
+			if (value->isGCObject())
+				value->value.gc->Mark();
+		}
 
 		virtual ~UpValue() 
 		{

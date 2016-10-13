@@ -41,6 +41,7 @@ namespace halang
 	public:
 
 		friend class GC;
+		friend class Context;
 
 		virtual Dict* GetPrototype() { return nullptr; }
 		virtual Value toValue();
@@ -49,8 +50,13 @@ namespace halang
 
 	protected:
 
+		GCObject():
+			next(nullptr), marked(false), persistent(false)
+		{}
+
 		GCObject* next;
-		bool marked;
+		bool marked : 2;
+		bool persistent : 2;
 
 	};
 
@@ -69,15 +75,6 @@ namespace halang
 		Dict,
 	};
 
-	union _Value
-	{
-		GCObject* gc;
-		String *str;
-		TSmallInt si;		// small int
-		TNumber number;
-		TBool bl;
-	};
-
 	struct Value 
 	{
 	public:
@@ -85,7 +82,6 @@ namespace halang
 		union
 		{
 			GCObject* gc;
-			String *str;
 			TSmallInt si;		// small int
 			TNumber number;
 			TBool bl;
@@ -118,6 +114,7 @@ namespace halang
 		inline bool isBool() const { return type == TypeId::Bool; }
 		inline bool isSmallInt() const { return type == TypeId::SmallInt; }
 		inline bool isNumber() const { return type == TypeId::Number; }
+		inline bool isGCObject() const { return type >= TypeId::GCObject; }
 		inline bool isString() const { return type == TypeId::String; }
 		inline bool isScriptContext() const { return type == TypeId::ScriptContext; }
 		inline bool isCodePack() const { return type == TypeId::CodePack; }
