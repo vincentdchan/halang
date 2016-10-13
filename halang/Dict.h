@@ -8,7 +8,7 @@
 namespace halang
 {
 	class Dict : 
-		public GCObject, private std::unordered_map<Value, Value>
+		public GCObject
 	{
 	public:
 
@@ -20,28 +20,46 @@ namespace halang
 
 	protected:
 
-		Dict() :
-			std::unordered_map<Value,Value>(20)
-		{
-		}
+		Dict();
+		// Dict(const Dict&);
 
 		struct Entry;
+
+		Entry ** entries;
+		size_type _size;
 
 	public:
 
 		Value toValue() override;
+
+		bool TryGetValue(Value key, Value &value);
+		bool TryEmplace(Value key, Value value);
+		bool TryRemove(Value key);
+		bool Exist(Value key);
+
+		void Insert(Value key, Value value);
 		Value GetValue(Value key);
 		void SetValue(Value key, Value value);
-		bool Exist(Value key);
+
+		virtual ~Dict() override;
 
 	};
 
 	struct Dict::Entry
 	{
 	public:
+
+		Entry() : next(nullptr)
+		{}
+
+		Entry(unsigned int _hash, Value _key, Value _value, Entry * _next = nullptr):
+			hash(_hash), key(_key), value(_value), next(_next)
+		{}
+
 		unsigned int hash;
-		Value Key;
-		Value Value;
+		Value key;
+		Value value;
+		Entry * next;
 	};
 
 }

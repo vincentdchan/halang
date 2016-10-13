@@ -189,8 +189,8 @@ namespace halang
 
 	void CodeGen::visit(BinaryExprNode* _node)
 	{
-		visit(_node->left);
 		visit(_node->right);
+		visit(_node->left);
 		switch (_node->op)
 		{
 		case OperatorType::ADD:
