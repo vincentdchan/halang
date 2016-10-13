@@ -101,11 +101,15 @@ namespace halang
 
 	protected:
 
-		FunctionArgs(ScriptContext * sc) 
+		FunctionArgs(ScriptContext * sc):
+			scriptContext(sc)
 		{
-			scriptContext = sc;
 		}
 
+		FunctionArgs(ScriptContext * sc, unsigned int i):
+			Array(i), scriptContext(sc)
+		{
+		}
 	};
 
 	typedef std::function<Value (Value, FunctionArgs& )> ExternFunction;

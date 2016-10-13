@@ -37,6 +37,12 @@ namespace halang
 
 		static Value _null_str_(Value self, FunctionArgs& args);
 
+		static Value _bl_and_(Value self, FunctionArgs& args);
+		static Value _bl_or_(Value self, FunctionArgs& args);
+		static Value _bl_not_(Value self, FunctionArgs& args);
+		static Value _bl_eq_(Value self, FunctionArgs& args);
+		static Value _bl_str_(Value self, FunctionArgs& args);
+
 		static Value _si_add_(Value self, FunctionArgs& args);
 		static Value _si_sub_(Value self, FunctionArgs& args);
 		static Value _si_mul_(Value self, FunctionArgs& args);

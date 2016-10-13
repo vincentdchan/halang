@@ -95,6 +95,9 @@ namespace halang
 				PUSH(dict->GetValue(key));
 				break;
 			}
+			case VM_CODE::PUSH_NULL:
+				PUSH(Value());
+				break;
 			case VM_CODE::PUSH_INT:
 				PUSH(Value(current->GetParam()));
 				break;
@@ -143,12 +146,14 @@ namespace halang
 
 				auto new_sc = Context::GetGC()->New<ScriptContext>(func);
 
+				auto params_size = current->GetParam();
+				
+				FunctionArgs * args = Context::GetGC()->New<FunctionArgs>(new_sc, params_size);
 
-				FunctionArgs * args = Context::GetGC()->New<FunctionArgs>(new_sc);
-
-				for (int i = 0; i < current->GetParam(); ++i)
-					args->Push(sc->Pop());
-
+				for (int i = 0; i < params_size; ++i)
+					args->Set(params_size - i - 1, POP());
+				
+				//	args->Push(sc->Pop());
 				
 				ChangeContext(new_sc);
 
@@ -160,6 +165,10 @@ namespace halang
 				}
 				else
 				{
+					// load args
+					for (unsigned int i = 0; i < args->GetLength(); ++i)
+						new_sc->variables[i] = args->At(i);
+
 					for (unsigned int i = 0;
 						i < func->codepack->_upval_names_size; ++i)
 						new_sc->upvals[i] = func->upvalues[i];

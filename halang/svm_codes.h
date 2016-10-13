@@ -12,29 +12,30 @@
 	V(STORE_UPVAL,		0x06) \
 	V(SET_VAL,			0x07) \
 	V(GET_VAL,			0x08) \
-	V(PUSH_INT,			0x09) \
-	V(PUSH_BOOL,		0x0a) \
-	V(POP,				0x0b) \
-	V(CLOSURE,			0x0c) \
-	V(DOT,				0x0d) \
-	V(CALL,				0x0e) \
-	V(RETURN,			0x0f) \
-	V(IFNO,				0x10) \
-	V(JMP,				0x11) \
-	V(NOT,				0x12) \
-	V(ADD,				0x13) \
-	V(SUB,				0x14) \
-	V(MUL,				0x15) \
-	V(DIV,				0x16) \
-	V(MOD,				0x17) \
-	V(POW,				0x18) \
-	V(GT,				0x19) \
-	V(LT,				0x1a) \
-	V(GTEQ,				0x1b) \
-	V(LTEQ,				0x1c) \
-	V(EQ,				0x1d) \
-	V(OUT,				0x1e) \
-	V(STOP,				0x1f)
+	V(PUSH_NULL,		0x09) \
+	V(PUSH_INT,			0x0a) \
+	V(PUSH_BOOL,		0x0b) \
+	V(POP,				0x0c) \
+	V(CLOSURE,			0x0d) \
+	V(DOT,				0x0e) \
+	V(CALL,				0x0f) \
+	V(RETURN,			0x10) \
+	V(IFNO,				0x11) \
+	V(JMP,				0x12) \
+	V(NOT,				0x13) \
+	V(ADD,				0x14) \
+	V(SUB,				0x15) \
+	V(MUL,				0x16) \
+	V(DIV,				0x17) \
+	V(MOD,				0x18) \
+	V(POW,				0x19) \
+	V(GT,				0x1a) \
+	V(LT,				0x1b) \
+	V(GTEQ,				0x1c) \
+	V(LTEQ,				0x1d) \
+	V(EQ,				0x1e) \
+	V(OUT,				0x1f) \
+	V(STOP,				0x20) \
 
 namespace halang
 {

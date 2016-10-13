@@ -37,6 +37,13 @@ namespace halang
 		_null_proto = gc->New<Dict>();
 		_null_proto->SetValue(TEXT("__str__"), FUN(_null_str_));
 
+		_bool_proto = gc->New<Dict>();
+		_bool_proto->SetValue(TEXT("__and__"),	FUN(_bl_and_));
+		_bool_proto->SetValue(TEXT("__or__"),	FUN(_bl_or_));
+		_bool_proto->SetValue(TEXT("__not__"),	FUN(_bl_not_));
+		_bool_proto->SetValue(TEXT("__eq__"),	FUN(_bl_eq_));
+		_bool_proto->SetValue(TEXT("__str__"),	FUN(_bl_str_));
+
 		_si_proto = gc->New<Dict>();
 		_si_proto->SetValue(TEXT("__add__"),	FUN(_si_add_));
 		_si_proto->SetValue(TEXT("__sub__"),	FUN(_si_sub_));
@@ -71,6 +78,34 @@ namespace halang
 	Value Context::_null_str_(Value self, FunctionArgs& args)
 	{
 		return TEXT("<Null>");
+	}
+
+	Value Context::_bl_and_(Value self, FunctionArgs& args)
+	{
+		return Value(self.value.bl && args[0].value.bl);
+	}
+
+	Value Context::_bl_or_(Value self, FunctionArgs& args)
+	{
+		return Value(self.value.bl || args[0].value.bl);
+	}
+
+	Value Context::_bl_not_(Value self, FunctionArgs& args)
+	{
+		return Value(!self.value.bl);
+	}
+
+	Value Context::_bl_eq_(Value self, FunctionArgs& args)
+	{
+		return Value(self.value.bl == args[0].value.bl);
+	}
+
+	Value Context::_bl_str_(Value self, FunctionArgs& args)
+	{
+		if (self.value.bl)
+			return TEXT("True");
+		else
+			return TEXT("False");
 	}
 
 	Value Context::_si_add_(Value self, FunctionArgs& args)
