@@ -34,6 +34,8 @@ namespace halang
 	Dict* Context::_si_proto = nullptr;
 	Dict* Context::_num_proto = nullptr;
 	Dict* Context::_str_proto = nullptr;
+	Dict* Context::_array_proto = nullptr;
+	Dict* Context::_dict_proto = nullptr;
 
 	String* Context::CreatePersistent(const char* _s)
 	{
@@ -84,7 +86,20 @@ namespace halang
 		_str_proto = gc->NewPersistent<Dict>();
 		_str_proto->SetValue(TEXT("__str__"),		FUN(_str_str_));
 		_str_proto->SetValue(TEXT("__add__"),		FUN(_str_add_));
+		_str_proto->SetValue(TEXT("concat"),		FUN(_str_add_));
+		_str_proto->SetValue(TEXT("length"),		FUN(_str_length_));
+		_str_proto->SetValue(TEXT("hash"),			FUN(_str_hash_));
 
+		_array_proto = gc->NewPersistent<Dict>();
+		_array_proto->SetValue(TEXT("push"),		FUN(_array_push_));
+		_array_proto->SetValue(TEXT("pop"),			FUN(_array_pop_));
+		_array_proto->SetValue(TEXT("at"),			FUN(_array_at_));
+		_array_proto->SetValue(TEXT("length"),		FUN(_array_length_));
+
+		_dict_proto = gc->NewPersistent<Dict>();
+		_dict_proto->SetValue(TEXT("get"),			FUN(_dict_get_));
+		_dict_proto->SetValue(TEXT("set"),			FUN(_dict_get_));
+		_dict_proto->SetValue(TEXT("exisit"),		FUN(_dict_get_));
 	}
 
 	Value Context::_null_str_(Value self, FunctionArgs& args)
@@ -284,6 +299,79 @@ namespace halang
 		auto _self_str = reinterpret_cast<String*>(self.value.gc);
 		auto _that_str = reinterpret_cast<String*>(arg.value.gc);
 		return String::Concat(_self_str, _that_str)->toValue();
+	}
+
+	Value Context::_str_length_(Value self, FunctionArgs& args)
+	{
+		if (self.type != TypeId::String)
+			throw std::runtime_error("Not a string");
+		return Value(static_cast<TSmallInt>(
+			reinterpret_cast<String*>(self.value.gc)->GetLength()));
+	}
+
+	Value Context::_str_hash_(Value self, FunctionArgs& args)
+	{
+		if (self.type != TypeId::String)
+			throw std::runtime_error("Not a string");
+		return Value(static_cast<TSmallInt>(
+			reinterpret_cast<String*>(self.value.gc)->GetHash()));
+	}
+
+	Value Context::_array_push_(Value self, FunctionArgs& args)
+	{
+		if (args.GetLength() < 1)
+			std::runtime_error("arguments not enough.");
+		auto arr = reinterpret_cast<Array*>(self.value.gc);
+		arr->Push(args[0]);
+		return Value();
+	}
+
+	Value Context::_array_pop_(Value self, FunctionArgs& args)
+	{
+		auto arr = reinterpret_cast<Array*>(self.value.gc);
+		return arr->Pop();
+	}
+
+	Value Context::_array_at_(Value self, FunctionArgs& args)
+	{
+		if (args.GetLength() < 1)
+			std::runtime_error("arguments not enough.");
+		auto arg1 = args[0];
+		if (arg1.type != TypeId::SmallInt)
+			std::runtime_error("index must be int");
+		auto arr = reinterpret_cast<Array*>(self.value.gc);
+		return arr->At(arg1.value.si);
+	}
+
+	Value Context::_array_length_(Value self, FunctionArgs& args)
+	{
+		auto arr = reinterpret_cast<Array*>(self.value.gc);
+		return Value(static_cast<TSmallInt>(arr->GetLength()));
+	}
+
+	Value Context::_dict_set_(Value self, FunctionArgs& args)
+	{
+		if (args.GetLength() < 2)
+			throw std::runtime_error("arguments not enough");
+		auto _dict = reinterpret_cast<Dict*>(self.value.gc);
+		_dict->SetValue(args[0], args[1]);
+		return Value();
+	}
+
+	Value Context::_dict_get_(Value self, FunctionArgs& args)
+	{
+		if (args.GetLength() < 1)
+			throw std::runtime_error("arguments not enough");
+		auto _dict = reinterpret_cast<Dict*>(self.value.gc);
+		return Value(_dict->GetValue(args[0]));
+	}
+
+	Value Context::_dict_exist_(Value self, FunctionArgs& args)
+	{
+		if (args.GetLength() < 1)
+			throw std::runtime_error("arguments not enough");
+		auto _dict = reinterpret_cast<Dict*>(self.value.gc);
+		return Value(_dict->Exist(args[0]));
 	}
 
 }
