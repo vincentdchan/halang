@@ -219,7 +219,7 @@ namespace halang
 		switch (buffer[iter])
 		{
 		case u'c':
-			if (match == swallow(u"class"))
+			if (match = swallow(u"class"))
 			{
 				loc.length = 5;
 				PUSH_TOKEN(CLASS);

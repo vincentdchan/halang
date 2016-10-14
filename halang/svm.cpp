@@ -66,7 +66,7 @@ namespace halang
 			case VM_CODE::LOAD_UPVAL:
 			{
 				auto _upval = GET_UPVAL(current->GetParam());
-				PUSH(_upval->toValue());
+				PUSH(_upval->GetVal());
 				break;
 			}
 			case VM_CODE::LOAD_C:
@@ -123,13 +123,13 @@ namespace halang
 
 				CodePack* cp = func->codepack;
 				UpValue* _upval = nullptr;
-				for (unsigned int i = 0; i < cp->_require_upvales_size; ++i)
+				for (unsigned int i = 0; i < cp->_require_upvalues_size; ++i)
 				{
 
 					if (cp->_require_upvalues[i] >= 0)
 					{
 						_upval = Context::GetGC()->New<UpValue>(sc->variables + cp->_require_upvalues[i]);
-						sc->PushUpValue(_upval);
+						// sc->PushUpValue(_upval);
 					}
 					else
 						_upval = sc->upvals[(-1 - cp->_require_upvalues[i])];

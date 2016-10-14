@@ -19,9 +19,11 @@ namespace halang
 
 	protected:
 
-		ScriptContext(size_type _var_size, size_type _upval_size);
+		// ScriptContext(size_type _var_size, size_type _upval_size);
 		ScriptContext(Function * );
 		ScriptContext(const ScriptContext&);
+
+		ScriptContext& operator=(const ScriptContext&) = delete;
 
 	private:
 
@@ -40,7 +42,6 @@ namespace halang
 		size_type variable_size;
 
 		UpValue** upvals;
-		UpValue** upval_ptr;
 		size_type upvals_size;
 
 		bool cp;
@@ -51,8 +52,8 @@ namespace halang
 		Value Pop();
 		void Push(Value v);
 		// Value GetConstant(unsigned int i);
-		Value GetVariable(unsigned int i);
-		UpValue* GetUpValue(unsigned int i);
+		Value GetVariable(unsigned int i) const;
+		UpValue* GetUpValue(unsigned int i) const;
 		void PushUpValue(UpValue*);
 		void SetVariable(unsigned int i, Value);
 		void SetUpValue(unsigned int i, UpValue*);
