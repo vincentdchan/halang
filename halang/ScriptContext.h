@@ -41,8 +41,12 @@ namespace halang
 		Value* var_ptr;
 		size_type variable_size;
 
-		UpValue** upvals;
-		size_type upvals_size;
+		/// <summary>
+		/// host upvalues means the upvalue created in this SriptContext
+		/// when this ScriptContext is closing, all the upvalues would be
+		/// closed.
+		/// </summary>
+		std::vector<UpValue*> host_upvals;
 
 		bool cp;
 
@@ -54,7 +58,7 @@ namespace halang
 		// Value GetConstant(unsigned int i);
 		Value GetVariable(unsigned int i) const;
 		UpValue* GetUpValue(unsigned int i) const;
-		void PushUpValue(UpValue*);
+		// void PushUpValue(UpValue*);
 		void SetVariable(unsigned int i, Value);
 		void SetUpValue(unsigned int i, UpValue*);
 		void CloseAllUpValue();

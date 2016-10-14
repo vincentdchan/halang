@@ -52,6 +52,7 @@ namespace halang
 		static Value _si_mul_(Value self, FunctionArgs& args);
 		static Value _si_div_(Value self, FunctionArgs& args);
 		static Value _si_mod_(Value self, FunctionArgs& args);
+		static Value _si_reverse_(Value self, FunctionArgs& args);
 		static Value _si_eq_(Value self, FunctionArgs& args);
 		static Value _si_gt_(Value self, FunctionArgs& args);
 		static Value _si_lt_(Value self, FunctionArgs& args);
@@ -63,6 +64,7 @@ namespace halang
 		static Value _num_sub_(Value self, FunctionArgs& args);
 		static Value _num_mul_(Value self, FunctionArgs& args);
 		static Value _num_div_(Value self, FunctionArgs& args);
+		static Value _num_reverse_(Value self, FunctionArgs& args);
 		static Value _num_eq_(Value self, FunctionArgs& args);
 		static Value _num_gt_(Value self, FunctionArgs& args);
 		static Value _num_lt_(Value self, FunctionArgs& args);

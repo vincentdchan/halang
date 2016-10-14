@@ -45,43 +45,45 @@ namespace halang
 	void Context::InitializeDefaultPrototype()
 	{
 		_null_proto = gc->NewPersistent<Dict>();
-		_null_proto->SetValue(TEXT("__str__"), FUN(_null_str_));
+		_null_proto->SetValue(TEXT("__str__"),		FUN(_null_str_));
 
 		_bool_proto = gc->NewPersistent<Dict>();
-		_bool_proto->SetValue(TEXT("__and__"),	FUN(_bl_and_));
-		_bool_proto->SetValue(TEXT("__or__"),	FUN(_bl_or_));
-		_bool_proto->SetValue(TEXT("__not__"),	FUN(_bl_not_));
-		_bool_proto->SetValue(TEXT("__eq__"),	FUN(_bl_eq_));
-		_bool_proto->SetValue(TEXT("__str__"),	FUN(_bl_str_));
+		_bool_proto->SetValue(TEXT("__and__"),		FUN(_bl_and_));
+		_bool_proto->SetValue(TEXT("__or__"),		FUN(_bl_or_));
+		_bool_proto->SetValue(TEXT("__not__"),		FUN(_bl_not_));
+		_bool_proto->SetValue(TEXT("__eq__"),		FUN(_bl_eq_));
+		_bool_proto->SetValue(TEXT("__str__"),		FUN(_bl_str_));
 
 		_si_proto = gc->NewPersistent<Dict>();
-		_si_proto->SetValue(TEXT("__add__"),	FUN(_si_add_));
-		_si_proto->SetValue(TEXT("__sub__"),	FUN(_si_sub_));
-		_si_proto->SetValue(TEXT("__mul__"),	FUN(_si_mul_));
-		_si_proto->SetValue(TEXT("__div__"),	FUN(_si_div_));
-		_si_proto->SetValue(TEXT("__mod__"),	FUN(_si_mod_));
-		_si_proto->SetValue(TEXT("__eq__"),		FUN(_si_eq_));
-		_si_proto->SetValue(TEXT("__gt__"),		FUN(_si_gt_));
-		_si_proto->SetValue(TEXT("__lt__"),		FUN(_si_lt_));
-		_si_proto->SetValue(TEXT("__gteq__"),	FUN(_si_gteq_));
-		_si_proto->SetValue(TEXT("__lteq__"),	FUN(_si_lteq_));
-		_si_proto->SetValue(TEXT("__str__"),	FUN(_si_str_));
+		_si_proto->SetValue(TEXT("__add__"),		FUN(_si_add_));
+		_si_proto->SetValue(TEXT("__sub__"),		FUN(_si_sub_));
+		_si_proto->SetValue(TEXT("__mul__"),		FUN(_si_mul_));
+		_si_proto->SetValue(TEXT("__div__"),		FUN(_si_div_));
+		_si_proto->SetValue(TEXT("__mod__"),		FUN(_si_mod_));
+		_si_proto->SetValue(TEXT("__reverse__"),	FUN(_si_reverse_));
+		_si_proto->SetValue(TEXT("__eq__"),			FUN(_si_eq_));
+		_si_proto->SetValue(TEXT("__gt__"),			FUN(_si_gt_));
+		_si_proto->SetValue(TEXT("__lt__"),			FUN(_si_lt_));
+		_si_proto->SetValue(TEXT("__gteq__"),		FUN(_si_gteq_));
+		_si_proto->SetValue(TEXT("__lteq__"),		FUN(_si_lteq_));
+		_si_proto->SetValue(TEXT("__str__"),		FUN(_si_str_));
 
 		_num_proto = gc->NewPersistent<Dict>();
-		_num_proto->SetValue(TEXT("__add__"),	FUN(_num_add_));
-		_num_proto->SetValue(TEXT("__sub__"),	FUN(_num_sub_));
-		_num_proto->SetValue(TEXT("__mul__"),	FUN(_num_mul_));
-		_num_proto->SetValue(TEXT("__div__"),	FUN(_num_div_));
-		_num_proto->SetValue(TEXT("__eq__"),	FUN(_num_eq_));
-		_num_proto->SetValue(TEXT("__gt__"),	FUN(_num_gt_));
-		_num_proto->SetValue(TEXT("__lt__"),	FUN(_num_lt_));
-		_num_proto->SetValue(TEXT("__gteq__"),	FUN(_num_gteq_));
-		_num_proto->SetValue(TEXT("__lteq__"),	FUN(_num_lteq_));
-		_num_proto->SetValue(TEXT("__str__"),	FUN(_num_str_));
+		_num_proto->SetValue(TEXT("__add__"),		FUN(_num_add_));
+		_num_proto->SetValue(TEXT("__sub__"),		FUN(_num_sub_));
+		_num_proto->SetValue(TEXT("__mul__"),		FUN(_num_mul_));
+		_num_proto->SetValue(TEXT("__div__"),		FUN(_num_div_));
+		_num_proto->SetValue(TEXT("__reverse__"),	FUN(_num_reverse_));
+		_num_proto->SetValue(TEXT("__eq__"),		FUN(_num_eq_));
+		_num_proto->SetValue(TEXT("__gt__"),		FUN(_num_gt_));
+		_num_proto->SetValue(TEXT("__lt__"),		FUN(_num_lt_));
+		_num_proto->SetValue(TEXT("__gteq__"),		FUN(_num_gteq_));
+		_num_proto->SetValue(TEXT("__lteq__"),		FUN(_num_lteq_));
+		_num_proto->SetValue(TEXT("__str__"),		FUN(_num_str_));
 		
 		_str_proto = gc->NewPersistent<Dict>();
-		_str_proto->SetValue(TEXT("__str__"),	FUN(_str_str_));
-		_str_proto->SetValue(TEXT("__add__"),	FUN(_str_add_));
+		_str_proto->SetValue(TEXT("__str__"),		FUN(_str_str_));
+		_str_proto->SetValue(TEXT("__add__"),		FUN(_str_add_));
 
 	}
 
@@ -149,6 +151,11 @@ namespace halang
 		return Value(self.value.si % arg.value.si);
 	}
 
+	Value Context::_si_reverse_(Value self, FunctionArgs& args)
+	{
+		return Value(self.value.si * -1);
+	}
+
 	Value Context::_si_eq_(Value self, FunctionArgs& args)
 	{
 		auto arg = args.At(0);
@@ -208,6 +215,11 @@ namespace halang
 	{
 		auto arg = args.At(0);
 		return Value(self.value.number / arg.value.number);
+	}
+
+	Value Context::_num_reverse_(Value self, FunctionArgs& args)
+	{
+		return Value(self.value.number * -1.0);
 	}
 
 	Value Context::_num_eq_(Value self, FunctionArgs& args)

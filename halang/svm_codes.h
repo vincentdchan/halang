@@ -22,20 +22,8 @@
 	V(RETURN,			0x10) \
 	V(IFNO,				0x11) \
 	V(JMP,				0x12) \
-	V(NOT,				0x13) \
-	V(ADD,				0x14) \
-	V(SUB,				0x15) \
-	V(MUL,				0x16) \
-	V(DIV,				0x17) \
-	V(MOD,				0x18) \
-	V(POW,				0x19) \
-	V(GT,				0x1a) \
-	V(LT,				0x1b) \
-	V(GTEQ,				0x1c) \
-	V(LTEQ,				0x1d) \
-	V(EQ,				0x1e) \
-	V(OUT,				0x1f) \
-	V(STOP,				0x20) \
+	V(OUT,				0x13) \
+	V(STOP,				0x14) \
 
 namespace halang
 {

@@ -46,6 +46,9 @@ namespace halang
 
 	void GC::FullGC()
 	{
+		/*
+		std::cout << "Full GC" << std::endl;
+		*/
 		ClearAllMarks();
 		if (Context::GetVM()->sc != nullptr)
 			Context::GetVM()->sc->Mark();
@@ -54,7 +57,7 @@ namespace halang
 
 	void GC::CheckAndGC()
 	{
-		if (counter >= 50)
+		if (counter >= 64)
 		{
 			FullGC();
 			counter = 0;

@@ -181,11 +181,16 @@ namespace halang
 		switch (_node->op)
 		{
 		case OperatorType::SUB:
-			AddInst(Instruction(VM_CODE::PUSH_INT, -1));
-			AddInst(Instruction(VM_CODE::MUL, 0));
+			state->constant.push_back(TEXT("__reverse__"));
+			AddInst(Instruction(VM_CODE::LOAD_C, state->constant.size() - 1));
+			AddInst(Instruction(VM_CODE::DOT, 0));
+			AddInst(Instruction(VM_CODE::CALL, 0));
 			break;
 		case OperatorType::NOT:
-			AddInst(Instruction(VM_CODE::NOT, 0));
+			state->constant.push_back(TEXT("__not__"));
+			AddInst(Instruction(VM_CODE::LOAD_C, state->constant.size() - 1));
+			AddInst(Instruction(VM_CODE::DOT, 0));
+			AddInst(Instruction(VM_CODE::CALL, 0));
 			break;
 		}
 	}
