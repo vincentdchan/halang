@@ -40,8 +40,12 @@ namespace halang
 		typedef unsigned int size_type;
 
 	protected:
+
 		CodePack() :
-			prev(nullptr), param_size(0)
+			prev(nullptr), param_size(0),
+			_var_names(nullptr), _upval_names(nullptr),
+			_var_names_size(0), _upval_names_size(0),
+			_require_upvalues(nullptr), _require_upvalues_size(0)
 		{}
 
 	private:
@@ -57,7 +61,7 @@ namespace halang
 		size_type _instructions_size;
 
 		int* _require_upvalues;
-		size_type _require_upvales_size;
+		size_type _require_upvalues_size;
 
 		// GC Object
 
@@ -68,6 +72,8 @@ namespace halang
 		size_type _upval_names_size;
 
 	public:
+
+		virtual void Mark() override;
 
 		virtual Dict* GetPrototype() override
 		{
@@ -110,6 +116,11 @@ namespace halang
 			Array(i), scriptContext(sc)
 		{
 		}
+
+	public:
+
+		virtual void Mark() override;
+
 	};
 
 	typedef std::function<Value (Value, FunctionArgs& )> ExternFunction;
@@ -162,6 +173,8 @@ namespace halang
 		virtual Dict* GetPrototype() override { return nullptr; }
 
 	public:
+
+		virtual void Mark() override;
 
 		virtual Value toValue() override { return Value(this, TypeId::Function); }
 

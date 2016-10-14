@@ -70,6 +70,16 @@ namespace halang
 			std::vector<Value>::resize(_size);
 		}
 
+		virtual void Mark() override
+		{
+			marked = true;
+			for (auto i = begin(); i != end(); ++i)
+				if (i->isGCObject())
+				{
+					i->value.gc->Mark();
+				}
+		}
+
 		Value& operator[](unsigned int i)
 		{
 			return std::vector<Value>::operator[](i);

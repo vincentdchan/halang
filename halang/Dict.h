@@ -40,6 +40,7 @@ namespace halang
 		void Insert(Value key, Value value);
 		Value GetValue(Value key);
 		void SetValue(Value key, Value value);
+		virtual void Mark() override;
 
 		virtual ~Dict() override;
 

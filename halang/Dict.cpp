@@ -126,7 +126,29 @@ namespace halang
 				}
 			}
 		}
+
 		delete[] entries;
+	}
+
+	void Dict::Mark()
+	{
+		if (!marked)
+		{
+			marked = true;
+			Entry * enptr;
+			for (size_type i = 0; i < _size; ++i)
+			{
+				enptr = entries[i];
+				while (enptr != nullptr)
+				{
+					if (enptr->key.isGCObject())
+						enptr->key.value.gc->Mark();
+					if (enptr->value.isGCObject())
+						enptr->value.value.gc->Mark();
+					enptr = enptr->next;
+				}
+			}
+		}
 	}
 
 }

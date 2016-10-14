@@ -25,11 +25,14 @@ namespace halang
 
 		// copy require_upvalues;
 		needed_size = gs->require_upvalues.size();
-		cp->_require_upvalues = new int[needed_size];
-		cp->_require_upvales_size = 0;
-		for (auto i = gs->require_upvalues.begin();
-			i != gs->require_upvalues.end(); ++i)
-			cp->_require_upvalues[cp->_require_upvales_size++] = *i;
+		if (needed_size > 0)
+		{
+			cp->_require_upvalues = new int[needed_size];
+			cp->_require_upvalues_size = 0;
+			for (auto i = gs->require_upvalues.begin();
+				i != gs->require_upvalues.end(); ++i)
+				cp->_require_upvalues[cp->_require_upvalues_size++] = *i;
+		}
 
 		// copy constants
 		needed_size = gs->constant.size();
