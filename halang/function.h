@@ -40,10 +40,12 @@ namespace halang
 		typedef unsigned int size_type;
 
 	protected:
+
 		CodePack() :
 			prev(nullptr), param_size(0),
 			_var_names(nullptr), _upval_names(nullptr),
-			_var_names_size(0), _upval_names_size(0)
+			_var_names_size(0), _upval_names_size(0),
+			_require_upvalues(nullptr), _require_upvalues_size(0)
 		{}
 
 	private:
@@ -59,7 +61,7 @@ namespace halang
 		size_type _instructions_size;
 
 		int* _require_upvalues;
-		size_type _require_upvales_size;
+		size_type _require_upvalues_size;
 
 		// GC Object
 

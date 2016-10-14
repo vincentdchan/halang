@@ -27,8 +27,12 @@ namespace halang
 
 		virtual void Mark() override
 		{
-			if (value->isGCObject())
-				value->value.gc->Mark();
+			if (!marked)
+			{
+				marked = true;
+				if (value->isGCObject())
+					value->value.gc->Mark();
+			}
 		}
 
 		virtual ~UpValue() 

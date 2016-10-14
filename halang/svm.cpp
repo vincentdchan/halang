@@ -66,7 +66,7 @@ namespace halang
 			case VM_CODE::LOAD_UPVAL:
 			{
 				auto _upval = GET_UPVAL(current->GetParam());
-				PUSH(_upval->toValue());
+				PUSH(_upval->GetVal());
 				break;
 			}
 			case VM_CODE::LOAD_C:
@@ -123,16 +123,16 @@ namespace halang
 
 				CodePack* cp = func->codepack;
 				UpValue* _upval = nullptr;
-				for (unsigned int i = 0; i < cp->_require_upvales_size; ++i)
+				for (unsigned int i = 0; i < cp->_require_upvalues_size; ++i)
 				{
 
 					if (cp->_require_upvalues[i] >= 0)
 					{
 						_upval = Context::GetGC()->New<UpValue>(sc->variables + cp->_require_upvalues[i]);
-						sc->PushUpValue(_upval);
+						sc->host_upvals.push_back(_upval);
 					}
 					else
-						_upval = sc->upvals[(-1 - cp->_require_upvalues[i])];
+						_upval = sc->function->upvalues[(-1 - cp->_require_upvalues[i])];
 
 					func->upvalues.push_back(_upval);
 
@@ -175,10 +175,6 @@ namespace halang
 					for (unsigned int i = 0; i < args->GetLength(); ++i)
 						new_sc->variables[i] = args->At(i);
 
-					for (unsigned int i = 0;
-						i < func->codepack->_upval_names_size; ++i)
-						new_sc->upvals[i] = func->upvalues[i];
-
 					inst = new_sc->function->codepack->_instructions;
 				}
 
@@ -202,54 +198,31 @@ namespace halang
 				}
 
 				auto proto = vo1.GetPrototype();
-				auto target = proto->GetValue(vs2);;
-				PUSH(vo1); // this
-				PUSH(target);
+				Value vfun;
+
+				bool ok = proto->TryGetValue(vs2, vfun);
+				if (ok)
+				{
+					PUSH(vo1); // this
+					PUSH(vfun);
+				}
+				else
+					throw std::runtime_error("This object does not contain that property.");
 
 				break;
 			}
 			case VM_CODE::RETURN:
 				if (current->GetParam() != 0)
 					sc->prev->Push(sc->Pop());
+
+				sc->CloseAllUpValue();
+
 				sc = sc->prev;
 				inst = sc->saved_ptr;
 				break;
 			case VM_CODE::IFNO:
 				if (!POP())
 					inst += current->GetParam() - 1;
-				break;
-			case VM_CODE::NOT:
-				PUSH(String::FromCharArray("__not__")->toValue());
-				break;
-			case VM_CODE::ADD:
-				PUSH(String::FromCharArray("__add__")->toValue());
-				break;
-			case VM_CODE::SUB:
-				PUSH(String::FromCharArray("__sub__")->toValue());
-				break;
-			case VM_CODE::MUL:
-				PUSH(String::FromCharArray("__mul__")->toValue());
-				break;
-			case VM_CODE::DIV:
-				PUSH(String::FromCharArray("__mul__")->toValue());
-				break;
-			case VM_CODE::MOD:
-				PUSH(String::FromCharArray("__mod__")->toValue());
-				break;
-			case VM_CODE::GT:
-				PUSH(String::FromCharArray("__gt__")->toValue());
-				break;
-			case VM_CODE::LT:
-				PUSH(String::FromCharArray("__lt__")->toValue());
-				break;
-			case VM_CODE::GTEQ:
-				PUSH(String::FromCharArray("__gteq__")->toValue());
-				break;
-			case VM_CODE::LTEQ:
-				PUSH(String::FromCharArray("__gteq__")->toValue());
-				break;
-			case VM_CODE::EQ:
-				PUSH(String::FromCharArray("__eq__")->toValue());
 				break;
 			case VM_CODE::OUT:
 				break;

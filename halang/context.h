@@ -36,6 +36,8 @@ namespace halang
 		static Dict* _si_proto;
 		static Dict* _num_proto;
 		static Dict* _str_proto;
+		static Dict* _array_proto;
+		static Dict* _dict_proto;
 
 		static void InitializeDefaultPrototype();
 
@@ -52,6 +54,7 @@ namespace halang
 		static Value _si_mul_(Value self, FunctionArgs& args);
 		static Value _si_div_(Value self, FunctionArgs& args);
 		static Value _si_mod_(Value self, FunctionArgs& args);
+		static Value _si_reverse_(Value self, FunctionArgs& args);
 		static Value _si_eq_(Value self, FunctionArgs& args);
 		static Value _si_gt_(Value self, FunctionArgs& args);
 		static Value _si_lt_(Value self, FunctionArgs& args);
@@ -63,6 +66,7 @@ namespace halang
 		static Value _num_sub_(Value self, FunctionArgs& args);
 		static Value _num_mul_(Value self, FunctionArgs& args);
 		static Value _num_div_(Value self, FunctionArgs& args);
+		static Value _num_reverse_(Value self, FunctionArgs& args);
 		static Value _num_eq_(Value self, FunctionArgs& args);
 		static Value _num_gt_(Value self, FunctionArgs& args);
 		static Value _num_lt_(Value self, FunctionArgs& args);
@@ -72,6 +76,17 @@ namespace halang
 
 		static Value _str_str_(Value self, FunctionArgs& args);
 		static Value _str_add_(Value self, FunctionArgs& args);
+		static Value _str_length_(Value self, FunctionArgs& args);
+		static Value _str_hash_(Value self, FunctionArgs& args);
+
+		static Value _array_push_(Value self, FunctionArgs& args);
+		static Value _array_pop_(Value self, FunctionArgs& args);
+		static Value _array_at_(Value self, FunctionArgs& args);
+		static Value _array_length_(Value self, FunctionArgs& args);
+
+		static Value _dict_set_(Value self, FunctionArgs& args);
+		static Value _dict_get_(Value self, FunctionArgs& args);
+		static Value _dict_exist_(Value self, FunctionArgs& args);
 
 		static Value _print_(Value self, FunctionArgs& args);
 

@@ -1,24 +1,14 @@
 #include "ScriptContext.h"
 #include "halang.h"
+#include <cstdlib>
 
 namespace halang
 {
 
-	ScriptContext::ScriptContext(size_type _var_size, size_type _upval_size):
-		variable_size(_var_size), upvals_size(_upval_size)
-	{
-		stack_size = VM_STACK_SIZE;
-		stack = new Value[stack_size]();
-
-		sptr = stack;
-
-		var_ptr = variables = new Value[variable_size];
-
-		upval_ptr = upvals = new UpValue*[upvals_size];
-
-	}
-
-	ScriptContext::ScriptContext(Function * _fun)
+	ScriptContext::ScriptContext(Function * _fun) :
+		function(nullptr), prev(nullptr), stack(nullptr), sptr(nullptr),
+		variables(nullptr), var_ptr(nullptr),
+		stack_size(0), variable_size(0)
 	{
 
 		stack_size = VM_STACK_SIZE;
@@ -29,30 +19,24 @@ namespace halang
 		if (_fun->isExtern)
 		{
 			variable_size = 0;
-			upvals_size = 0;
 			var_ptr = variables = nullptr;
-			upval_ptr = upvals = nullptr;
 		}
 		else
 		{
 			CodePack * cp = _fun->codepack;
 
 			variable_size = cp->_var_names_size;
-			upvals_size = cp->_upval_names_size;
 
 			var_ptr = variables = new Value[variable_size]();
-			upval_ptr = upvals = new UpValue*[upvals_size]();
 
 			saved_ptr = cp->_instructions;
 		}
 
 		function = _fun;
-
 	}
 
 	ScriptContext::ScriptContext(const ScriptContext& sc):
-		stack_size(sc.stack_size), variable_size(sc.variable_size),
-		upvals_size(sc.upvals_size)
+		stack_size(sc.stack_size), variable_size(sc.variable_size)
 	{
 
 		stack = new Value[stack_size]();
@@ -63,14 +47,10 @@ namespace halang
 		for (unsigned int i = 0; i < variable_size; ++i)
 			variables[i] = sc.variables[i];
 
-		upvals = new UpValue*[upvals_size]();
-		for (unsigned int i = 0; i < upvals_size; ++i)
-			upvals[i] = sc.upvals[i];
-
 		sptr = stack + (sc.sptr - sc.stack);
 		var_ptr = variables + (sc.var_ptr - sc.variables);
-		upval_ptr = upvals + (sc.upval_ptr - sc.upvals);
 
+		host_upvals = sc.host_upvals;
 	}
 
 	Value ScriptContext::Top(int i)
@@ -88,19 +68,14 @@ namespace halang
 		*(sptr++) = v;
 	}
 
-	Value ScriptContext::GetVariable(unsigned int i)
+	Value ScriptContext::GetVariable(unsigned int i) const
 	{
 		return variables[i];
 	}
 
-	UpValue* ScriptContext::GetUpValue(unsigned int i)
+	UpValue* ScriptContext::GetUpValue(unsigned int i) const
 	{
-		return upvals[i];
-	}
-
-	void ScriptContext::PushUpValue(UpValue * uv)
-	{
-		*(upval_ptr++) = uv;
+		return function->upvalues[i];
 	}
 
 	void ScriptContext::SetVariable(unsigned int i, Value v)
@@ -110,13 +85,14 @@ namespace halang
 
 	void ScriptContext::SetUpValue(unsigned int i, UpValue* uv)
 	{
-		upvals[i] = uv;
+		function->upvalues[i] = uv;
 	}
 
 	void ScriptContext::CloseAllUpValue()
 	{
-		for (unsigned int i = 0; i < upvals_size; ++i)
-			upvals[i]->close();
+		for (auto i = host_upvals.begin(); 
+			i != host_upvals.end(); i++)
+			(*i)->close();
 	}
 
 	void ScriptContext::Mark()
@@ -141,17 +117,17 @@ namespace halang
 				if (variables[i].isGCObject())
 					variables[i].value.gc->Mark();
 
-			for (size_type i = 0; i < upvals_size; ++i)
-				if (upvals[i] != nullptr)
-					upvals[i]->Mark();
+			for (auto i = host_upvals.begin(); 
+				i != host_upvals.end(); i++)
+				(*i)->Mark();
 		}
 	}
 
 	ScriptContext::~ScriptContext()
 	{
 		delete[] stack;
-		delete[] variables;
-		delete[] upvals;
+		if (variables != nullptr)
+			delete[] variables;
 	}
 
 }

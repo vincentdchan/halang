@@ -25,11 +25,14 @@ namespace halang
 
 		// copy require_upvalues;
 		needed_size = gs->require_upvalues.size();
-		cp->_require_upvalues = new int[needed_size];
-		cp->_require_upvales_size = 0;
-		for (auto i = gs->require_upvalues.begin();
-			i != gs->require_upvalues.end(); ++i)
-			cp->_require_upvalues[cp->_require_upvales_size++] = *i;
+		if (needed_size > 0)
+		{
+			cp->_require_upvalues = new int[needed_size];
+			cp->_require_upvalues_size = 0;
+			for (auto i = gs->require_upvalues.begin();
+				i != gs->require_upvalues.end(); ++i)
+				cp->_require_upvalues[cp->_require_upvalues_size++] = *i;
+		}
 
 		// copy constants
 		needed_size = gs->constant.size();
@@ -178,11 +181,16 @@ namespace halang
 		switch (_node->op)
 		{
 		case OperatorType::SUB:
-			AddInst(Instruction(VM_CODE::PUSH_INT, -1));
-			AddInst(Instruction(VM_CODE::MUL, 0));
+			state->constant.push_back(TEXT("__reverse__"));
+			AddInst(Instruction(VM_CODE::LOAD_C, state->constant.size() - 1));
+			AddInst(Instruction(VM_CODE::DOT, 0));
+			AddInst(Instruction(VM_CODE::CALL, 0));
 			break;
 		case OperatorType::NOT:
-			AddInst(Instruction(VM_CODE::NOT, 0));
+			state->constant.push_back(TEXT("__not__"));
+			AddInst(Instruction(VM_CODE::LOAD_C, state->constant.size() - 1));
+			AddInst(Instruction(VM_CODE::DOT, 0));
+			AddInst(Instruction(VM_CODE::CALL, 0));
 			break;
 		}
 	}
