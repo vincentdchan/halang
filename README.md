@@ -25,7 +25,12 @@ In HaLang, string is a immutable built-in object. It's described within *""*.
 
 ```javascript
 var a = "Hello World!" // define a variable name "a", and it's value is "Hello World!"
-print a
+print(a)
+
+// concat
+var b = "Hello " + "world!"	// result: Hello world!
+// whilch is equal to "Hello".__add__("world")
+print(a)
 ```
 
 
@@ -60,7 +65,7 @@ var a = 100
 if (a > 0)
 	a = -a
 	
-if (a > 0) { print -a } else { print a + 100 } // Correct! output: -100
+if (a > 0) { print(-a) } else { print(a + 100) } // Correct! output: -100
 ```
 
 This situation is due to the implementation of parser. I just implemented it in a very early stage. There will be a enhancement in the future to improve this situation.
@@ -74,11 +79,23 @@ var a = 0
 while (a <= 50)
 {
   a = a + 1
-  print a
+  print(a)
 }
-```
 
-The code above will output 0 - 50.
+// for statement
+for (var i = 0; i < 10; i++) {
+  print(i);
+}
+// which is equal to
+function _tmp() {
+  	var i = 0;
+  	while(i < 10) {
+  		print(i);
+    	i++;
+	}
+}
+_tmp();
+```
 
 ## Function
 
@@ -139,6 +156,25 @@ a(1);			// 7
 a(8);			// 15
 ```
 
+## Closure
+
+```javascript
+func A(a) {
+	func B(b) {
+    	func C(c) {
+          	return a + b + c;
+		}
+      	return C;
+	}
+  	return B;
+}
+var funcB = A("a");
+var funcC = funB("b");
+print(funC("c"));
+```
+
+
+
 # Object-Originted Programming
 
 In `Halang`, you can use `prototype` to implement OOP, the type of prototype is usually a Dict, Dict is and internal object.
@@ -159,6 +195,7 @@ Because the `prototype` of integer includes `__add__` method, so expression belo
 In the future, many features will be add to HaLang. Such as
 
 1. break and continue statement
-2. List and Hashmap
+2. Class support
 3. Yield
-4. ...
+4. binding to C lib
+5. ...

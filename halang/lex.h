@@ -41,6 +41,7 @@ namespace halang
 		bool scanLiteral();
 		bool scanIdentifier();
 		bool scanNumber();
+		bool swallowComment();
 		bool swallow(const char16_t* _str);
 
 		queue<Token> token_q;
