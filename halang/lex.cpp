@@ -158,6 +158,18 @@ namespace halang
 				else
 					PUSH_TOKEN(ASSIGN);
 				++iter; break;
+			case u'&':
+				if (swallow(u"&&"))
+				{
+					PUSH_TOKEN(AND);
+					break;
+				}
+			case u'|':
+				if (swallow(u"||"))
+				{
+					PUSH_TOKEN(OR);
+					break;
+				}
 			default:
 				ReportError(string("Lexer error: unexpected charactor: "));
 				++iter; break;
@@ -232,11 +244,23 @@ namespace halang
 		// check reserved
 		switch (buffer[iter])
 		{
+		case u'b':
+			if (match = swallow(u"break"))
+			{
+				loc.length = 5;
+				PUSH_TOKEN(BREAK);
+			}
+			break;
 		case u'c':
 			if (match = swallow(u"class"))
 			{
 				loc.length = 5;
 				PUSH_TOKEN(CLASS);
+			}
+			else if (match = swallow(u"continue"))
+			{
+				loc.length = 8;
+				PUSH_TOKEN(CONTINUE);
 			}
 			break;
 		case u'v': //  var

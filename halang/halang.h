@@ -25,6 +25,8 @@ namespace halang
 	V(LT, "<", 8) \
 	V(GTEQ, ">=", 8) \
 	V(LTEQ, "<=", 8) \
+	V(AND, "&&", 5) \
+	V(OR, "||", 5) \
 	V(ILLEGAL_OP, "", 0)
 
 #define TOKEN_LIST(V) \
@@ -37,6 +39,7 @@ namespace halang
 	V(ELSE) \
 	V(WHILE) \
 	V(BREAK) \
+	V(CONTINUE) \
 	V(ASSIGN) \
 	V(IDENTIFIER) \
 	V(STRING) \

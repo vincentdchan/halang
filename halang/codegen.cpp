@@ -114,6 +114,8 @@ namespace halang
 		auto new_state = GenerateDefaultState();
 		new_state->prev = state;
 		state = new_state;
+
+		_while_statement = false;
 	}
 
 	CodeGen::GenState* CodeGen::GenerateDefaultState()
@@ -202,31 +204,31 @@ namespace halang
 		switch (_node->op)
 		{
 		case OperatorType::ADD:
-			state->constant.push_back(TEXT("__add__"));
+			state->constant.push_back(Context::StringBuffer::__ADD__->toValue());
 			AddInst(Instruction(VM_CODE::LOAD_C, state->constant.size() - 1));
 			AddInst(Instruction(VM_CODE::DOT, 0));
 			AddInst(Instruction(VM_CODE::CALL, 1));
 			break;
 		case OperatorType::SUB:
-			state->constant.push_back(TEXT("__sub__"));
+			state->constant.push_back(Context::StringBuffer::__SUB__->toValue());
 			AddInst(Instruction(VM_CODE::LOAD_C, state->constant.size() - 1));
 			AddInst(Instruction(VM_CODE::DOT, 0));
 			AddInst(Instruction(VM_CODE::CALL, 1));
 			break;
 		case OperatorType::MUL:
-			state->constant.push_back(TEXT("__mul__"));
+			state->constant.push_back(Context::StringBuffer::__MUL__->toValue());
 			AddInst(Instruction(VM_CODE::LOAD_C, state->constant.size() - 1));
 			AddInst(Instruction(VM_CODE::DOT, 0));
 			AddInst(Instruction(VM_CODE::CALL, 1));
 			break;
 		case OperatorType::DIV:
-			state->constant.push_back(TEXT("__div__"));
+			state->constant.push_back(Context::StringBuffer::__DIV__->toValue());
 			AddInst(Instruction(VM_CODE::LOAD_C, state->constant.size() - 1));
 			AddInst(Instruction(VM_CODE::DOT, 0));
 			AddInst(Instruction(VM_CODE::CALL, 1));
 			break;
 		case OperatorType::MOD:
-			state->constant.push_back(TEXT("__mod__"));
+			state->constant.push_back(Context::StringBuffer::__MOD__->toValue());
 			AddInst(Instruction(VM_CODE::LOAD_C, state->constant.size() - 1));
 			AddInst(Instruction(VM_CODE::DOT, 0));
 			AddInst(Instruction(VM_CODE::CALL, 1));
@@ -238,31 +240,43 @@ namespace halang
 			AddInst(Instruction(VM_CODE::CALL, 1));
 			break;
 		case OperatorType::GT:
-			state->constant.push_back(TEXT("__gt__"));
+			state->constant.push_back(Context::StringBuffer::__GT__->toValue());
 			AddInst(Instruction(VM_CODE::LOAD_C, state->constant.size() - 1));
 			AddInst(Instruction(VM_CODE::DOT, 0));
 			AddInst(Instruction(VM_CODE::CALL, 1));
 			break;
 		case OperatorType::LT:
-			state->constant.push_back(TEXT("__lt__"));
+			state->constant.push_back(Context::StringBuffer::__LT__->toValue());
 			AddInst(Instruction(VM_CODE::LOAD_C, state->constant.size() - 1));
 			AddInst(Instruction(VM_CODE::DOT, 0));
 			AddInst(Instruction(VM_CODE::CALL, 1));
 			break;
 		case OperatorType::GTEQ:
-			state->constant.push_back(TEXT("__gteq__"));
+			state->constant.push_back(Context::StringBuffer::__GTEQ__->toValue());
 			AddInst(Instruction(VM_CODE::LOAD_C, state->constant.size() - 1));
 			AddInst(Instruction(VM_CODE::DOT, 0));
 			AddInst(Instruction(VM_CODE::CALL, 1));
 			break;
 		case OperatorType::LTEQ:
-			state->constant.push_back(TEXT("__lteq__"));
+			state->constant.push_back(Context::StringBuffer::__LTEQ__->toValue());
 			AddInst(Instruction(VM_CODE::LOAD_C, state->constant.size() - 1));
 			AddInst(Instruction(VM_CODE::DOT, 0));
 			AddInst(Instruction(VM_CODE::CALL, 1));
 			break;
 		case OperatorType::EQ:
-			state->constant.push_back(TEXT("__eq__"));
+			state->constant.push_back(Context::StringBuffer::__EQ__->toValue());
+			AddInst(Instruction(VM_CODE::LOAD_C, state->constant.size() - 1));
+			AddInst(Instruction(VM_CODE::DOT, 0));
+			AddInst(Instruction(VM_CODE::CALL, 1));
+			break;
+		case OperatorType::AND:
+			state->constant.push_back(Context::StringBuffer::__AND__->toValue());
+			AddInst(Instruction(VM_CODE::LOAD_C, state->constant.size() - 1));
+			AddInst(Instruction(VM_CODE::DOT, 0));
+			AddInst(Instruction(VM_CODE::CALL, 1));
+			break;
+		case OperatorType::OR:
+			state->constant.push_back(Context::StringBuffer::__OR__->toValue());
 			AddInst(Instruction(VM_CODE::LOAD_C, state->constant.size() - 1));
 			AddInst(Instruction(VM_CODE::DOT, 0));
 			AddInst(Instruction(VM_CODE::CALL, 1));
@@ -406,6 +420,11 @@ namespace halang
 
 	void CodeGen::visit(WhileStmtNode* _node)
 	{
+		auto _def_vs = _while_statement;
+		auto _def_break_loc = _break_loc;
+		_while_statement = true;
+		_break_loc = -1;
+
 		auto _begin_loc = state->instructions.size();
 		visit(_node->condition);
 		auto _condition_loc = state->instructions.size();
@@ -413,10 +432,19 @@ namespace halang
 		visit(_node->child);
 		state->instructions.push_back(Instruction(VM_CODE::JMP, -1 * (state->instructions.size() - _begin_loc)));
 		state->instructions[_condition_loc] = Instruction(VM_CODE::IFNO, state->instructions.size() - _condition_loc);
+		if (_break_loc >= 0)
+			state->instructions[_break_loc] = Instruction(VM_CODE::JMP, state->instructions.size() - _break_loc);
+
+		_break_loc = _def_break_loc;
+		_while_statement = _def_vs;
 	}
 
 	void CodeGen::visit(BreakStmtNode* _node)
 	{
+		if (!_while_statement)
+			throw std::logic_error("You should place break in while statment.");
+		_break_loc = state->instructions.size();
+		state->instructions.push_back(Instruction(VM_CODE::JMP, 0));
 	}
 
 	void CodeGen::visit(ReturnStmtNode* _node)

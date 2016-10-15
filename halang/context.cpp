@@ -7,7 +7,9 @@
 #include <sstream>
 #include <iostream>
 
-#define TEXT(T) CreatePersistent(T)->toValue()
+#define TEXT(T) CreatePersistent(T)
+#define TOV(T) T->toValue()
+#define SBV(T) StringBuffer::T->toValue()
 #define FUN(F) gc->NewPersistent<Function>(F)->toValue()
 
 namespace halang
@@ -29,6 +31,36 @@ namespace halang
 	GC* Context::gc = nullptr;
 	StackVM* Context::vm = nullptr;
 
+	String* Context::StringBuffer::__ADD__ = nullptr;
+	String* Context::StringBuffer::__SUB__ = nullptr;
+	String* Context::StringBuffer::__MUL__ = nullptr;
+	String* Context::StringBuffer::__DIV__ = nullptr;
+	String* Context::StringBuffer::__MOD__ = nullptr;
+	String* Context::StringBuffer::__LT__ = nullptr;
+	String* Context::StringBuffer::__GT__ = nullptr;
+	String* Context::StringBuffer::__LTEQ__ = nullptr;
+	String* Context::StringBuffer::__GTEQ__ = nullptr;
+	String* Context::StringBuffer::__EQ__ = nullptr;
+	String* Context::StringBuffer::__STR__ = nullptr;
+	String* Context::StringBuffer::__REVERSE__ = nullptr;
+	String* Context::StringBuffer::__AND__ = nullptr;
+	String* Context::StringBuffer::__OR__ = nullptr;
+	String* Context::StringBuffer::__NOT__ = nullptr;
+
+	String* Context::StringBuffer::CONCAT = nullptr;
+	String* Context::StringBuffer::LENGTH = nullptr;
+	String* Context::StringBuffer::HASH = nullptr;
+
+	String* Context::StringBuffer::PUSH = nullptr;
+	String* Context::StringBuffer::POP = nullptr;
+	String* Context::StringBuffer::AT = nullptr;
+	String* Context::StringBuffer::GET = nullptr;
+	String* Context::StringBuffer::SET = nullptr;
+	String* Context::StringBuffer::EXIST = nullptr;
+
+	String* Context::StringBuffer::TRUE = nullptr;
+	String* Context::StringBuffer::FALSE = nullptr;
+
 	Dict* Context::_null_proto = nullptr;
 	Dict* Context::_bool_proto = nullptr;
 	Dict* Context::_si_proto = nullptr;
@@ -46,65 +78,102 @@ namespace halang
 
 	void Context::InitializeDefaultPrototype()
 	{
+		InitializeStringBuffer();
+
 		_null_proto = gc->NewPersistent<Dict>();
-		_null_proto->SetValue(TEXT("__str__"),		FUN(_null_str_));
+		_null_proto->SetValue(SBV(__ADD__),		FUN(_null_str_));
 
 		_bool_proto = gc->NewPersistent<Dict>();
-		_bool_proto->SetValue(TEXT("__and__"),		FUN(_bl_and_));
-		_bool_proto->SetValue(TEXT("__or__"),		FUN(_bl_or_));
-		_bool_proto->SetValue(TEXT("__not__"),		FUN(_bl_not_));
-		_bool_proto->SetValue(TEXT("__eq__"),		FUN(_bl_eq_));
-		_bool_proto->SetValue(TEXT("__str__"),		FUN(_bl_str_));
+		_bool_proto->SetValue(SBV(__AND__),		FUN(_bl_and_));
+		_bool_proto->SetValue(SBV(__OR__),		FUN(_bl_or_));
+		_bool_proto->SetValue(SBV(__NOT__),		FUN(_bl_not_));
+		_bool_proto->SetValue(SBV(__EQ__),		FUN(_bl_eq_));
+		_bool_proto->SetValue(SBV(__STR__),		FUN(_bl_str_));
 
 		_si_proto = gc->NewPersistent<Dict>();
-		_si_proto->SetValue(TEXT("__add__"),		FUN(_si_add_));
-		_si_proto->SetValue(TEXT("__sub__"),		FUN(_si_sub_));
-		_si_proto->SetValue(TEXT("__mul__"),		FUN(_si_mul_));
-		_si_proto->SetValue(TEXT("__div__"),		FUN(_si_div_));
-		_si_proto->SetValue(TEXT("__mod__"),		FUN(_si_mod_));
-		_si_proto->SetValue(TEXT("__reverse__"),	FUN(_si_reverse_));
-		_si_proto->SetValue(TEXT("__eq__"),			FUN(_si_eq_));
-		_si_proto->SetValue(TEXT("__gt__"),			FUN(_si_gt_));
-		_si_proto->SetValue(TEXT("__lt__"),			FUN(_si_lt_));
-		_si_proto->SetValue(TEXT("__gteq__"),		FUN(_si_gteq_));
-		_si_proto->SetValue(TEXT("__lteq__"),		FUN(_si_lteq_));
-		_si_proto->SetValue(TEXT("__str__"),		FUN(_si_str_));
+		_si_proto->SetValue(SBV(__ADD__),		FUN(_si_add_));
+		_si_proto->SetValue(SBV(__SUB__),		FUN(_si_sub_));
+		_si_proto->SetValue(SBV(__MUL__),		FUN(_si_mul_));
+		_si_proto->SetValue(SBV(__DIV__),		FUN(_si_div_));
+		_si_proto->SetValue(SBV(__MOD__),		FUN(_si_mod_));
+		_si_proto->SetValue(SBV(__REVERSE__),	FUN(_si_reverse_));
+		_si_proto->SetValue(SBV(__EQ__),			FUN(_si_eq_));
+		_si_proto->SetValue(SBV(__GT__),			FUN(_si_gt_));
+		_si_proto->SetValue(SBV(__LT__),			FUN(_si_lt_));
+		_si_proto->SetValue(SBV(__GTEQ__),		FUN(_si_gteq_));
+		_si_proto->SetValue(SBV(__LTEQ__),		FUN(_si_lteq_));
+		_si_proto->SetValue(SBV(__STR__),		FUN(_si_str_));
 
 		_num_proto = gc->NewPersistent<Dict>();
-		_num_proto->SetValue(TEXT("__add__"),		FUN(_num_add_));
-		_num_proto->SetValue(TEXT("__sub__"),		FUN(_num_sub_));
-		_num_proto->SetValue(TEXT("__mul__"),		FUN(_num_mul_));
-		_num_proto->SetValue(TEXT("__div__"),		FUN(_num_div_));
-		_num_proto->SetValue(TEXT("__reverse__"),	FUN(_num_reverse_));
-		_num_proto->SetValue(TEXT("__eq__"),		FUN(_num_eq_));
-		_num_proto->SetValue(TEXT("__gt__"),		FUN(_num_gt_));
-		_num_proto->SetValue(TEXT("__lt__"),		FUN(_num_lt_));
-		_num_proto->SetValue(TEXT("__gteq__"),		FUN(_num_gteq_));
-		_num_proto->SetValue(TEXT("__lteq__"),		FUN(_num_lteq_));
-		_num_proto->SetValue(TEXT("__str__"),		FUN(_num_str_));
+		_num_proto->SetValue(SBV(__ADD__),		FUN(_num_add_));
+		_num_proto->SetValue(SBV(__SUB__),		FUN(_num_sub_));
+		_num_proto->SetValue(SBV(__MUL__),		FUN(_num_mul_));
+		_num_proto->SetValue(SBV(__DIV__),		FUN(_num_div_));
+		_num_proto->SetValue(SBV(__REVERSE__),	FUN(_num_reverse_));
+		_num_proto->SetValue(SBV(__EQ__),		FUN(_num_eq_));
+		_num_proto->SetValue(SBV(__GT__),		FUN(_num_gt_));
+		_num_proto->SetValue(SBV(__LT__),		FUN(_num_lt_));
+		_num_proto->SetValue(SBV(__GTEQ__),		FUN(_num_gteq_));
+		_num_proto->SetValue(SBV(__LTEQ__),		FUN(_num_lteq_));
+		_num_proto->SetValue(SBV(__STR__),		FUN(_num_str_));
 		
 		_str_proto = gc->NewPersistent<Dict>();
-		_str_proto->SetValue(TEXT("__str__"),		FUN(_str_str_));
-		_str_proto->SetValue(TEXT("__add__"),		FUN(_str_add_));
-		_str_proto->SetValue(TEXT("concat"),		FUN(_str_add_));
-		_str_proto->SetValue(TEXT("length"),		FUN(_str_length_));
-		_str_proto->SetValue(TEXT("hash"),			FUN(_str_hash_));
+		_str_proto->SetValue(SBV(__STR__),		FUN(_str_str_));
+		_str_proto->SetValue(SBV(__ADD__),		FUN(_str_add_));
+		_str_proto->SetValue(SBV(CONCAT),		FUN(_str_add_));
+		_str_proto->SetValue(SBV(LENGTH),		FUN(_str_length_));
+		_str_proto->SetValue(SBV(HASH),			FUN(_str_hash_));
 
 		_array_proto = gc->NewPersistent<Dict>();
-		_array_proto->SetValue(TEXT("push"),		FUN(_array_push_));
-		_array_proto->SetValue(TEXT("pop"),			FUN(_array_pop_));
-		_array_proto->SetValue(TEXT("at"),			FUN(_array_at_));
-		_array_proto->SetValue(TEXT("length"),		FUN(_array_length_));
+		_array_proto->SetValue(SBV(PUSH),		FUN(_array_push_));
+		_array_proto->SetValue(SBV(POP),			FUN(_array_pop_));
+		_array_proto->SetValue(SBV(AT),			FUN(_array_at_));
+		_array_proto->SetValue(SBV(LENGTH),		FUN(_array_length_));
 
 		_dict_proto = gc->NewPersistent<Dict>();
-		_dict_proto->SetValue(TEXT("get"),			FUN(_dict_get_));
-		_dict_proto->SetValue(TEXT("set"),			FUN(_dict_get_));
-		_dict_proto->SetValue(TEXT("exisit"),		FUN(_dict_get_));
+		_dict_proto->SetValue(SBV(GET),			FUN(_dict_get_));
+		_dict_proto->SetValue(SBV(SET),			FUN(_dict_get_));
+		_dict_proto->SetValue(SBV(EXIST),		FUN(_dict_get_));
+	}
+
+	void Context::InitializeStringBuffer()
+	{
+
+		StringBuffer::__ADD__ = TEXT("__add__");
+		StringBuffer::__SUB__ = TEXT("__sub__");
+		StringBuffer::__MUL__ = TEXT("__mul__");
+		StringBuffer::__DIV__ = TEXT("__div__");
+		StringBuffer::__MOD__ = TEXT("__mod__");
+		StringBuffer::__LT__ = TEXT("__lt__");
+		StringBuffer::__GT__ = TEXT("__gt__");
+		StringBuffer::__LTEQ__ = TEXT("__lteq__");
+		StringBuffer::__GTEQ__ = TEXT("__gteq__");
+		StringBuffer::__EQ__ = TEXT("__eq__");
+		StringBuffer::__STR__ = TEXT("__str__");
+		StringBuffer::__REVERSE__ = TEXT("__reverse__");
+		StringBuffer::__AND__ = TEXT("__and__");
+		StringBuffer::__OR__ = TEXT("__or__");
+		StringBuffer::__NOT__ = TEXT("__not__");
+
+		StringBuffer::CONCAT = TEXT("concat");
+		StringBuffer::LENGTH = TEXT("length");
+		StringBuffer::HASH = TEXT("hash");
+
+		StringBuffer::PUSH = TEXT("push");
+		StringBuffer::POP = TEXT("pop");
+		StringBuffer::AT = TEXT("at");
+		StringBuffer::GET = TEXT("get");
+		StringBuffer::SET = TEXT("set");
+		StringBuffer::EXIST = TEXT("exist");
+
+		StringBuffer::TRUE = TEXT("true");
+		StringBuffer::FALSE = TEXT("false");
+
 	}
 
 	Value Context::_null_str_(Value self, FunctionArgs& args)
 	{
-		return TEXT("<Null>");
+		return TEXT("<Null>")->toValue();
 	}
 
 	Value Context::_bl_and_(Value self, FunctionArgs& args)
@@ -130,9 +199,9 @@ namespace halang
 	Value Context::_bl_str_(Value self, FunctionArgs& args)
 	{
 		if (self.value.bl)
-			return TEXT("True");
+			return SBV(TRUE);
 		else
-			return TEXT("False");
+			return SBV(FALSE);
 	}
 
 	Value Context::_si_add_(Value self, FunctionArgs& args)
