@@ -47,7 +47,7 @@ namespace halang
 	void GC::FullGC()
 	{
 #ifdef _DEBUG
-		std::cout << "Full GC" << std::endl;
+		// std::cout << "Full GC" << std::endl;
 #endif
 		ClearAllMarks();
 		if (Context::GetVM()->sc != nullptr)

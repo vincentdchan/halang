@@ -35,6 +35,8 @@ namespace halang
 
 	bool Lexer::readline()
 	{
+		BEGIN_READLINE:
+
 		if (ist.eof()) return false;
 		bool result = true;
 
@@ -112,8 +114,20 @@ namespace halang
 					PUSH_TOKEN(MUL);
 				++iter; break;
 			case u'/':
-				PUSH_TOKEN(DIV);
-				++iter; break;
+				if (buffer[iter + 1] == u'/')
+				{
+					goto BEGIN_READLINE;
+				}
+				else if (buffer[iter + 1] == u'*')
+				{
+					swallowComment();
+				}
+				else
+				{
+					PUSH_TOKEN(DIV);
+					++iter;
+				}
+				break;
 			case u'%':
 				PUSH_TOKEN(MOD);
 				++iter; break;
@@ -367,6 +381,31 @@ namespace halang
 	{
 		token_q.push(Token(Token::TYPE::ENDFILE, Location(linenumber)));
 		_end = true;
+	}
+
+	bool Lexer::swallowComment()
+	{
+		if (buffer[iter] != '/' || buffer[iter + 1] != '*')
+			throw std::logic_error("not a comment");
+		auto mid = iter + 2;
+		bool end = false;
+		while (!end)
+		{
+			if (mid >= buffer.size()) {
+				std::string _buf;
+				std::getline(ist, _buf);
+				buffer = utils::utf8_to_utf16(_buf);
+				mid = iter = 0;
+			}
+			if (buffer[mid] == '*' && mid + 1 < buffer.size() 
+				&& buffer[mid + 1] == '/')
+			{
+				iter = mid + 2;
+				end = true;
+				break;
+			}
+			++mid;
+		}
 	}
 
 	bool Lexer::isDigit(char16_t ch)
