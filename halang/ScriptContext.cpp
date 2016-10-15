@@ -65,6 +65,8 @@ namespace halang
 
 	void ScriptContext::Push(Value v)
 	{
+		if (sptr - stack >= stack_size)
+			throw std::runtime_error("stack overflow");
 		*(sptr++) = v;
 	}
 

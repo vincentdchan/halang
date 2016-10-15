@@ -11,6 +11,42 @@ namespace halang
 	{
 	public:
 
+		class StringBuffer 
+		{
+		public:
+
+			static String* __ADD__;
+			static String* __SUB__;
+			static String* __MUL__;
+			static String* __DIV__;
+			static String* __MOD__;
+			static String* __LT__;
+			static String* __GT__;
+			static String* __LTEQ__;
+			static String* __GTEQ__;
+			static String* __EQ__;
+			static String* __STR__;
+			static String* __REVERSE__;
+			static String* __AND__;
+			static String* __OR__;
+			static String* __NOT__;
+
+			static String* CONCAT;
+			static String* LENGTH;
+			static String* HASH;
+
+			static String* PUSH;
+			static String* POP;
+			static String* AT;
+			static String* GET;
+			static String* SET;
+			static String* EXIST;
+
+			static String* TRUE;
+			static String* FALSE;
+
+		};
+
 		friend class CodeGen;
 		friend class GC;
 		friend class StackVM;
@@ -40,6 +76,7 @@ namespace halang
 		static Dict* _dict_proto;
 
 		static void InitializeDefaultPrototype();
+		static void InitializeStringBuffer();
 
 		static Value _null_str_(Value self, FunctionArgs& args);
 
