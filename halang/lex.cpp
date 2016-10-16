@@ -158,6 +158,18 @@ namespace halang
 				else
 					PUSH_TOKEN(ASSIGN);
 				++iter; break;
+			case u'&':
+				if (swallow(u"&&"))
+				{
+					PUSH_TOKEN(AND);
+					break;
+				}
+			case u'|':
+				if (swallow(u"||"))
+				{
+					PUSH_TOKEN(OR);
+					break;
+				}
 			default:
 				ReportError(string("Lexer error: unexpected charactor: "));
 				++iter; break;

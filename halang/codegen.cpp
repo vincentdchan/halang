@@ -267,6 +267,18 @@ namespace halang
 			AddInst(Instruction(VM_CODE::DOT, 0));
 			AddInst(Instruction(VM_CODE::CALL, 1));
 			break;
+		case OperatorType::AND:
+			state->constant.push_back(Context::StringBuffer::__AND__->toValue());
+			AddInst(Instruction(VM_CODE::LOAD_C, state->constant.size() - 1));
+			AddInst(Instruction(VM_CODE::DOT, 0));
+			AddInst(Instruction(VM_CODE::CALL, 1));
+			break;
+		case OperatorType::OR:
+			state->constant.push_back(Context::StringBuffer::__OR__->toValue());
+			AddInst(Instruction(VM_CODE::LOAD_C, state->constant.size() - 1));
+			AddInst(Instruction(VM_CODE::DOT, 0));
+			AddInst(Instruction(VM_CODE::CALL, 1));
+			break;
 		default:
 			// runtime error
 			AddInst(Instruction(VM_CODE::POP, 0));

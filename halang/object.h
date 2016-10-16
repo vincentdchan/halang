@@ -42,6 +42,7 @@ namespace halang
 
 		friend class GC;
 		friend class Context;
+		friend class ScriptContextPool;
 
 		virtual Dict* GetPrototype() { return nullptr; }
 		virtual Value toValue();

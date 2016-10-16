@@ -16,7 +16,7 @@ namespace halang
 		friend class StackVM;
 		typedef unsigned int size_type;
 
-		static const size_type DEFAULT_ENTRY_SIZE = 32;
+		static const size_type DEFAULT_ENTRY_SIZE = 64;
 
 	protected:
 
