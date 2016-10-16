@@ -61,6 +61,7 @@ namespace halang
 			match(Token::TYPE::VAR) ||
 			match(Token::TYPE::OPEN_PAREN) ||
 			match(Token::TYPE::WHILE) ||
+			match(Token::TYPE::BREAK) ||
 			match(Token::TYPE::IF) ||
 			match(Token::TYPE::FUNC) ||
 			match(Token::TYPE::SEMICOLON) ||

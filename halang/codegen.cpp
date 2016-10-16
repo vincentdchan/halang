@@ -114,6 +114,8 @@ namespace halang
 		auto new_state = GenerateDefaultState();
 		new_state->prev = state;
 		state = new_state;
+
+		_while_statement = false;
 	}
 
 	CodeGen::GenState* CodeGen::GenerateDefaultState()
@@ -418,6 +420,11 @@ namespace halang
 
 	void CodeGen::visit(WhileStmtNode* _node)
 	{
+		auto _def_vs = _while_statement;
+		auto _def_break_loc = _break_loc;
+		_while_statement = true;
+		_break_loc = -1;
+
 		auto _begin_loc = state->instructions.size();
 		visit(_node->condition);
 		auto _condition_loc = state->instructions.size();
@@ -425,10 +432,19 @@ namespace halang
 		visit(_node->child);
 		state->instructions.push_back(Instruction(VM_CODE::JMP, -1 * (state->instructions.size() - _begin_loc)));
 		state->instructions[_condition_loc] = Instruction(VM_CODE::IFNO, state->instructions.size() - _condition_loc);
+		if (_break_loc >= 0)
+			state->instructions[_break_loc] = Instruction(VM_CODE::JMP, state->instructions.size() - _break_loc);
+
+		_break_loc = _def_break_loc;
+		_while_statement = _def_vs;
 	}
 
 	void CodeGen::visit(BreakStmtNode* _node)
 	{
+		if (!_while_statement)
+			throw std::logic_error("You should place break in while statment.");
+		_break_loc = state->instructions.size();
+		state->instructions.push_back(Instruction(VM_CODE::JMP, 0));
 	}
 
 	void CodeGen::visit(ReturnStmtNode* _node)

@@ -39,6 +39,7 @@ namespace halang
 	V(ELSE) \
 	V(WHILE) \
 	V(BREAK) \
+	V(CONTINUE) \
 	V(ASSIGN) \
 	V(IDENTIFIER) \
 	V(STRING) \
