@@ -3,6 +3,18 @@ A toy language implementation. Including lexer, parser, code generation and inte
 
 
 
+- ✔ Lexer
+- ✔ Parser
+- ✔ Code Generation
+- ✔ Stack VM
+- ✔ Simple mark-sweep GC
+- ✔ Function and Closure
+- ◦ Class
+- ◦ Yield
+- ◦ ...
+
+
+
 # Usage
 
 By default, the program read the file named "source.txt" in the same location with the program, but you can pass the filename as the parameter to the program.
@@ -12,12 +24,6 @@ By default, the program read the file named "source.txt" in the same location wi
 # Language
 
 This language is similar to JavaScript, but it has differences because this project is not completely finished.
-
-
-
-## Typed?
-
-Once Halang is static typed, but after my consideration, Halang return to be dynamic because it's its origin propose. The static typed version is still in another branch.
 
 ## String
 
