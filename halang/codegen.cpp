@@ -173,8 +173,11 @@ namespace halang
 	void CodeGen::visit(InvokeExprNode* _node)
 	{
 		visit(_node->source);
-		visit(_node->id);
+		state->constant.push_back(
+			String::FromU16String(_node->id->name)->toValue());
+		AddInst(Instruction(VM_CODE::LOAD_C, state->constant.size() - 1));
 		AddInst(Instruction(VM_CODE::DOT, 0));
+		// AddInst(Instruction(VM_CODE::CALL, 0));
 	}
 
 	void CodeGen::visit(UnaryExprNode* _node)
@@ -422,8 +425,10 @@ namespace halang
 	{
 		auto _def_vs = _while_statement;
 		auto _def_break_loc = _break_loc;
+		auto _def_continue_loc = this->_continue_loc;
 		_while_statement = true;
 		_break_loc = -1;
+		this->_continue_loc = -1;
 
 		auto _begin_loc = state->instructions.size();
 		visit(_node->condition);
@@ -432,18 +437,30 @@ namespace halang
 		visit(_node->child);
 		state->instructions.push_back(Instruction(VM_CODE::JMP, -1 * (state->instructions.size() - _begin_loc)));
 		state->instructions[_condition_loc] = Instruction(VM_CODE::IFNO, state->instructions.size() - _condition_loc);
+
 		if (_break_loc >= 0)
 			state->instructions[_break_loc] = Instruction(VM_CODE::JMP, state->instructions.size() - _break_loc);
+		if (this->_continue_loc >= 0)
+			state->instructions[this->_continue_loc] = Instruction(VM_CODE::JMP, _begin_loc - this->_continue_loc);
 
 		_break_loc = _def_break_loc;
+		_continue_loc = _def_continue_loc;
 		_while_statement = _def_vs;
 	}
 
 	void CodeGen::visit(BreakStmtNode* _node)
 	{
 		if (!_while_statement)
-			throw std::logic_error("You should place break in while statment.");
+			throw std::logic_error("You should place \"break\" in while statment.");
 		_break_loc = state->instructions.size();
+		state->instructions.push_back(Instruction(VM_CODE::JMP, 0));
+	}
+
+	void CodeGen::visit(ContinueStmtNode * _node) 
+	{
+		if (!_while_statement)
+			throw std::logic_error("You should place \"continue\" in while statment.");
+		_continue_loc = state->instructions.size();
 		state->instructions.push_back(Instruction(VM_CODE::JMP, 0));
 	}
 

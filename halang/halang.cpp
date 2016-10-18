@@ -116,7 +116,7 @@ int main(int argc, char** argv)
 	CLEAR_PTR(cg);
 
 	nvm->InitializeFunction(main_fun);
-	nvm->Execute();
+	nvm->CallFunction(main_fun, Value());
 
 	CLEAR_AND_EXIT:
 

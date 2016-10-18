@@ -50,14 +50,17 @@ namespace halang
 		// std::cout << "Full GC" << std::endl;
 #endif
 		ClearAllMarks();
-		if (Context::GetVM()->sc != nullptr)
-			Context::GetVM()->sc->Mark();
+		auto scs = Context::GetRunningContexts();
+		for (auto i = scs->begin(); i != scs->end(); ++i)
+		{
+			(*i)->Mark();
+		}
 		SweepAll();
 	}
 
 	void GC::CheckAndGC()
 	{
-		if (counter >= 64)
+		if (counter >= 128)
 		{
 			FullGC();
 			counter = 0;

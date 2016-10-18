@@ -89,6 +89,9 @@ namespace halang
 		case Token::TYPE::BREAK:
 			nextToken();
 			return make_object<BreakStmtNode>();
+		case Token::TYPE::CONTINUE:
+			nextToken();
+			return make_object<ContinueStmtNode>();
 		case Token::TYPE::IF:
 			return parseIfStmt();
 		case Token::TYPE::FUNC:
@@ -204,6 +207,9 @@ namespace halang
 				return parseBinaryExpr(_id, _tk);
 			}
 			else return _id;
+		}
+		else if (match(Token::TYPE::OPEN_SQUARE_BRAKET)) {
+			return parseListExpr();
 		}
 		else
 			return parseBinaryExpr();

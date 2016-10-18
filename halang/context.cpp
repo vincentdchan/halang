@@ -3,7 +3,9 @@
 #include "Dict.h"
 #include "string.h"
 #include "function.h"
+#include "ScriptContext.h"
 #include "util.h"
+#include "svm.h"
 #include <sstream>
 #include <iostream>
 
@@ -16,6 +18,10 @@ namespace halang
 {
 
 	GC* Context::GetGC() { return gc; }
+	std::vector<ScriptContext*>* Context::GetRunningContexts()
+	{
+		return runningContexts;
+	}
 	StackVM* Context::GetVM() { return vm; }
 
 	Dict* Context::GetNullPrototype() { return _null_proto; }
@@ -29,6 +35,7 @@ namespace halang
 	Dict* Context::GetStringPrototype() { return _str_proto; }
 		
 	GC* Context::gc = nullptr;
+	std::vector<ScriptContext*>* Context::runningContexts = nullptr;
 	StackVM* Context::vm = nullptr;
 
 	String* Context::StringBuffer::__ADD__ = nullptr;
@@ -48,8 +55,8 @@ namespace halang
 	String* Context::StringBuffer::__NOT__ = nullptr;
 
 	String* Context::StringBuffer::CONCAT = nullptr;
-	String* Context::StringBuffer::LENGTH = nullptr;
-	String* Context::StringBuffer::HASH = nullptr;
+	String* Context::StringBuffer::GET_LENGTH = nullptr;
+	String* Context::StringBuffer::GET_HASH = nullptr;
 
 	String* Context::StringBuffer::PUSH = nullptr;
 	String* Context::StringBuffer::POP = nullptr;
@@ -121,14 +128,14 @@ namespace halang
 		_str_proto->SetValue(SBV(__STR__),		FUN(_str_str_));
 		_str_proto->SetValue(SBV(__ADD__),		FUN(_str_add_));
 		_str_proto->SetValue(SBV(CONCAT),		FUN(_str_add_));
-		_str_proto->SetValue(SBV(LENGTH),		FUN(_str_length_));
-		_str_proto->SetValue(SBV(HASH),			FUN(_str_hash_));
+		_str_proto->SetValue(SBV(GET_LENGTH),	FUN(_str_length_));
+		_str_proto->SetValue(SBV(GET_HASH),		FUN(_str_hash_));
 
 		_array_proto = gc->NewPersistent<Dict>();
 		_array_proto->SetValue(SBV(PUSH),		FUN(_array_push_));
 		_array_proto->SetValue(SBV(POP),			FUN(_array_pop_));
 		_array_proto->SetValue(SBV(AT),			FUN(_array_at_));
-		_array_proto->SetValue(SBV(LENGTH),		FUN(_array_length_));
+		_array_proto->SetValue(SBV(GET_LENGTH),	FUN(_array_length_));
 
 		_dict_proto = gc->NewPersistent<Dict>();
 		_dict_proto->SetValue(SBV(GET),			FUN(_dict_get_));
@@ -156,8 +163,8 @@ namespace halang
 		StringBuffer::__NOT__ = TEXT("__not__");
 
 		StringBuffer::CONCAT = TEXT("concat");
-		StringBuffer::LENGTH = TEXT("length");
-		StringBuffer::HASH = TEXT("hash");
+		StringBuffer::GET_LENGTH = TEXT("getLength");
+		StringBuffer::GET_HASH = TEXT("getHash");
 
 		StringBuffer::PUSH = TEXT("push");
 		StringBuffer::POP = TEXT("pop");
@@ -351,9 +358,17 @@ namespace halang
 	Value Context::_print_(Value self, FunctionArgs& args)
 	{
 		auto arg = args.At(0);
+		String* _str= nullptr;
 		if (arg.type != TypeId::String)
-			throw std::runtime_error("You must print a string");
-		auto _str = reinterpret_cast<String*>(arg.value.gc);
+		{
+			auto _proto_ = arg.GetPrototype();
+			auto _fun_ = reinterpret_cast<Function*>(
+				_proto_->GetValue(String::FromCharArray("__str__")->toValue()).value.gc);
+			auto _arg_ = Context::GetGC()->New<FunctionArgs>();
+			_str = reinterpret_cast<String*>(Context::GetVM()->CallFunction(_fun_, arg, _arg_).value.gc);
+		}
+		else
+			_str = reinterpret_cast<String*>(arg.value.gc);
 		std::u16string utf16;
 		_str->ToU16String(utf16);
 		std::cout << utils::UTF16_to_UTF8(utf16) << std::endl;

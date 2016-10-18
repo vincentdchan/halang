@@ -1,7 +1,5 @@
 # Ha Language 哈语言
-A toy language implementation. Including lexer, parser, code generation and interpreter.
-
-
+A toy dynamic language implementation.
 
 - ✔ Lexer
 - ✔ Parser

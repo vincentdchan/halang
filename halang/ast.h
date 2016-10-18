@@ -23,6 +23,7 @@ namespace halang
 	V(IfStmt) \
 	V(WhileStmt) \
 	V(BreakStmt) \
+	V(ContinueStmt) \
 	V(ReturnStmt) \
 	V(ClassDef) \
 	V(FuncDef) \
@@ -65,6 +66,7 @@ namespace halang
 		virtual IfStmtNode* asIfStmt() { return nullptr; }
 		virtual WhileStmtNode* asWhileStmt() { return nullptr; }
 		virtual BreakStmtNode* asBreakStmt() { return nullptr; }
+		virtual ContinueStmtNode* asContinueStmtNode() { return nullptr; }
 		virtual ReturnStmtNode* asReturnStmt() { return nullptr; }
 		virtual ClassDefNode* asClassDef() { return nullptr; }
 		virtual FuncDefNode* asFuncDef() { return nullptr; }
@@ -304,6 +306,17 @@ namespace halang
 	{
 	public:
 		virtual BreakStmtNode* asBreakStmt() override { return this; }
+
+		VISIT_OVERRIDE
+	};
+
+	/// <summary>
+	/// Continue ::= 'continue'
+	/// </summary>
+	class ContinueStmtNode : public Node
+	{
+	public:
+		virtual ContinueStmtNode * asContinueStmtNode() override { return this; }
 
 		VISIT_OVERRIDE
 	};

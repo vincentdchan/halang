@@ -30,6 +30,11 @@ namespace halang
 	V(ILLEGAL_OP, "", 0)
 
 #define TOKEN_LIST(V) \
+	V(GET) \
+	V(SET) \
+	V(GETTER) \
+	V(SETTER) \
+	V(ACCESSOR) \
 	V(DOT) \
 	V(AT) \
 	V(COMMA) \
