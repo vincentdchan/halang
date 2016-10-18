@@ -32,8 +32,8 @@ namespace halang
 			static String* __NOT__;
 
 			static String* CONCAT;
-			static String* LENGTH;
-			static String* HASH;
+			static String* GET_LENGTH;
+			static String* GET_HASH;
 
 			static String* PUSH;
 			static String* POP;

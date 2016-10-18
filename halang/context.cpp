@@ -48,8 +48,8 @@ namespace halang
 	String* Context::StringBuffer::__NOT__ = nullptr;
 
 	String* Context::StringBuffer::CONCAT = nullptr;
-	String* Context::StringBuffer::LENGTH = nullptr;
-	String* Context::StringBuffer::HASH = nullptr;
+	String* Context::StringBuffer::GET_LENGTH = nullptr;
+	String* Context::StringBuffer::GET_HASH = nullptr;
 
 	String* Context::StringBuffer::PUSH = nullptr;
 	String* Context::StringBuffer::POP = nullptr;
@@ -121,14 +121,14 @@ namespace halang
 		_str_proto->SetValue(SBV(__STR__),		FUN(_str_str_));
 		_str_proto->SetValue(SBV(__ADD__),		FUN(_str_add_));
 		_str_proto->SetValue(SBV(CONCAT),		FUN(_str_add_));
-		_str_proto->SetValue(SBV(LENGTH),		FUN(_str_length_));
-		_str_proto->SetValue(SBV(HASH),			FUN(_str_hash_));
+		_str_proto->SetValue(SBV(GET_LENGTH),	FUN(_str_length_));
+		_str_proto->SetValue(SBV(GET_HASH),		FUN(_str_hash_));
 
 		_array_proto = gc->NewPersistent<Dict>();
 		_array_proto->SetValue(SBV(PUSH),		FUN(_array_push_));
 		_array_proto->SetValue(SBV(POP),			FUN(_array_pop_));
 		_array_proto->SetValue(SBV(AT),			FUN(_array_at_));
-		_array_proto->SetValue(SBV(LENGTH),		FUN(_array_length_));
+		_array_proto->SetValue(SBV(GET_LENGTH),	FUN(_array_length_));
 
 		_dict_proto = gc->NewPersistent<Dict>();
 		_dict_proto->SetValue(SBV(GET),			FUN(_dict_get_));
@@ -156,8 +156,8 @@ namespace halang
 		StringBuffer::__NOT__ = TEXT("__not__");
 
 		StringBuffer::CONCAT = TEXT("concat");
-		StringBuffer::LENGTH = TEXT("length");
-		StringBuffer::HASH = TEXT("hash");
+		StringBuffer::GET_LENGTH = TEXT("getLength");
+		StringBuffer::GET_HASH = TEXT("getHash");
 
 		StringBuffer::PUSH = TEXT("push");
 		StringBuffer::POP = TEXT("pop");
