@@ -44,7 +44,7 @@ namespace halang
 		bool _var_statement;
 		bool _while_statement;
 		int _break_loc;
-		int _coninue_loc;
+		int _continue_loc;
 
 		StackVM* vm;
 		Parser* parser;
