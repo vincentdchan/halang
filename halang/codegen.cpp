@@ -173,8 +173,11 @@ namespace halang
 	void CodeGen::visit(InvokeExprNode* _node)
 	{
 		visit(_node->source);
-		visit(_node->id);
+		state->constant.push_back(
+			String::FromU16String(_node->id->name)->toValue());
+		AddInst(Instruction(VM_CODE::LOAD_C, state->constant.size() - 1));
 		AddInst(Instruction(VM_CODE::DOT, 0));
+		// AddInst(Instruction(VM_CODE::CALL, 0));
 	}
 
 	void CodeGen::visit(UnaryExprNode* _node)

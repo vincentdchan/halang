@@ -54,7 +54,7 @@ namespace halang
 			{
 				result = scanNumber();
 			}
-			else if (isAlphabet(buffer[iter]))
+			else if (isAlphabet(buffer[iter]) || buffer[iter] == u'_')
 			{
 				result = scanLiteral();
 			}
@@ -315,7 +315,7 @@ namespace halang
 	{
 		auto ic = iter;
 
-		if (!isAlphabet(buffer[ic]))
+		if (!isAlphabet(buffer[ic]) && !buffer[ic] == u'_')
 		{
 			return false;
 		}
