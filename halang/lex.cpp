@@ -244,6 +244,37 @@ namespace halang
 		// check reserved
 		switch (buffer[iter])
 		{
+		case u'g':
+			if (match = swallow(u"get"))
+			{
+				loc.length = 3;
+				PUSH_TOKEN(GET);
+			}
+			else if (match = swallow(u"getter"))
+			{
+				loc.length = 6;
+				PUSH_TOKEN(GETTER);
+			}
+			break;
+		case u's':
+			if (match = swallow(u"set"))
+			{
+				loc.length = 3;
+				PUSH_TOKEN(SET);
+			}
+			else if (match = swallow(u"setter"))
+			{
+				loc.length = 6;
+				PUSH_TOKEN(SETTER);
+			}
+			break;
+		case u'a':
+			if (match = swallow(u"asscessor"))
+			{
+				loc.length = 9;
+				PUSH_TOKEN(ACCESSOR);
+			}
+			break;
 		case u'b':
 			if (match = swallow(u"break"))
 			{
