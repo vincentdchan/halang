@@ -32,7 +32,7 @@ namespace halang
 		void InitializeFunction(Function * );
 
 
-		void CallFunction(Function* function, Value self, FunctionArgs * args = nullptr);
+		Value CallFunction(Function* function, Value self, FunctionArgs * args = nullptr);
 
 		~StackVM();
 

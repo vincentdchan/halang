@@ -37,14 +37,15 @@ namespace halang
 	}
 
 
-	void StackVM::CallFunction(Function* _fun, Value _self, FunctionArgs * args)
+	Value StackVM::CallFunction(Function* _fun, Value _self, FunctionArgs * args)
 	{
 
 		if (args == nullptr)
-			args = Context::GetGC()->New<FunctionArgs>(nullptr);
+			args = Context::GetGC()->New<FunctionArgs>();
 		Executor executor(_self, _fun, args);
 		executor.Execute();
 
+		return executor.ReturnValue();
 	}
 
 	StackVM::Executor::Executor(Value _self, Function * _fn,
@@ -180,7 +181,7 @@ namespace halang
 
 					auto params_size = current->GetParam();
 
-					FunctionArgs * args = Context::GetGC()->New<FunctionArgs>(sc, params_size);
+					FunctionArgs * args = Context::GetGC()->New<FunctionArgs>(params_size);
 
 					for (int i = 0; i < params_size; ++i)
 						args->Set(params_size - i - 1, POP());

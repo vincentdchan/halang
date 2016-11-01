@@ -101,19 +101,14 @@ namespace halang
 		friend class GC;
 		friend class StackVM;
 
-	private:
-
-		// ScriptContext * scriptContext;
-
 	protected:
 
-		FunctionArgs(ScriptContext * sc)// :
-			// scriptContext(sc)
+		FunctionArgs()
 		{
 		}
 
-		FunctionArgs(ScriptContext * sc, unsigned int i):
-			Array(i)// , scriptContext(sc)
+		FunctionArgs(unsigned int i):
+			Array(i)
 		{
 		}
 

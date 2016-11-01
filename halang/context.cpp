@@ -5,6 +5,7 @@
 #include "function.h"
 #include "ScriptContext.h"
 #include "util.h"
+#include "svm.h"
 #include <sstream>
 #include <iostream>
 
@@ -357,9 +358,17 @@ namespace halang
 	Value Context::_print_(Value self, FunctionArgs& args)
 	{
 		auto arg = args.At(0);
+		String* _str= nullptr;
 		if (arg.type != TypeId::String)
-			throw std::runtime_error("You must print a string");
-		auto _str = reinterpret_cast<String*>(arg.value.gc);
+		{
+			auto _proto_ = arg.GetPrototype();
+			auto _fun_ = reinterpret_cast<Function*>(
+				_proto_->GetValue(String::FromCharArray("__str__")->toValue()).value.gc);
+			auto _arg_ = Context::GetGC()->New<FunctionArgs>();
+			_str = reinterpret_cast<String*>(Context::GetVM()->CallFunction(_fun_, arg, _arg_).value.gc);
+		}
+		else
+			_str = reinterpret_cast<String*>(arg.value.gc);
 		std::u16string utf16;
 		_str->ToU16String(utf16);
 		std::cout << utils::UTF16_to_UTF8(utf16) << std::endl;
