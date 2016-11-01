@@ -50,7 +50,7 @@ namespace halang
 		{
 			marked = true;
 			Array::Mark();
-			scriptContext->Mark();
+			// scriptContext->Mark();
 		}
 	}
 

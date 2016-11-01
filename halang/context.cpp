@@ -3,6 +3,7 @@
 #include "Dict.h"
 #include "string.h"
 #include "function.h"
+#include "ScriptContext.h"
 #include "util.h"
 #include <sstream>
 #include <iostream>
@@ -16,6 +17,10 @@ namespace halang
 {
 
 	GC* Context::GetGC() { return gc; }
+	std::vector<ScriptContext*>* Context::GetRunningContexts()
+	{
+		return runningContexts;
+	}
 	StackVM* Context::GetVM() { return vm; }
 
 	Dict* Context::GetNullPrototype() { return _null_proto; }
@@ -29,6 +34,7 @@ namespace halang
 	Dict* Context::GetStringPrototype() { return _str_proto; }
 		
 	GC* Context::gc = nullptr;
+	std::vector<ScriptContext*>* Context::runningContexts = nullptr;
 	StackVM* Context::vm = nullptr;
 
 	String* Context::StringBuffer::__ADD__ = nullptr;

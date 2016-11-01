@@ -1,11 +1,14 @@
 #pragma once
 #include "GC.h"
+#include <vector>
 
 namespace halang 
 {
 
 	class Function;
 	class FunctionArgs;
+
+	class ScriptContext;
 
 	class Context final
 	{
@@ -52,6 +55,7 @@ namespace halang
 		friend class StackVM;
 
 		static GC* GetGC();
+		static std::vector<ScriptContext*>* GetRunningContexts();
 		static StackVM* GetVM();
 
 		static Dict* GetNullPrototype();
@@ -61,6 +65,8 @@ namespace halang
 		static Dict* GetStringPrototype();
 
 	private:
+
+		static std::vector<ScriptContext*>* runningContexts;
 
 		static String* CreatePersistent(const char*);
 		

@@ -103,17 +103,17 @@ namespace halang
 
 	private:
 
-		ScriptContext * scriptContext;
+		// ScriptContext * scriptContext;
 
 	protected:
 
-		FunctionArgs(ScriptContext * sc):
-			scriptContext(sc)
+		FunctionArgs(ScriptContext * sc)// :
+			// scriptContext(sc)
 		{
 		}
 
 		FunctionArgs(ScriptContext * sc, unsigned int i):
-			Array(i), scriptContext(sc)
+			Array(i)// , scriptContext(sc)
 		{
 		}
 

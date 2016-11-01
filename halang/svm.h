@@ -22,18 +22,19 @@ namespace halang
 
 		friend class GC;
 
+		class Executor;
+
 		StackVM();
 
 		StackVM(const StackVM&) = delete;
 		StackVM& operator=(const StackVM&) = delete;
 
 		void InitializeFunction(Function * );
-		void Execute();
 
-		void ChangeContext(ScriptContext*);
 
-		~StackVM()
-		{ }
+		void CallFunction(Function* function, Value self, FunctionArgs * args = nullptr);
+
+		~StackVM();
 
 	private:
 
@@ -42,7 +43,27 @@ namespace halang
 
 		GC gc;
 
+	};
+
+	class StackVM::Executor 
+	{
+	public:
+
+		Executor(Value _self, Function *, FunctionArgs * args = nullptr);
+
+		void LoadArguments(FunctionArgs *);
+		void Execute();
+		Value ReturnValue();
+		~Executor();
+
+	private:
+
+		Value self;
 		ScriptContext* sc;
+		Function* fun;
+		FunctionArgs * args;
+		InstIter inst;
+		Value returnValue;
 
 	};
 
