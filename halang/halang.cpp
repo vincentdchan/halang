@@ -18,7 +18,7 @@
 
 const char* VERSION_INFO =
 "Halang interpreter developint version\n"
-"v - 0.1.0\n";
+"v - 0.0.2\n";
 
 const char* DEFAULT_FILENAME = "source.txt";
 
@@ -125,7 +125,7 @@ int main(int argc, char** argv)
 	CLEAR_PTR(cg);
 	CLEAR_PTR(nvm);
 
-	string ch;
-	cin >> ch;
+	// string ch;
+	// cin >> ch;
     return 0;
 }
