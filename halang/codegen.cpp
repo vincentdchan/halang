@@ -525,6 +525,9 @@ namespace halang
 
 	void CodeGen::visit(IfStmtNode* _node)
 	{
+		auto new_state = GenState::CreateEqualState(state);
+		state = new_state;
+
 		int jmp_val;
 		visit(_node->condition);
 		auto jmp_loc = state->AddInstruction(VM_CODE::IFNO, 1);
@@ -540,10 +543,16 @@ namespace halang
 			(*state->GetInstructionVector())[true_finish_loc] = 
 				Instruction(VM_CODE::JMP, jmp_val);
 		}
+
+		state = state->GetPrevState();
+		delete new_state;
 	}
 
 	void CodeGen::visit(WhileStmtNode* _node)
 	{
+		auto new_state = GenState::CreateEqualState(state);
+		state = new_state;
+
 		auto _def_vs = _while_statement;
 		auto _def_break_loc = _break_loc;
 		auto _def_continue_loc = this->_continue_loc;
@@ -574,6 +583,9 @@ namespace halang
 		_break_loc = _def_break_loc;
 		_continue_loc = _def_continue_loc;
 		_while_statement = _def_vs;
+
+		state = state->GetPrevState();
+		delete new_state;
 	}
 
 	void CodeGen::visit(BreakStmtNode* _node)
