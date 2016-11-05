@@ -110,8 +110,8 @@ namespace halang
 
 	public:
 
-		std::vector<Value> constant;
-		std::vector<Instruction> instructions;
+		std::vector<Value>* constant;
+		std::vector<Instruction>* instructions;
 
 		bool ExistName(const std::u16string& _name) const;
 
@@ -153,6 +153,42 @@ namespace halang
 		inline GenState* GetPrevState() const
 		{
 			return prev;
+		}
+
+		inline std::vector<Instruction>* 
+			GetInstructionVector() const
+		{
+			return instructions;
+		}
+
+		inline std::vector<Value>*
+			GetConstantVector() const
+		{
+			return constant;
+		}
+
+		std::vector<Instruction>::size_type 
+			AddInstruction(VM_CODE code, int param)
+		{
+			auto _size = instructions->size();
+			instructions->push_back(Instruction(code, param));
+			return _size;
+		}
+
+		std::vector<Instruction>::size_type 
+			AddInstruction(const Instruction& inst)
+		{
+			auto _size = instructions->size();
+			instructions->push_back(inst);
+			return _size;
+		}
+
+		std::vector<Value>::size_type
+			AddConstant(Value _value)
+		{
+			auto _size = constant->size();
+			constant->push_back(_value);
+			return _size;
 		}
 
 		~GenState();
