@@ -11,8 +11,122 @@
 namespace halang
 {
 
+	CodeGen::GenState* CodeGen::GenState::CreateEqualState(GenState * state)
+	{
+		auto result = new GenState();
+		result->isNew = false;
+		result->prev = state;
+		result->father_state = state->father_state;
+		result->upvalue_names = state->upvalue_names;
+		result->require_upvalues = state->require_upvalues;
+
+		result->copyEntry();
+		result->_var_names_size = state->_var_names_size;
+		result->_max_entries_size = state->_max_entries_size;
+		return result;
+	}
+
+	CodeGen::GenState* CodeGen::GenState::CreateNewState(GenState * state)
+	{
+		auto result = new GenState();
+		result->isNew = true;
+		result->prev = state;
+		if (state != nullptr)
+			result->_level = state->_level + 1;
+		else
+			result->_level = 0;
+
+		result->father_state = state;
+		result->upvalue_names = new std::vector<std::u16string>();
+		result->require_upvalues = new std::vector<int>();
+		result->_max_entries_size = new unsigned int(0);
+		result->_var_names_size = 0;
+		return result;
+	}
+
+	bool CodeGen::GenState::ExistName(const std::u16string& _name) const
+	{
+		auto _hash = std::hash<std::u16string>{}(_name);
+		auto _index = _hash % ENTRY_SIZE;
+
+		auto ptr = var_names_entries[_index];
+		while (ptr != nullptr) {
+			if (ptr->hash == _hash) {
+				return true;
+			}
+			ptr = ptr->next;
+		}
+		return false;
+	}
+
+	bool CodeGen::GenState::TryGetVarId(const std::u16string& _name, int &_id) const
+	{
+		auto _hash = std::hash<std::u16string>{}(_name);
+		auto _index = _hash % ENTRY_SIZE;
+
+		auto ptr = var_names_entries[_index];
+		while (ptr != nullptr) {
+			if (ptr->hash == _hash) {
+				_id = ptr->givenId;
+				return true;
+			}
+			ptr = ptr->next;
+		}
+		return false;
+	}
+
+	CodeGen::GenState::size_type 
+		CodeGen::GenState::AddVariable(const std::u16string& name)
+	{
+		auto new_entry = make_shared<VariableEntry>(name, *(_max_entries_size));
+		auto _index = new_entry->hash % ENTRY_SIZE;
+		new_entry->next = var_names_entries[_index];
+		var_names_entries[_index] = new_entry;
+		_var_names_size++;
+		return (*_max_entries_size)++;
+	}
+
+	CodeGen::GenState::size_type
+		CodeGen::GenState::size()
+	{
+		return _var_names_size;
+	}
+
+	CodeGen::GenState::size_type 
+		CodeGen::GenState::AddUpValue(const std::u16string& name)
+	{
+		size_type i = upvalue_names->size();
+		upvalue_names->push_back(name);
+		return i;
+	}
+
+	void CodeGen::GenState::forEachVarNames(std::function<void (const std::u16string&, int)> _fun) {
+		for (auto i = var_names_entries.begin();
+			i != var_names_entries.end(); i++) {
+			auto ptr = *i;
+			while (ptr != nullptr)
+			{
+				_fun(ptr->name, ptr->givenId);
+				ptr = ptr->next;
+			}
+		}
+	}
+
+	CodeGen::GenState::~GenState()
+	{
+		if (isNew)
+		{
+			delete upvalue_names;
+			delete require_upvalues;
+			delete _max_entries_size;
+		}
+	}
+
 	CodePack* CodeGen::GenState::GenerateCodePack(GenState* gs)
 	{
+		if (!gs->isNew)
+			throw std::logic_error("You can only generate new code pack");
+
 		auto cp = Context::GetGC()->New<CodePack>();
 
 		// copy instructions
@@ -24,13 +138,13 @@ namespace halang
 			cp->_instructions[cp->_instructions_size++] = *i;
 
 		// copy require_upvalues;
-		needed_size = gs->require_upvalues.size();
+		needed_size = gs->GetRequireUpvaluesVector()->size();
 		if (needed_size > 0)
 		{
 			cp->_require_upvalues = new int[needed_size];
 			cp->_require_upvalues_size = 0;
-			for (auto i = gs->require_upvalues.begin();
-				i != gs->require_upvalues.end(); ++i)
+			for (auto i = gs->GetRequireUpvaluesVector()->begin();
+				i != gs->GetRequireUpvaluesVector()->end(); ++i)
 				cp->_require_upvalues[cp->_require_upvalues_size++] = *i;
 		}
 
@@ -43,21 +157,19 @@ namespace halang
 			cp->_constants[cp->_const_size++] = *i;
 
 		// copy varnames;
-		cp->_var_names_size = gs->var_names.size();
-		cp->_var_names = new String*[cp->_var_names_size];
-		for (unsigned int i = 0;
-			i < cp->_var_names_size; ++i)
+		cp->GenerateVarNamesArray(gs->MaxVarNamesSize());
+		gs->forEachVarNames([&cp](const std::u16string& _name, int id) 
 		{
-			cp->_var_names[i] = String::FromU16String(gs->var_names[i]);
-		}
+			cp->SetVarName(id, String::FromU16String(_name));
+		});
 
 		// copy upval names;
-		cp->_upval_names_size = gs->upvalue_names.size();
-		cp->_upval_names = new String*[cp->_upval_names_size];
+		cp->GenerateUpValNamesArray(gs->GetUpValuesVector()->size());
 		for (unsigned int i = 0;
 			i < cp->_upval_names_size; ++i)
 		{
-			cp->_upval_names[i] = String::FromU16String(gs->upvalue_names[i]);
+			cp->SetUpValName(i, 
+				String::FromU16String(gs->GetUpValuesVector()->at(i)));
 		}
 
 		return cp;
@@ -77,28 +189,28 @@ namespace halang
 	/// </summary>
 	CodeGen::VarType CodeGen::FindVar(GenState * cs, const std::u16string& _Str)
 	{
-		for (int i = 0; i < cs->var_names.size(); ++i)
-			if (cs->var_names[i] == _Str)
-				return VarType(VarType::TYPE::LOCAL, i);
+		int _var_id;
+		if (cs->TryGetVarId(_Str, _var_id))
+			return VarType(VarType::TYPE::LOCAL, _var_id);
 
-		for (int i = 0; i < cs->upvalue_names.size(); ++i)
-			if (cs->upvalue_names[i] == _Str)
+		for (int i = 0; i < cs->GetUpValuesVector()->size(); ++i)
+			if (cs->GetUpValuesVector()->at(i) == _Str)
 				return VarType(VarType::TYPE::UPVAL, i);
 
-		if (cs->prev)
+		if (cs->GetFather())
 		{
-			VarType _p = FindVar(cs->prev, _Str);
+			VarType _p = FindVar(cs->GetFather(), _Str);
 			switch (_p.type())
 			{
 			case VarType::TYPE::LOCAL:
 			{
-				cs->require_upvalues.push_back(_p.id());
+				cs->GetRequireUpvaluesVector()->push_back(_p.id());
 				auto t = cs->AddUpValue(_Str);
 				return VarType(VarType::TYPE::UPVAL, t);
 			}
 			case VarType::TYPE::UPVAL:
 			{
-				cs->require_upvalues.push_back(-1 - _p.id());
+				cs->GetRequireUpvaluesVector()->push_back(-1 - _p.id());
 				auto i = cs->AddUpValue(_Str);
 				return VarType(VarType::TYPE::UPVAL, i);
 			}
@@ -112,7 +224,6 @@ namespace halang
 		vm(_vm), parser(nullptr), name(nullptr)
 	{ 
 		auto new_state = GenerateDefaultState();
-		new_state->prev = state;
 		state = new_state;
 
 		_while_statement = false;
@@ -120,7 +231,7 @@ namespace halang
 
 	CodeGen::GenState* CodeGen::GenerateDefaultState()
 	{
-		auto state = new GenState();
+		auto state = GenState::CreateNewState();
 		auto _print_fun_ = Context::GetGC()->New<Function>(Context::_print_);
 		state->constant.push_back(_print_fun_->toValue());
 
@@ -487,9 +598,8 @@ namespace halang
 		if (_node->name)
 			var_id = state->AddVariable(_node->name->name);
 
-		auto new_state = new GenState();
+		auto new_state = GenState::CreateNewState(state);
 
-		new_state->prev = state;
 		state = new_state;
 
 		for (auto i = _node->parameters.begin();
@@ -499,7 +609,7 @@ namespace halang
 		visit(_node->block);
 		AddInst(Instruction(VM_CODE::RETURN, 0));
 
-		state = new_state->prev;
+		state = new_state->GetPrevState();
 
 		auto new_fun = Context::GetGC()->New<Function>(GenState::GenerateCodePack(new_state));
 

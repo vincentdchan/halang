@@ -125,7 +125,7 @@ int main(int argc, char** argv)
 	CLEAR_PTR(cg);
 	CLEAR_PTR(nvm);
 
-	// string ch;
-	// cin >> ch;
+	string ch;
+	cin >> ch;
     return 0;
 }

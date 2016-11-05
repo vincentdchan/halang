@@ -14,6 +14,8 @@ namespace halang
 
 	class ConstantTable : public GCObject
 	{
+	private:
+
 
 	};
 
@@ -73,6 +75,32 @@ namespace halang
 
 	public:
 
+		inline void GenerateVarNamesArray(size_type _size)
+		{
+			_var_names_size = _size;
+			_var_names = _size > 0 ? new String*[_size] : nullptr;
+		}
+
+		inline void SetVarName(size_type index, String* name)
+		{
+			if (index >= _var_names_size)
+				throw std::runtime_error("index out of range");
+			_var_names[index] = name;
+		}
+
+		inline void GenerateUpValNamesArray(size_type _size)
+		{
+			_upval_names_size = _size;
+			_upval_names = _size > 0 ? new String*[_size] : nullptr;
+		}
+
+		inline void SetUpValName(size_type index, String* name)
+		{
+			if (index >= _upval_names_size)
+				throw std::runtime_error("index out of range");
+			_upval_names[index] = name;
+		}
+
 		virtual void Mark() override;
 
 		virtual Dict* GetPrototype() override
@@ -87,6 +115,10 @@ namespace halang
 
 		virtual ~CodePack()
 		{
+			if (_var_names != nullptr)
+				delete[] _var_names;
+			if (_upval_names != nullptr)
+				delete[] _upval_names;
 			delete[] _constants;
 			delete[] _instructions;
 			delete[] _require_upvalues;

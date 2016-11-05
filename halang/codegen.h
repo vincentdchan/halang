@@ -1,6 +1,8 @@
 #pragma once
 #include <map>
 #include <vector>
+#include <memory>
+#include <functional>
 #include "ast.h"
 #include "util.h"
 #include "parser.h"
@@ -59,42 +61,101 @@ namespace halang
 	{
 	public:
 
-		friend class CodeGen;
+		static const unsigned int ENTRY_SIZE = 64;
+		static GenState* CreateEqualState(GenState*);
+		static GenState* CreateNewState(GenState* prev = nullptr);
+		static CodePack* GenerateCodePack(GenState*);
 
+		class VariableEntry;
+
+		typedef std::shared_ptr<VariableEntry> pEntry;
 		typedef unsigned int size_type;
 
-		GenState(GenState* _prev = nullptr):
-			prev(_prev)
-		{}
-
-		static CodePack* GenerateCodePack(GenState*);
 
 	private:
 
-		GenState* prev;
+		GenState() :
+			prev(nullptr), father_state(nullptr),
+			var_names_entries(ENTRY_SIZE)
+		{}
+		GenState(const GenState&) = delete;
+		GenState& operator=(const GenState&) = delete;
+
+		int _level;
+
+		void copyEntry()
+		{
+			for (unsigned int i = 0; i < prev->var_names_entries.size();
+				i++) 
+			{
+				if (prev->var_names_entries[i] != nullptr) 
+				{
+					this->var_names_entries[i] = prev->var_names_entries[i];
+				}
+			}
+		}
+
+		std::vector<pEntry> var_names_entries;
+
+		unsigned int _var_names_size;
+		unsigned int* _max_entries_size;
+		bool isNew;
+
+		GenState *prev, *father_state;
 
 		size_type params_size;
-		std::vector<Value> constant;
-		std::vector<std::u16string> var_names;
-		std::vector<std::u16string> upvalue_names;
-		std::vector<int> require_upvalues;
-		std::vector<Instruction> instructions;
+
+		std::vector<std::u16string>* upvalue_names;
+		std::vector<int>* require_upvalues;
 
 	public:
 
-		size_type AddVariable(const std::u16string& name)
+		std::vector<Value> constant;
+		std::vector<Instruction> instructions;
+
+		bool ExistName(const std::u16string& _name) const;
+
+		bool TryGetVarId(const std::u16string& _name, int &_id) const;
+
+		size_type AddVariable(const std::u16string& name);
+
+		size_type size();
+
+		size_type AddUpValue(const std::u16string& name);
+
+		void forEachVarNames(std::function<void(const std::u16string&, int)> _fun);
+
+		inline std::vector<std::u16string>* GetUpValuesVector() const 
 		{
-			size_type i = var_names.size();
-			var_names.push_back(name);
-			return i;
+			return upvalue_names;
 		}
 
-		size_type AddUpValue(const std::u16string& name)
+		inline std::vector<int>* GetRequireUpvaluesVector() const
 		{
-			size_type i = upvalue_names.size();
-			upvalue_names.push_back(name);
-			return i;
+			return require_upvalues;
 		}
+
+		inline size_type VarNamesSize() const
+		{
+			return _var_names_size;
+		}
+
+		inline size_type MaxVarNamesSize() const
+		{
+			return *_max_entries_size;
+		}
+		
+		inline GenState* GetFather() const
+		{
+			return father_state;
+		}
+
+		inline GenState* GetPrevState() const
+		{
+			return prev;
+		}
+
+		~GenState();
 
 	};
 
@@ -120,6 +181,24 @@ namespace halang
 	private:
 		TYPE _type;
 		int _id;
+	};
+
+	class CodeGen::GenState::VariableEntry
+	{
+	public:
+
+		VariableEntry(std::u16string _name, 
+			int _id = -1, bool _fast = true) :
+			isFastVar(_fast), name(_name), givenId(_id)
+		{
+			hash = std::hash<std::u16string>{}(name);
+		}
+
+		std::shared_ptr<VariableEntry> next;
+		unsigned int hash;
+		bool isFastVar;
+		std::u16string name;
+		int givenId;
 	};
 
 };
