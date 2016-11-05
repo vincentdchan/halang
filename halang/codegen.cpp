@@ -11,53 +11,173 @@
 namespace halang
 {
 
+	CodeGen::GenState* CodeGen::GenState::CreateEqualState(GenState * state)
+	{
+		auto result = new GenState();
+		result->isNew = false;
+		result->prev = state;
+		result->father_state = state->father_state;
+		result->upvalue_names = state->upvalue_names;
+		result->require_upvalues = state->require_upvalues;
+
+		result->copyEntry();
+		result->_var_names_size = state->_var_names_size;
+		result->_max_entries_size = state->_max_entries_size;
+
+		result->constant = state->constant;
+		result->instructions = state->instructions;
+		return result;
+	}
+
+	CodeGen::GenState* CodeGen::GenState::CreateNewState(GenState * state)
+	{
+		auto result = new GenState();
+		result->isNew = true;
+		result->prev = state;
+		if (state != nullptr)
+			result->_level = state->_level + 1;
+		else
+			result->_level = 0;
+
+		result->father_state = state;
+		result->upvalue_names = new std::vector<std::u16string>();
+		result->require_upvalues = new std::vector<int>();
+		result->_max_entries_size = new unsigned int(0);
+		result->_var_names_size = 0;
+
+		result->constant = new std::vector<Value>();
+		result->instructions = new std::vector<Instruction>();
+		return result;
+	}
+
+	bool CodeGen::GenState::ExistName(const std::u16string& _name) const
+	{
+		auto _hash = std::hash<std::u16string>{}(_name);
+		auto _index = _hash % ENTRY_SIZE;
+
+		auto ptr = var_names_entries[_index];
+		while (ptr != nullptr) {
+			if (ptr->hash == _hash) {
+				return true;
+			}
+			ptr = ptr->next;
+		}
+		return false;
+	}
+
+	bool CodeGen::GenState::TryGetVarId(const std::u16string& _name, int &_id) const
+	{
+		auto _hash = std::hash<std::u16string>{}(_name);
+		auto _index = _hash % ENTRY_SIZE;
+
+		auto ptr = var_names_entries[_index];
+		while (ptr != nullptr) {
+			if (ptr->hash == _hash) {
+				_id = ptr->givenId;
+				return true;
+			}
+			ptr = ptr->next;
+		}
+		return false;
+	}
+
+	CodeGen::GenState::size_type 
+		CodeGen::GenState::AddVariable(const std::u16string& name)
+	{
+		auto new_entry = make_shared<VariableEntry>(name, *(_max_entries_size));
+		auto _index = new_entry->hash % ENTRY_SIZE;
+		new_entry->next = var_names_entries[_index];
+		var_names_entries[_index] = new_entry;
+		_var_names_size++;
+		return (*_max_entries_size)++;
+	}
+
+	CodeGen::GenState::size_type
+		CodeGen::GenState::size()
+	{
+		return _var_names_size;
+	}
+
+	CodeGen::GenState::size_type 
+		CodeGen::GenState::AddUpValue(const std::u16string& name)
+	{
+		size_type i = upvalue_names->size();
+		upvalue_names->push_back(name);
+		return i;
+	}
+
+	void CodeGen::GenState::forEachVarNames(std::function<void (const std::u16string&, int)> _fun) {
+		for (auto i = var_names_entries.begin();
+			i != var_names_entries.end(); i++) {
+			auto ptr = *i;
+			while (ptr != nullptr)
+			{
+				_fun(ptr->name, ptr->givenId);
+				ptr = ptr->next;
+			}
+		}
+	}
+
+	CodeGen::GenState::~GenState()
+	{
+		if (isNew)
+		{
+			delete upvalue_names;
+			delete require_upvalues;
+			delete _max_entries_size;
+			delete constant;
+			delete instructions;
+		}
+	}
+
 	CodePack* CodeGen::GenState::GenerateCodePack(GenState* gs)
 	{
+		if (!gs->isNew)
+			throw std::logic_error("You can only generate new code pack");
+
 		auto cp = Context::GetGC()->New<CodePack>();
 
 		// copy instructions
-		auto needed_size = gs->instructions.size();
+		auto needed_size = gs->GetInstructionVector()->size();
 		cp->_instructions = new Instruction[needed_size];
 		cp->_instructions_size = 0;
-		for (auto i = gs->instructions.begin();
-			i != gs->instructions.end(); ++i)
+		for (auto i = gs->GetInstructionVector()->begin();
+			i != gs->GetInstructionVector()->end(); ++i)
 			cp->_instructions[cp->_instructions_size++] = *i;
 
 		// copy require_upvalues;
-		needed_size = gs->require_upvalues.size();
+		needed_size = gs->GetRequireUpvaluesVector()->size();
 		if (needed_size > 0)
 		{
 			cp->_require_upvalues = new int[needed_size];
 			cp->_require_upvalues_size = 0;
-			for (auto i = gs->require_upvalues.begin();
-				i != gs->require_upvalues.end(); ++i)
+			for (auto i = gs->GetRequireUpvaluesVector()->begin();
+				i != gs->GetRequireUpvaluesVector()->end(); ++i)
 				cp->_require_upvalues[cp->_require_upvalues_size++] = *i;
 		}
 
 		// copy constants
-		needed_size = gs->constant.size();
+		needed_size = gs->GetConstantVector()->size();
 		cp->_const_size = 0;
 		cp->_constants = new Value[needed_size]();
-		for (auto i = gs->constant.begin();
-			i != gs->constant.end(); ++i)
+		for (auto i = gs->GetConstantVector()->begin();
+			i != gs->GetConstantVector()->end(); ++i)
 			cp->_constants[cp->_const_size++] = *i;
 
 		// copy varnames;
-		cp->_var_names_size = gs->var_names.size();
-		cp->_var_names = new String*[cp->_var_names_size];
-		for (unsigned int i = 0;
-			i < cp->_var_names_size; ++i)
+		cp->GenerateVarNamesArray(gs->MaxVarNamesSize());
+		gs->forEachVarNames([&cp](const std::u16string& _name, int id) 
 		{
-			cp->_var_names[i] = String::FromU16String(gs->var_names[i]);
-		}
+			cp->SetVarName(id, String::FromU16String(_name));
+		});
 
 		// copy upval names;
-		cp->_upval_names_size = gs->upvalue_names.size();
-		cp->_upval_names = new String*[cp->_upval_names_size];
+		cp->GenerateUpValNamesArray(gs->GetUpValuesVector()->size());
 		for (unsigned int i = 0;
 			i < cp->_upval_names_size; ++i)
 		{
-			cp->_upval_names[i] = String::FromU16String(gs->upvalue_names[i]);
+			cp->SetUpValName(i, 
+				String::FromU16String(gs->GetUpValuesVector()->at(i)));
 		}
 
 		return cp;
@@ -77,28 +197,28 @@ namespace halang
 	/// </summary>
 	CodeGen::VarType CodeGen::FindVar(GenState * cs, const std::u16string& _Str)
 	{
-		for (int i = 0; i < cs->var_names.size(); ++i)
-			if (cs->var_names[i] == _Str)
-				return VarType(VarType::TYPE::LOCAL, i);
+		int _var_id;
+		if (cs->TryGetVarId(_Str, _var_id))
+			return VarType(VarType::TYPE::LOCAL, _var_id);
 
-		for (int i = 0; i < cs->upvalue_names.size(); ++i)
-			if (cs->upvalue_names[i] == _Str)
+		for (int i = 0; i < cs->GetUpValuesVector()->size(); ++i)
+			if (cs->GetUpValuesVector()->at(i) == _Str)
 				return VarType(VarType::TYPE::UPVAL, i);
 
-		if (cs->prev)
+		if (cs->GetFather())
 		{
-			VarType _p = FindVar(cs->prev, _Str);
+			VarType _p = FindVar(cs->GetFather(), _Str);
 			switch (_p.type())
 			{
 			case VarType::TYPE::LOCAL:
 			{
-				cs->require_upvalues.push_back(_p.id());
+				cs->GetRequireUpvaluesVector()->push_back(_p.id());
 				auto t = cs->AddUpValue(_Str);
 				return VarType(VarType::TYPE::UPVAL, t);
 			}
 			case VarType::TYPE::UPVAL:
 			{
-				cs->require_upvalues.push_back(-1 - _p.id());
+				cs->GetRequireUpvaluesVector()->push_back(-1 - _p.id());
 				auto i = cs->AddUpValue(_Str);
 				return VarType(VarType::TYPE::UPVAL, i);
 			}
@@ -112,7 +232,6 @@ namespace halang
 		vm(_vm), parser(nullptr), name(nullptr)
 	{ 
 		auto new_state = GenerateDefaultState();
-		new_state->prev = state;
 		state = new_state;
 
 		_while_statement = false;
@@ -120,19 +239,19 @@ namespace halang
 
 	CodeGen::GenState* CodeGen::GenerateDefaultState()
 	{
-		auto state = new GenState();
+		auto state = GenState::CreateNewState();
 		auto _print_fun_ = Context::GetGC()->New<Function>(Context::_print_);
-		state->constant.push_back(_print_fun_->toValue());
+		auto _fun_id = state->AddConstant(_print_fun_->toValue());
 
 		auto var_id = state->AddVariable(u"print");
-		state->instructions.push_back(Instruction(VM_CODE::LOAD_C, state->constant.size() - 1));
-		state->instructions.push_back(Instruction(VM_CODE::STORE_V, var_id));
+		state->AddInstruction(VM_CODE::LOAD_C, _fun_id);
+		state->AddInstruction(VM_CODE::STORE_V, var_id);
 		return state;
 	}
 
 	void CodeGen::AddInst(Instruction inst)
 	{
-		state->instructions.push_back(inst);
+		state->AddInstruction(inst);
 	}
 
 	Function* CodeGen::generate(Parser* p)
@@ -173,27 +292,27 @@ namespace halang
 	void CodeGen::visit(InvokeExprNode* _node)
 	{
 		visit(_node->source);
-		state->constant.push_back(
+		auto _name_id = state->AddConstant(
 			String::FromU16String(_node->id->name)->toValue());
-		AddInst(Instruction(VM_CODE::LOAD_C, state->constant.size() - 1));
+		AddInst(Instruction(VM_CODE::LOAD_C, _name_id));
 		AddInst(Instruction(VM_CODE::DOT, 0));
-		// AddInst(Instruction(VM_CODE::CALL, 0));
 	}
 
 	void CodeGen::visit(UnaryExprNode* _node)
 	{
 		visit(_node->child);
+		unsigned int id;
 		switch (_node->op)
 		{
 		case OperatorType::SUB:
-			state->constant.push_back(TEXT("__reverse__"));
-			AddInst(Instruction(VM_CODE::LOAD_C, state->constant.size() - 1));
+			id = state->AddConstant(Context::StringBuffer::__REVERSE__->toValue());
+			AddInst(Instruction(VM_CODE::LOAD_C, id));
 			AddInst(Instruction(VM_CODE::DOT, 0));
 			AddInst(Instruction(VM_CODE::CALL, 0));
 			break;
 		case OperatorType::NOT:
-			state->constant.push_back(TEXT("__not__"));
-			AddInst(Instruction(VM_CODE::LOAD_C, state->constant.size() - 1));
+			id = state->AddConstant(Context::StringBuffer::__NOT__->toValue());
+			AddInst(Instruction(VM_CODE::LOAD_C, id));
 			AddInst(Instruction(VM_CODE::DOT, 0));
 			AddInst(Instruction(VM_CODE::CALL, 0));
 			break;
@@ -204,83 +323,85 @@ namespace halang
 	{
 		visit(_node->right);
 		visit(_node->left);
+
+		unsigned int id;
 		switch (_node->op)
 		{
 		case OperatorType::ADD:
-			state->constant.push_back(Context::StringBuffer::__ADD__->toValue());
-			AddInst(Instruction(VM_CODE::LOAD_C, state->constant.size() - 1));
+			id = state->AddConstant(Context::StringBuffer::__ADD__->toValue());
+			AddInst(Instruction(VM_CODE::LOAD_C, id));
 			AddInst(Instruction(VM_CODE::DOT, 0));
 			AddInst(Instruction(VM_CODE::CALL, 1));
 			break;
 		case OperatorType::SUB:
-			state->constant.push_back(Context::StringBuffer::__SUB__->toValue());
-			AddInst(Instruction(VM_CODE::LOAD_C, state->constant.size() - 1));
+			id = state->AddConstant(Context::StringBuffer::__SUB__->toValue());
+			AddInst(Instruction(VM_CODE::LOAD_C, id));
 			AddInst(Instruction(VM_CODE::DOT, 0));
 			AddInst(Instruction(VM_CODE::CALL, 1));
 			break;
 		case OperatorType::MUL:
-			state->constant.push_back(Context::StringBuffer::__MUL__->toValue());
-			AddInst(Instruction(VM_CODE::LOAD_C, state->constant.size() - 1));
+			id = state->AddConstant(Context::StringBuffer::__MUL__->toValue());
+			AddInst(Instruction(VM_CODE::LOAD_C, id));
 			AddInst(Instruction(VM_CODE::DOT, 0));
 			AddInst(Instruction(VM_CODE::CALL, 1));
 			break;
 		case OperatorType::DIV:
-			state->constant.push_back(Context::StringBuffer::__DIV__->toValue());
-			AddInst(Instruction(VM_CODE::LOAD_C, state->constant.size() - 1));
+			id = state->AddConstant(Context::StringBuffer::__DIV__->toValue());
+			AddInst(Instruction(VM_CODE::LOAD_C, id));
 			AddInst(Instruction(VM_CODE::DOT, 0));
 			AddInst(Instruction(VM_CODE::CALL, 1));
 			break;
 		case OperatorType::MOD:
-			state->constant.push_back(Context::StringBuffer::__MOD__->toValue());
-			AddInst(Instruction(VM_CODE::LOAD_C, state->constant.size() - 1));
+			id = state->AddConstant(Context::StringBuffer::__MOD__->toValue());
+			AddInst(Instruction(VM_CODE::LOAD_C, id));
 			AddInst(Instruction(VM_CODE::DOT, 0));
 			AddInst(Instruction(VM_CODE::CALL, 1));
 			break;
 		case OperatorType::POW:
-			state->constant.push_back(TEXT("__pow__"));
-			AddInst(Instruction(VM_CODE::LOAD_C, state->constant.size() - 1));
+			id = state->AddConstant(TEXT("__pow__"));
+			AddInst(Instruction(VM_CODE::LOAD_C, id));
 			AddInst(Instruction(VM_CODE::DOT, 0));
 			AddInst(Instruction(VM_CODE::CALL, 1));
 			break;
 		case OperatorType::GT:
-			state->constant.push_back(Context::StringBuffer::__GT__->toValue());
-			AddInst(Instruction(VM_CODE::LOAD_C, state->constant.size() - 1));
+			id = state->AddConstant(Context::StringBuffer::__GT__->toValue());
+			AddInst(Instruction(VM_CODE::LOAD_C, id));
 			AddInst(Instruction(VM_CODE::DOT, 0));
 			AddInst(Instruction(VM_CODE::CALL, 1));
 			break;
 		case OperatorType::LT:
-			state->constant.push_back(Context::StringBuffer::__LT__->toValue());
-			AddInst(Instruction(VM_CODE::LOAD_C, state->constant.size() - 1));
+			id = state->AddConstant(Context::StringBuffer::__LT__->toValue());
+			AddInst(Instruction(VM_CODE::LOAD_C, id));
 			AddInst(Instruction(VM_CODE::DOT, 0));
 			AddInst(Instruction(VM_CODE::CALL, 1));
 			break;
 		case OperatorType::GTEQ:
-			state->constant.push_back(Context::StringBuffer::__GTEQ__->toValue());
-			AddInst(Instruction(VM_CODE::LOAD_C, state->constant.size() - 1));
+			id = state->AddConstant(Context::StringBuffer::__GTEQ__->toValue());
+			AddInst(Instruction(VM_CODE::LOAD_C, id));
 			AddInst(Instruction(VM_CODE::DOT, 0));
 			AddInst(Instruction(VM_CODE::CALL, 1));
 			break;
 		case OperatorType::LTEQ:
-			state->constant.push_back(Context::StringBuffer::__LTEQ__->toValue());
-			AddInst(Instruction(VM_CODE::LOAD_C, state->constant.size() - 1));
+			id = state->AddConstant(Context::StringBuffer::__LTEQ__->toValue());
+			AddInst(Instruction(VM_CODE::LOAD_C, id));
 			AddInst(Instruction(VM_CODE::DOT, 0));
 			AddInst(Instruction(VM_CODE::CALL, 1));
 			break;
 		case OperatorType::EQ:
-			state->constant.push_back(Context::StringBuffer::__EQ__->toValue());
-			AddInst(Instruction(VM_CODE::LOAD_C, state->constant.size() - 1));
+			id = state->AddConstant(Context::StringBuffer::__EQ__->toValue());
+			AddInst(Instruction(VM_CODE::LOAD_C, id));
 			AddInst(Instruction(VM_CODE::DOT, 0));
 			AddInst(Instruction(VM_CODE::CALL, 1));
 			break;
 		case OperatorType::AND:
-			state->constant.push_back(Context::StringBuffer::__AND__->toValue());
-			AddInst(Instruction(VM_CODE::LOAD_C, state->constant.size() - 1));
+			id = state->AddConstant(Context::StringBuffer::__AND__->toValue());
+			AddInst(Instruction(VM_CODE::LOAD_C, id));
 			AddInst(Instruction(VM_CODE::DOT, 0));
 			AddInst(Instruction(VM_CODE::CALL, 1));
 			break;
 		case OperatorType::OR:
-			state->constant.push_back(Context::StringBuffer::__OR__->toValue());
-			AddInst(Instruction(VM_CODE::LOAD_C, state->constant.size() - 1));
+			id = state->AddConstant(Context::StringBuffer::__OR__->toValue());
+			AddInst(Instruction(VM_CODE::LOAD_C, id));
 			AddInst(Instruction(VM_CODE::DOT, 0));
 			AddInst(Instruction(VM_CODE::CALL, 1));
 			break;
@@ -293,19 +414,20 @@ namespace halang
 
 	void CodeGen::visit(NumberNode* _node)
 	{
-		auto index = state->constant.size();
+		unsigned int index;
 
 		if (_node->maybeInt)
-			state->constant.push_back(Value(static_cast<TSmallInt>(_node->number)));
-		state->constant.push_back(Value(_node->number));
+			index = state->AddConstant(Value(static_cast<TSmallInt>(_node->number)));
+		else
+			index = state->AddConstant(Value(_node->number));
 
 		AddInst(Instruction(VM_CODE::LOAD_C, index));
 	}
 
 	void CodeGen::visit(StringNode* _node)
 	{
-		auto index = state->constant.size();
-		state->constant.push_back(Value(String::FromU16String(_node->content), TypeId::String));
+		auto index = state->AddConstant(
+			Value(String::FromU16String(_node->content), TypeId::String));
 
 		AddInst(Instruction(VM_CODE::LOAD_C, index));
 	}
@@ -405,19 +527,18 @@ namespace halang
 	{
 		int jmp_val;
 		visit(_node->condition);
-		auto jmp_loc = state->instructions.size();
-		state->instructions.push_back(Instruction(VM_CODE::IFNO, 1));
+		auto jmp_loc = state->AddInstruction(VM_CODE::IFNO, 1);
 		visit(_node->true_branch);
-		auto true_finish_loc = state->instructions.size();
-		state->instructions.push_back(Instruction(VM_CODE::JMP, 1));
+		auto true_finish_loc = state->AddInstruction(VM_CODE::JMP, 1);
 		// if condition not ture, jmp to the right location
-		jmp_val = state->instructions.size() - jmp_loc;
-		state->instructions[jmp_loc] = Instruction(VM_CODE::IFNO, jmp_val); 
+		jmp_val = state->GetInstructionVector()->size() - jmp_loc;
+		(*state->GetInstructionVector())[jmp_loc] = Instruction(VM_CODE::IFNO, jmp_val); 
 		if (_node->false_branch)
 		{
 			visit(_node->false_branch);
-			jmp_val = state->instructions.size() - true_finish_loc;
-			state->instructions[true_finish_loc] = Instruction(VM_CODE::JMP, jmp_val);
+			jmp_val = state->GetInstructionVector()->size() - true_finish_loc;
+			(*state->GetInstructionVector())[true_finish_loc] = 
+				Instruction(VM_CODE::JMP, jmp_val);
 		}
 	}
 
@@ -430,18 +551,25 @@ namespace halang
 		_break_loc = -1;
 		this->_continue_loc = -1;
 
-		auto _begin_loc = state->instructions.size();
+		auto _begin_loc = state->GetInstructionVector()->size();
 		visit(_node->condition);
-		auto _condition_loc = state->instructions.size();
-		state->instructions.push_back(Instruction(VM_CODE::IFNO, 0));
+		auto _condition_loc = state->GetInstructionVector()->size();
+		state->AddInstruction(VM_CODE::IFNO, 0);
 		visit(_node->child);
-		state->instructions.push_back(Instruction(VM_CODE::JMP, -1 * (state->instructions.size() - _begin_loc)));
-		state->instructions[_condition_loc] = Instruction(VM_CODE::IFNO, state->instructions.size() - _condition_loc);
+		state->AddInstruction(VM_CODE::JMP, -1 * 
+			(state->GetInstructionVector()->size() - _begin_loc));
+		(*state->GetInstructionVector())[_condition_loc] = 
+			Instruction(VM_CODE::IFNO, 
+				state->GetInstructionVector()->size() - _condition_loc);
 
 		if (_break_loc >= 0)
-			state->instructions[_break_loc] = Instruction(VM_CODE::JMP, state->instructions.size() - _break_loc);
+			(*state->GetInstructionVector())[_break_loc] = 
+			Instruction(VM_CODE::JMP, 
+				state->GetInstructionVector()->size() - _break_loc);
 		if (this->_continue_loc >= 0)
-			state->instructions[this->_continue_loc] = Instruction(VM_CODE::JMP, _begin_loc - this->_continue_loc);
+			(*state->GetInstructionVector())[this->_continue_loc] = 
+				Instruction(VM_CODE::JMP, 
+					_begin_loc - this->_continue_loc);
 
 		_break_loc = _def_break_loc;
 		_continue_loc = _def_continue_loc;
@@ -452,16 +580,14 @@ namespace halang
 	{
 		if (!_while_statement)
 			throw std::logic_error("You should place \"break\" in while statment.");
-		_break_loc = state->instructions.size();
-		state->instructions.push_back(Instruction(VM_CODE::JMP, 0));
+		_break_loc = state->AddInstruction(VM_CODE::JMP, 0);
 	}
 
 	void CodeGen::visit(ContinueStmtNode * _node) 
 	{
 		if (!_while_statement)
 			throw std::logic_error("You should place \"continue\" in while statment.");
-		_continue_loc = state->instructions.size();
-		state->instructions.push_back(Instruction(VM_CODE::JMP, 0));
+		_continue_loc = state->AddInstruction(VM_CODE::JMP, 0);
 	}
 
 	void CodeGen::visit(ReturnStmtNode* _node)
@@ -487,9 +613,8 @@ namespace halang
 		if (_node->name)
 			var_id = state->AddVariable(_node->name->name);
 
-		auto new_state = new GenState();
+		auto new_state = GenState::CreateNewState(state);
 
-		new_state->prev = state;
 		state = new_state;
 
 		for (auto i = _node->parameters.begin();
@@ -499,14 +624,13 @@ namespace halang
 		visit(_node->block);
 		AddInst(Instruction(VM_CODE::RETURN, 0));
 
-		state = new_state->prev;
+		state = new_state->GetPrevState();
 
 		auto new_fun = Context::GetGC()->New<Function>(GenState::GenerateCodePack(new_state));
 
 		delete new_state;
 
-		int const_id = state->constant.size();
-		state->constant.push_back(new_fun->toValue());
+		int const_id = state->AddConstant(new_fun->toValue());
 		AddInst(Instruction(VM_CODE::LOAD_C, const_id));
 		AddInst(Instruction(VM_CODE::CLOSURE, 0));
 
