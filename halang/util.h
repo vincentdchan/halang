@@ -56,10 +56,11 @@ namespace halang
 		/// A helper class to help record message of
 		/// errors and warnings.
 		/// </summary>
-		template<typename _MsgType = std::string>
 		class _MessageContainer
 		{
 		public:
+			typedef std::string _MsgType;
+
 			enum struct FLAG
 			{
 				NORMAL,
@@ -135,15 +136,15 @@ namespace halang
 			}
 
 			static std::ostream& OutputMsg(std::ostream& _os,
-				const typename _MessageContainer<_MsgType>::Message& _msg)
+				const typename _MessageContainer::Message& _msg)
 			{
 				switch (_msg.flag)
 				{
-				case _MessageContainer<_MsgType>::FLAG::NORMAL:
+				case _MessageContainer::FLAG::NORMAL:
 					_os << "Normal: "; break;
-				case _MessageContainer<_MsgType>::FLAG::WARNING:
+				case _MessageContainer::FLAG::WARNING:
 					_os << "Warnging: "; break;
-				case _MessageContainer<_MsgType>::FLAG::ERROR:
+				case _MessageContainer::FLAG::ERROR:
 					_os << "Error: "; break;
 				}
 				if (_msg.loc.line > -1)
@@ -165,7 +166,7 @@ namespace halang
 
 #if _MSC_VER == 1900
 
-		static std::string UTF16_to_UTF8(std::u16string utf16_string)
+		static std::string utf16_to_utf8(std::u16string utf16_string)
 		{
 			std::wstring_convert<std::codecvt_utf8_utf16<int16_t>, int16_t> convert;
 			auto p = reinterpret_cast<const int16_t *>(utf16_string.data());
@@ -261,23 +262,22 @@ namespace halang
 
 namespace std
 {
-	template<typename _MsgType>
 	inline std::ostream& operator<<(std::ostream& _os,
-		const typename halang::utils::_MessageContainer<_MsgType>::Message& _msg)
+		const typename halang::utils::_MessageContainer::Message& _msg)
 		{
 			switch (_msg.flag)
 			{
-			case _MessageContainer<_MsgType>::FLAG::NORMAL:
+			case halang::utils::_MessageContainer::FLAG::NORMAL:
 				_os << "Normal: "; break;
-			case _MessageContainer<_MsgType>::FLAG::WARNING:
+			case halang::utils::_MessageContainer::FLAG::WARNING:
 				_os << "Warnging: "; break;
-			case _MessageContainer<_MsgType>::FLAG::ERROR:
+			case halang::utils::_MessageContainer::FLAG::ERROR:
 				_os << "Error: "; break;
 			}
 			if (_msg.loc.line > -1)
 			{
 				_os << "line " << _msg.loc.line;
-				if (_location.column > -1)
+				if (_msg.loc.column > -1)
 					_os << " Col " << _msg.loc.column << " : ";
 			}
 			_os << _msg.msg << std::endl;

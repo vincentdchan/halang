@@ -1,4 +1,5 @@
 #pragma once
+#include "svm.h"
 #include "GC.h"
 #include <vector>
 

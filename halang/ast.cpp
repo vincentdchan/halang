@@ -1,4 +1,3 @@
-#include "stdafx.h"
 #include "ast.h"
 #include "visitor.h"
 #include "codegen.h"

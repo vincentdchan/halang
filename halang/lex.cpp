@@ -1,4 +1,3 @@
-#include "stdafx.h"
 #include <cstring>
 #include <string>
 #include "lex.h"
@@ -397,7 +396,7 @@ namespace halang
 							num.push_back(buffer[ic++]);
 							++loc.length;
 						}
-						t._double = std::stod(utils::UTF16_to_UTF8(num));
+						t._double = std::stod(utils::utf16_to_utf8(num));
 						t.location = loc;
 						token_q.push(t);
 
@@ -418,7 +417,7 @@ namespace halang
 				}
 			}
 			t.maybeInt = true;
-			t._double = std::stod(utils::UTF16_to_UTF8(num));
+			t._double = std::stod(utils::utf16_to_utf8(num));
 			t.location = loc;
 			token_q.push(t);
 		}

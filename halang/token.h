@@ -19,8 +19,8 @@ namespace halang
 
 	struct Token
 	{
-#define EXTEND_OP(NAME, STR, PRECEDENCE) NAME##,
-#define EXTEND_TOKEN(NAME) NAME##,
+#define EXTEND_OP(NAME, STR, PRECEDENCE) NAME,
+#define EXTEND_TOKEN(NAME) NAME,
 		enum TYPE
 		{
 			OPERATOR_LIST(EXTEND_OP)

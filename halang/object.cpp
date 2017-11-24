@@ -1,4 +1,3 @@
-#include "stdafx.h"
 #include "context.h"
 #include "object.h"
 #include "string.h"

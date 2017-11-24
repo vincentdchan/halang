@@ -1,4 +1,3 @@
-#include "stdafx.h"
 #include "codegen.h"
 #include "svm_codes.h"
 #include "String.h"
@@ -448,7 +447,7 @@ namespace halang
 			AddInst(Instruction(VM_CODE::LOAD_UPVAL, _var.id()));
 			break;
 		case VarType::TYPE::NONE:
-			ReportError(std::u16string(u"<Identifier>Variables not found: ") + _node->name);
+			// ReportError(std::u16string(u"<Identifier>Variables not found: ") + utils::utf8_to_utf16(_node->name));
 			break;
 		}
 	}
@@ -493,7 +492,7 @@ namespace halang
 			else
 			{
 				// i don't know how to fix it, fuck you.
-				ReportError(std::u16string(u"<Assignment>Identifier not found: ") + _id_node->name);
+				// ReportError(std::u16string(u"<Assignment>Identifier not found: ") + _id_node->name);
 			}
 			break;
 		}

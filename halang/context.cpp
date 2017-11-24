@@ -371,7 +371,7 @@ namespace halang
 			_str = reinterpret_cast<String*>(arg.value.gc);
 		std::u16string utf16;
 		_str->ToU16String(utf16);
-		std::cout << utils::UTF16_to_UTF8(utf16) << std::endl;
+		std::cout << utils::utf16_to_utf8(utf16) << std::endl;
 		return Value();
 	}
 

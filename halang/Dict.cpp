@@ -1,4 +1,5 @@
 #include "Dict.h"
+#include "String.h"
 
 namespace halang
 {

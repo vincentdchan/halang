@@ -1,7 +1,6 @@
 // halang.cpp : Defines the entry point for the console application.
 //
 
-#include "stdafx.h"
 #include <iostream>
 #include <fstream>
 #include <utility>
@@ -28,7 +27,7 @@ const char* DEFAULT_FILENAME = "source.txt";
 		for (auto i = MC->getMessages().begin();  \
 				i != MC->getMessages().end(); ++i) \
 		{ \
-			utils:: _MessageContainer<std::string>::OutputMsg(std::cout, *i); \
+			utils:: _MessageContainer::OutputMsg(std::cout, *i); \
 		} \
 		goto CLEAR_AND_EXIT; \
 	} \
@@ -106,7 +105,7 @@ int main(int argc, char** argv)
 		for (auto i = cg->getMessages().begin(); 
 				i != cg->getMessages().end(); ++i)
 		{
-			std::cout << utils::UTF16_to_UTF8(i->msg) << std::endl;
+			std::cout << i->msg << std::endl;
 		}
 		goto CLEAR_AND_EXIT; 
 	}

@@ -1,4 +1,3 @@
-#include "stdafx.h"
 #include "svm.h"
 #include "function.h"
 #include "upvalue.h"

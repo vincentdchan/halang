@@ -1,4 +1,3 @@
-#include "stdafx.h"
 #include <cstring>
 #include "context.h"
 #include "GC.h"
