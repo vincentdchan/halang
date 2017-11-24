@@ -13,11 +13,13 @@ A toy dynamic language implementation.
 
 
 
-# Usage
+# Build
 
-By default, the program read the file named "source.txt" in the same location with the program, but you can pass the filename as the parameter to the program.
-
-
+```sh
+$ git clone https://github.com/vincentdchan/halang.git
+$ cd halang
+$ make
+```
 
 # Language
 
