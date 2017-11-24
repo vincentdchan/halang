@@ -1,48 +1,50 @@
-
+CC=g++
+CFLAGS=-Wall -g -c --std=c++11
 
 halang: ast.o codegen.o context.o Dict.o GC.o \
 		lex.o object.o parser.o ScriptContext.o \
 		String.o svm.o function.o
-	g++ --std=c++11 -o halang halang.cpp \
+	mkdir build;
+	$(CC) --std=c++11 -o halang halang.cpp \
 		ast.o codegen.o context.o Dict.o GC.o \
 		lex.o object.o parser.o ScriptContext.o \
 		String.o svm.o function.o
 
 ast.o: ast.cpp
-	g++ -Wall -g -c --std=c++11 ast.cpp
+	$(CC) $(CFLAGS) ast.cpp
 
 codegen.o: codegen.cpp
-	g++ -Wall -g -c --std=c++11 codegen.cpp
+	$(CC) $(CFLAGS) codegen.cpp
 
 context.o: context.cpp
-	g++ -Wall -g -c --std=c++11 context.cpp
+	$(CC) $(CFLAGS) context.cpp
 
 Dict.o: Dict.cpp
-	g++ -Wall -g -c --std=c++11 Dict.cpp
+	$(CC) $(CFLAGS) Dict.cpp
 
 function.o: function.cpp
-	g++ -Wall -g -c --std=c++11 function.cpp
+	$(CC) $(CFLAGS) function.cpp
 
 GC.o: GC.cpp
-	g++ -Wall -g -c --std=c++11 GC.cpp
+	$(CC) $(CFLAGS) GC.cpp
 
 lex.o: lex.cpp
-	g++ -Wall -g -c --std=c++11 lex.cpp
+	$(CC) $(CFLAGS) lex.cpp
 
 object.o: object.cpp
-	g++ -Wall -g -c --std=c++11 object.cpp
+	$(CC) $(CFLAGS) object.cpp
 
 parser.o: parser.cpp
-	g++ -Wall -g -c --std=c++11 parser.cpp
+	$(CC) $(CFLAGS) parser.cpp
 
 ScriptContext.o: ScriptContext.cpp
-	g++ -Wall -g -c --std=c++11 ScriptContext.cpp
+	$(CC) $(CFLAGS) ScriptContext.cpp
 
 String.o: String.cpp
-	g++ -Wall -g -c --std=c++11 String.cpp
+	$(CC) $(CFLAGS) String.cpp
 
 svm.o: svm.cpp
-	g++ -Wall -g -c --std=c++11 svm.cpp
+	$(CC) $(CFLAGS) svm.cpp
 
 clean:
 	rm ./*.o;
