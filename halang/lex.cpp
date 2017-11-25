@@ -6,470 +6,326 @@ namespace halang
 {
 	using namespace std;
 
-	Lexer::Lexer(istream& s): 
-		_end(false), linenumber(0), _beginpos(0), _endpos(0), ist(s)
+	Lexer::Lexer()
 	{
-		loc.line = 0;
-		readline();
+		current_tok = nullptr;
+		is_finished = false;
 	}
 
-	Token Lexer::read()
-	{
-		if (!token_q.empty())
-		{
-			Token t = token_q.front();
-			token_q.pop();
-			return t;
-		}
-		else
-		{
-			if (readline())
-				return read();
-			else
-				return Token(Token::TYPE::ENDFILE, Location(linenumber));
-		}
+	bool Lexer::Match(Token::TYPE _type) {
+		return current_tok->type == _type;
 	}
 
-#define PUSH_TOKEN(TK_NAME) token_q.push(Token(Token::TYPE::TK_NAME, loc))
-
-	bool Lexer::readline()
-	{
-		BEGIN_READLINE:
-
-		if (ist.eof()) return false;
-		bool result = true;
-
-		std::string _buf;
-		std::getline(ist, _buf);
-		buffer = utils::utf8_to_utf16(_buf);
-
-		iter = 0;
-		while (iter < buffer.size() && result)
-		{
-			loc.line = linenumber;
-			loc.column = iter;
-
-			if (isDigit(buffer[iter]))
-			{
-				result = scanNumber();
-			}
-			else if (isAlphabet(buffer[iter]) || buffer[iter] == u'_')
-			{
-				result = scanLiteral();
-			}
-			else if (buffer[iter] == u'"')
-				result = scanString();
-			else switch (buffer[iter])
-			{
-			case u'\t':
-			case u'\n':
-			case u' ': ++iter; break;
-			case u'!':
-				PUSH_TOKEN(NOT);
-				++iter; break;
-			case u'@':
-				PUSH_TOKEN(AT);
-				++iter; break;
-			case u'.':
-				PUSH_TOKEN(DOT);
-				++iter; break;
-			case u',':
-				PUSH_TOKEN(COMMA);
-				++iter; break;
-			case u';':
-				PUSH_TOKEN(SEMICOLON);
-				++iter; break;
-			case u'(':
-				PUSH_TOKEN(OPEN_PAREN);
-				++iter; break;
-			case u')':
-				PUSH_TOKEN(CLOSE_PAREN);
-				++iter; break;
-			case u'{':
-				PUSH_TOKEN(OPEN_BRAKET);
-				++iter; break;
-			case u'}':
-				PUSH_TOKEN(CLOSE_BRAKET);
-				++iter; break;
-			case u'[':
-				PUSH_TOKEN(OPEN_SQUARE_BRAKET);
-				++iter; break;
-			case u']':
-				PUSH_TOKEN(CLOSE_SQUARE_BRAKET);
-				++iter; break;
-			case u'+':
-				PUSH_TOKEN(ADD);
-				++iter; break;
-			case u'-':
-				PUSH_TOKEN(SUB);
-				++iter; break;
-			case u'*':
-				if (swallow(u"**"))
-				{
-					PUSH_TOKEN(POW);
-					break;
-				}
-				else
-					PUSH_TOKEN(MUL);
-				++iter; break;
-			case u'/':
-				if (buffer[iter + 1] == u'/')
-				{
-					goto BEGIN_READLINE;
-				}
-				else if (buffer[iter + 1] == u'*')
-				{
-					swallowComment();
-				}
-				else
-				{
-					PUSH_TOKEN(DIV);
-					++iter;
-				}
-				break;
-			case u'%':
-				PUSH_TOKEN(MOD);
-				++iter; break;
-			case u'>':
-				if (swallow(u">="))
-				{
-					PUSH_TOKEN(GTEQ);
-					break;
-				}
-				else
-					PUSH_TOKEN(GT);
-				++iter; break;
-			case u'<':
-				if (swallow(u"<="))
-				{
-					PUSH_TOKEN(LTEQ);
-					break;
-				}
-				else
-					PUSH_TOKEN(LT);
-				++iter; break;
-			case u'=':
-				if (swallow(u"=="))
-				{
-					PUSH_TOKEN(EQ);
-					break;
-				}
-				else
-					PUSH_TOKEN(ASSIGN);
-				++iter; break;
-			case u'&':
-				if (swallow(u"&&"))
-				{
-					PUSH_TOKEN(AND);
-					break;
-				}
-			case u'|':
-				if (swallow(u"||"))
-				{
-					PUSH_TOKEN(OR);
-					break;
-				}
-			default:
-				ReportError(string("Lexer error: unexpected charactor: "));
-				++iter; break;
+	Token* Lexer::NextToken() {
+		auto current = current_tok;
+		if (!is_finished) {
+			current_tok = ReadToken();
+			if (current_tok->type == Token::TYPE::ENDFILE) {
+				is_finished = true;
 			}
 		}
-		++linenumber;
-		return result;
+		return current;
 	}
 
-	bool Lexer::swallow(const char16_t* _str)
-	{
-		std::size_t len = 0;
-		const char16_t * _tmp = _str;
-		while (*_tmp++ != u'\0') len++;
+	Token* Lexer::ReadToken() {
+		StartToken();
+		char16_t ch = GetChar();
 
-		bool result = true;
-		for (std::size_t i = 0; i < len; ++i)
+		if (IsDigit(ch))
 		{
-			if (i + iter >= buffer.size() || _str[i] != buffer[iter + i])
-			{
-				result = false;
-				break;
-			}
+			return scanNumber();
 		}
-		if (result)
-			iter += len;
-		return result;
-	}
-
-	bool Lexer::scanString()
-	{
-		auto ic = iter;
-		if (buffer[ic++] != u'"') return false;
-		std::u16string str;
-		while (ic < buffer.size() && buffer[ic] != u'"')
+		else if (IsAlphabet(ch) || 
+			ch == u'_')
 		{
-			if (buffer[ic] == u'\\')
+			return scanLiteral();
+		}
+		else if (ch == u'"')
+			return scanString();
+		else switch (ch)
+		{
+		case u'\t':
+		case u'\n':
+		case u'\r':
+		case u' ': 
+			NextChar(); 
+			return ReadToken();
+			break;
+		case u'!':
+			NextChar();
+			return MakeToken(Token::TYPE::NOT);
+		case u'@':
+			NextChar();
+			return MakeToken(Token::TYPE::AT);
+		case u'.':
+			NextChar();
+			return MakeToken(Token::TYPE::DOT);
+		case u',':
+			NextChar();
+			return MakeToken(Token::TYPE::COMMA);
+		case u';':
+			NextChar();
+			return MakeToken(Token::TYPE::SEMICOLON);
+		case u'(':
+			NextChar();
+			return MakeToken(Token::TYPE::OPEN_PAREN);
+		case u')':
+			NextChar();
+			return MakeToken(Token::TYPE::CLOSE_PAREN);
+		case u'{':
+			NextChar();
+			return MakeToken(Token::TYPE::OPEN_BRACKET);
+		case u'}':
+			NextChar();
+			return MakeToken(Token::TYPE::CLOSE_BRACKET);
+		case u'[':
+			NextChar();
+			return MakeToken(Token::TYPE::OPEN_SQUARE_BRACKET);
+		case u']':
+			NextChar();
+			return MakeToken(Token::TYPE::CLOSE_SQUARE_BRACKET);
+		case u'+':
+			NextChar();
+			return MakeToken(Token::TYPE::ADD);
+		case u'-':
+			NextChar();
+			return MakeToken(Token::TYPE::SUB);
+		case u'*':
+			NextChar();
+			if (GetChar() == u'*') { // **
+				NextChar();
+				return MakeToken(Token::TYPE::POW);
+			}
+			return MakeToken(Token::TYPE::MUL);
+		case u'/':
+			NextChar();
+			if (GetChar() == u'/')
 			{
-				if (ic + 1 < buffer.size() && buffer[ic + 1] == u'"')
-				{
-					str.push_back(u'"');
-					ic += 2;
-					continue;
+				NextChar();
+				while (!IsLineBreak(GetChar())) {
+					NextChar();
 				}
-				else
-					str.push_back(buffer[ic]);
+				NextToken();
+				return ReadToken();
+			}
+			else if (GetChar() == u'*')
+			{
+				NextChar();
+				SwallowComment();
+				return ReadToken();
 			}
 			else
-				str.push_back(buffer[ic]);
-			ic++;
+			{
+				return MakeToken(Token::TYPE::DIV);
+			}
+			break;
+		case u'%':
+			NextChar();
+			return MakeToken(Token::TYPE::MOD);
+		case u'>':
+			NextChar();
+			if (GetChar() == u'=') {
+				NextChar();
+				return MakeToken(Token::TYPE::GTEQ);
+			}
+			return MakeToken(Token::TYPE::GT);
+		case u'<':
+			NextChar();
+			if (GetChar() == u'=') {
+				NextChar();
+				return MakeToken(Token::TYPE::LTEQ);
+			}
+			return MakeToken(Token::TYPE::LT);
+		case u'=':
+			NextChar();
+			if (GetChar() == u'=')
+			{
+				NextChar();
+				return MakeToken(Token::TYPE::EQ);
+			}
+			return MakeToken(Token::TYPE::ASSIGN);
+		case u'&':
+			NextChar();
+			if (GetChar() == u'&')
+			{
+				NextChar();
+				return MakeToken(Token::TYPE::AND);
+			}
+			ReportError("Invalid Token &");
+			return ReadToken();
+		case u'|':
+			NextChar();
+			if (GetChar() == u'|')
+			{
+				NextChar();
+				return MakeToken(Token::TYPE::OR);
+			}
+			ReportError("Invalid Token |");
+			return ReadToken();
+		default:
+			return MakeToken(Token::TYPE::ENDFILE);
 		}
-		if (buffer[ic++] == u'"')
-		{
-			Token t;
-			t.location = loc;
-			t.type = Token::TYPE::STRING;
-			t._literal = make_literal();
-			*t._literal = str;
-			token_q.push(t);
 
-			iter = ic;
-			return true;
-		}
-		else
-			return false;
 	}
 
-	bool Lexer::scanLiteral()
+	Token* Lexer::scanString()
 	{
-		bool match = false;
-		loc.column = iter;
-		// check reserved
-		switch (buffer[iter])
+		U16String buffer;
+
+		buffer.push_back(NextChar());
+		while (GetChar() != u'"')
 		{
-		case u'g':
-			if (match = swallow(u"get"))
+			buffer.push_back(NextChar());
+			if (GetChar() == u'\\')
 			{
-				loc.length = 3;
-				PUSH_TOKEN(GET);
+				NextChar();
 			}
-			else if (match = swallow(u"getter"))
-			{
-				loc.length = 6;
-				PUSH_TOKEN(GETTER);
-			}
-			break;
-		case u's':
-			if (match = swallow(u"set"))
-			{
-				loc.length = 3;
-				PUSH_TOKEN(SET);
-			}
-			else if (match = swallow(u"setter"))
-			{
-				loc.length = 6;
-				PUSH_TOKEN(SETTER);
-			}
-			break;
-		case u'a':
-			if (match = swallow(u"asscessor"))
-			{
-				loc.length = 9;
-				PUSH_TOKEN(ACCESSOR);
-			}
-			break;
-		case u'b':
-			if (match = swallow(u"break"))
-			{
-				loc.length = 5;
-				PUSH_TOKEN(BREAK);
-			}
-			break;
-		case u'c':
-			if (match = swallow(u"class"))
-			{
-				loc.length = 5;
-				PUSH_TOKEN(CLASS);
-			}
-			else if (match = swallow(u"continue"))
-			{
-				loc.length = 8;
-				PUSH_TOKEN(CONTINUE);
-			}
-			break;
-		case u'v': //  var
-			if (match = swallow(u"var"))
-			{
-				loc.length = 3;
-				PUSH_TOKEN(VAR);
-			}
-			break;
-		case u'i': // if
-			if (match = swallow(u"if"))
-			{
-				loc.length = 2;
-				PUSH_TOKEN(IF);
-			}
-			break;
-		case u'e': // else
-			if (match = swallow(u"else"))
-			{
-				loc.length = 4;
-				PUSH_TOKEN(ELSE);
-			}
-			break;
-		case u'w': // while
-			if (match = swallow(u"while"))
-			{
-				loc.length = 5;
-				PUSH_TOKEN(WHILE);
-			}
-			break;
-		case u'f': // func
-			if (match = swallow(u"func"))
-			{
-				loc.length = 4;
-				PUSH_TOKEN(FUNC);
-			}
-			break;
-		case u'r': // return
-			if (match = swallow(u"return"))
-			{
-				loc.length = 6;
-				PUSH_TOKEN(RETURN);
-			}
-			break;
 		}
-		if (!match)
-			match = scanIdentifier();
-		return match;
+
+		return MakeToken(Token::TYPE::STRING, buffer);
 	}
 
-	bool Lexer::scanIdentifier()
+	Token* Lexer::scanLiteral()
 	{
-		auto ic = iter;
+		U16String buffer;
 
-		if (!isAlphabet(buffer[ic]) && !buffer[ic] == u'_')
-		{
-			return false;
+		buffer.push_back(NextChar());
+
+		while (
+			IsAlphabet(GetChar()) || 
+			IsDigit(GetChar()) || 
+			GetChar() == '_') {
+
+			buffer.push_back(NextChar());
 		}
 
-		Token t;
-		loc.column = iter;
-		loc.length = 0;
-		t.type = Token::TYPE::IDENTIFIER;
-		t._literal = make_literal();
-
-		while (isAlphabet(buffer[ic]) || buffer[ic] == u'_')
+		if (buffer == u"get")
 		{
-			loc.length++;
-			t._literal->push_back(buffer[ic++]);
+			return MakeToken(Token::TYPE::GET);
 		}
-
-		// finish work
-		iter = ic;
-		t.location = loc;
-		token_q.push(t);
-		return true;
+		else if (buffer == u"getter")
+		{
+			return MakeToken(Token::TYPE::GETTER);
+		}
+		else if (buffer == u"set")
+		{
+			return MakeToken(Token::TYPE::SET);
+		}
+		else if (buffer == u"setter")
+		{
+			return MakeToken(Token::TYPE::SETTER);
+		}
+		else if (buffer == u"accessor")
+		{
+			return MakeToken(Token::TYPE::ACCESSOR);
+		}
+		else if (buffer == u"break")
+		{
+			return MakeToken(Token::TYPE::BREAK);
+		}
+		else if (buffer == u"class")
+		{
+			return MakeToken(Token::TYPE::CLASS);
+		}
+		else if (buffer == u"continue")
+		{
+			return MakeToken(Token::TYPE::CONTINUE);
+		}
+		else if (buffer == u"var")
+		{
+			return MakeToken(Token::TYPE::VAR);
+		}
+		else if (buffer == u"if")
+		{
+			return MakeToken(Token::TYPE::IF);
+		}
+		else if (buffer == u"else")
+		{
+			return MakeToken(Token::TYPE::ELSE);
+		}
+		else if (buffer == u"while")
+		{
+			return MakeToken(Token::TYPE::WHILE);
+		}
+		else if (buffer == u"func")
+		{
+			return MakeToken(Token::TYPE::FUNC);
+		}
+		else if (buffer == u"return")
+		{
+			return MakeToken(Token::TYPE::RETURN);
+		} else {
+			return MakeToken(Token::TYPE::IDENTIFIER, buffer);
+		}
 	}
 
-	bool Lexer::scanNumber()
+	Token* Lexer::scanNumber()
 	{
-		Token t;
+		std::u16string buffer;
+		bool maybeInt = true;
 
-		// prepare works
-		bool match = true;
-		auto ic = iter;
-		loc.column = iter;
+		buffer.push_back(NextChar());
 
-		std::u16string num;
-		if (isDigit(buffer[ic]))
+		while (IsDigit(GetChar()) || GetChar() == u'.')
 		{
-			t.type = Token::TYPE::NUMBER;
-			// t.pLiteral.reset(new string());
-			num.push_back(buffer[ic++]);
-			while (isDigit(buffer[ic]) || buffer[ic] == u'.')
+			if (GetChar() == u'.')
 			{
-				if (buffer[ic] == u'.')
-				{
-					t.maybeInt = false;
-					num.push_back(buffer[ic++]);
-					if (isDigit(buffer[ic]))
-					{
-						while (isDigit(buffer[ic])) {
-							num.push_back(buffer[ic++]);
-							++loc.length;
-						}
-						t._double = std::stod(utils::utf16_to_utf8(num));
-						t.location = loc;
-						token_q.push(t);
+				maybeInt = false;
+			}
+			buffer.push_back(NextChar());
+		}
+		auto tok = MakeToken(std::stod(utils::utf16_to_utf8(buffer)));
+		tok->maybeInt = maybeInt;
+		return tok;
+	}
 
-						if (match)
-							iter = ic; // watch out
-						return match;
-					}
-					else
-					{
-						ReportError("Not a valid Number", Location(linenumber, ic, ic));
-						match = false;
-					}
-				}
-				else // digit
-				{
-					num.push_back(buffer[ic++]);
-					loc.length++;
+	void Lexer::SwallowComment()
+	{
+		while (true)
+		{
+			if (GetChar() == u'*') {
+				NextChar();
+				if (GetChar() == u'/') {
+					NextChar();
+					break;
 				}
 			}
-			t.maybeInt = true;
-			t._double = std::stod(utils::utf16_to_utf8(num));
-			t.location = loc;
-			token_q.push(t);
-		}
-		else
-		{
-			match = false;
-			ReportError("Not a valid number", Location(linenumber, ic, ic));
-		}
-		if (match) // success
-			iter = ic;
-		return match;
-	}
-
-	void Lexer::finish()
-	{
-		token_q.push(Token(Token::TYPE::ENDFILE, Location(linenumber)));
-		_end = true;
-	}
-
-	bool Lexer::swallowComment()
-	{
-		if (buffer[iter] != '/' || buffer[iter + 1] != '*')
-			throw std::logic_error("not a comment");
-		auto mid = iter + 2;
-		bool end = false;
-		while (!end)
-		{
-			if (mid >= buffer.size()) {
-				std::string _buf;
-				std::getline(ist, _buf);
-				buffer = utils::utf8_to_utf16(_buf);
-				mid = iter = 0;
-			}
-			if (buffer[mid] == '*' && mid + 1 < buffer.size() 
-				&& buffer[mid + 1] == '/')
-			{
-				iter = mid + 2;
-				end = true;
-				break;
-			}
-			++mid;
 		}
 	}
 
-	bool Lexer::isDigit(char16_t ch)
-	{
-		return ch >= u'0' && ch <= u'9' ? true : false;
+	Token* Lexer::MakeToken(Token::TYPE _type) {
+		token_buffer.push_back(
+			std::make_unique<Token>(_type, _start_location)
+		);
+		return (token_buffer.end() - 1)->get();
 	}
 
-	bool Lexer::isAlphabet(char16_t ch)
-	{
-		return (ch >= u'a' && ch <= u'z') || (ch >= u'A' && ch <= u'Z');
+	Token* Lexer::MakeToken(
+		Token::TYPE _type,
+		const U16String& _string_literal
+	) {
+		token_buffer.push_back(
+			std::make_unique<Token>(_type, _start_location)
+		);
+		auto ptr = (token_buffer.end() - 1)->get();
+		ptr->SetLiteralValue(_string_literal);
+		return ptr;
+	}
+
+	Token* Lexer::MakeToken(double val) {
+		token_buffer.push_back(
+			std::make_unique<Token>(
+				Token::TYPE::NUMBER, 
+				_start_location
+			)
+		);
+		auto ptr = (token_buffer.end() - 1)->get();
+		ptr->SetDoubleValue(val);
+		return ptr;
+	}
+
+	void Lexer::StartToken() {
+		_start_location = GetLocation();
 	}
 
 }

@@ -27,7 +27,7 @@ const char* DEFAULT_FILENAME = "source.txt";
 		for (auto i = MC->getMessages().begin();  \
 				i != MC->getMessages().end(); ++i) \
 		{ \
-			utils:: _MessageContainer::OutputMsg(std::cout, *i); \
+			utils:: MessageContainer::OutputMsg(std::cout, *i); \
 		} \
 		goto CLEAR_AND_EXIT; \
 	} \
@@ -39,7 +39,7 @@ const char* DEFAULT_FILENAME = "source.txt";
 		for (auto i = MC->getMessages().begin();  \
 				i != MC->getMessages().end(); ++i) \
 		{ \
-			utils:: _MessageContainer<std::u16string>::OutputMsg(std::cout, *i); \
+			utils:: MessageContainer<std::u16string>::OutputMsg(std::cout, *i); \
 		} \
 		goto CLEAR_AND_EXIT; \
 	} \

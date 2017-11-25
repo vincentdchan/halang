@@ -14,7 +14,7 @@ namespace halang
 	}
 
 	Parser::Parser(Parser&& _parser) :
-		_MessageContainer(_parser),
+		MessageContainer(_parser),
 		lexer(_parser.lexer), ok(_parser.ok), 
 		ast_root(move(_parser.ast_root))
 	{ }

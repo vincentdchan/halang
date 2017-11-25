@@ -1,6 +1,7 @@
 #pragma once
 #include <iostream>
 #include <list>
+#include <memory>
 #include "halang.h"
 
 
@@ -11,14 +12,16 @@ namespace halang
 
 	struct Location
 	{
-		Location(int _line = -1, int _col = -1, int _len = -1): 
-			line(_line), column(_col), length(_len) {}
+		Location(int _line = -1, int _col = -1, int _pos = -1): 
+			line(_line), column(_col), pos(_pos) {}
 		int line;
-		int column, length;
+		int column;
+		int pos;
 	};
 
-	struct Token
+	class Token final
 	{
+	public:
 #define EXTEND_OP(NAME, STR, PRECEDENCE) NAME,
 #define EXTEND_TOKEN(NAME) NAME,
 		enum TYPE
@@ -34,44 +37,35 @@ namespace halang
 		bool maybeInt;
 		Location location;
 
-		union
-		{
-			double _double;
-			std::u16string* _literal;
-		};
+	private:
+		// Number* | String*
+		double double_value;
+		U16String literal_value;
 
-		Token(): type(ILLEGAL), maybeInt(false)
-		{}
+	public:
 
-		Token(const Token& _target)
-		{
-			type = _target.type;
-			location = _target.location;
-			maybeInt = _target.maybeInt;
+		Token();
+		Token(TYPE _t, Location _loc);
 
-			if (type == TYPE::NUMBER)
-				_double = _target._double;
-			else if (type == TYPE::IDENTIFIER || type == TYPE::STRING)
-				_literal = _target._literal;
+		inline void
+		SetLiteralValue(const U16String& literal) {
+			literal_value = literal;
 		}
 
-		Token(TYPE _t, Location _loc)
-		{
-			type = _t;
-			location = _loc;
+		inline 
+		const U16String&
+		GetLiteralValue() {
+			return literal_value;
 		}
 
+		inline void
+		SetDoubleValue(double val) {
+			double_value = val;
+		}
 
-		Token(Token&& _target)
-		{
-			type = _target.type;
-			location = _target.location;
-			maybeInt = _target.maybeInt;
-
-			if (type == TYPE::NUMBER)
-				_double = _target._double;
-			else if (type == TYPE::IDENTIFIER || type == TYPE::STRING)
-				_literal = _target._literal;
+		inline
+		double GetDoubleValue() {
+			return double_value;
 		}
 
 		static bool isOperator(const Token& t)
@@ -87,58 +81,33 @@ namespace halang
 				return OperatorType::ILLEGAL_OP;
 		}
 
-		Token& operator=(const Token& _target)
-		{
-			type = _target.type;
-			location = _target.location;
-			maybeInt = _target.maybeInt;
-
-			if (type == TYPE::NUMBER)
-				_double = _target._double;
-			else if (type == TYPE::IDENTIFIER || type == TYPE::STRING)
-				_literal = _target._literal;
-
-			return *this;
-		}
-
-		Token& operator=(Token&& _target)
-		{
-			type = _target.type;
-			location = _target.location;
-			maybeInt = _target.maybeInt;
-
-			if (type == TYPE::NUMBER)
-				_double = _target._double;
-			else if (type == TYPE::IDENTIFIER || type == TYPE::STRING)
-				_literal = _target._literal;
-
-			return *this;
-		}
-
-		bool operator==(const Token& t) const
+		inline bool operator==(const Token& t) const
 		{
 			return this->type == t.type;
 		}
 
-		bool operator!=(const Token& t) const
+		inline bool operator!=(const Token& t) const
 		{
 			return this->type != t.type;
 		}
 
-		bool operator==(TYPE _t) const
+		inline bool operator==(TYPE _t) const
 		{
 			return this->type == _t;
 		}
 
-		bool operator!=(TYPE _t) const
+		inline bool operator!=(TYPE _t) const
 		{
 			return this->type != _t;
 		}
 
-		operator bool() const
+		inline operator bool() const
 		{
 			return type != TYPE::ILLEGAL;
 		}
+
+		const std::string& 
+		ToString() const;
 
 	};
 }

@@ -15,7 +15,7 @@ namespace halang
 {
 
 	class CodeGen final : 
-		public utils::_MessageContainer, public Visitor
+		public utils::MessageContainer, public Visitor
 	{
 	public:
 

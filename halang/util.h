@@ -2,6 +2,7 @@
 #include <iostream>
 #include <tuple>
 #include <list>
+#include <vector>
 #include <string>
 #include <codecvt>
 #include <locale>
@@ -56,7 +57,7 @@ namespace halang
 		/// A helper class to help record message of
 		/// errors and warnings.
 		/// </summary>
-		class _MessageContainer
+		class MessageContainer
 		{
 		public:
 			typedef std::string _MsgType;
@@ -81,15 +82,15 @@ namespace halang
 				FLAG flag;
 			};
 
-			_MessageContainer() : _hasError(false) {}
-			_MessageContainer(const _MessageContainer& _con) :
+			MessageContainer() : _hasError(false) {}
+			MessageContainer(const MessageContainer& _con) :
 				_messages(_con._messages), _hasError(_con._hasError)
 			{}
-			_MessageContainer(_MessageContainer&& _con) :
+			MessageContainer(MessageContainer&& _con) :
 				_messages(std::move(_con._messages)), _hasError(_con._hasError)
 			{}
 
-			virtual ~_MessageContainer() {}
+			virtual ~MessageContainer() {}
 
 			void ReportMessage(const _MsgType& _content, Location _loc, FLAG _mt)
 			{
@@ -136,15 +137,15 @@ namespace halang
 			}
 
 			static std::ostream& OutputMsg(std::ostream& _os,
-				const typename _MessageContainer::Message& _msg)
+				const typename MessageContainer::Message& _msg)
 			{
 				switch (_msg.flag)
 				{
-				case _MessageContainer::FLAG::NORMAL:
+				case MessageContainer::FLAG::NORMAL:
 					_os << "Normal: "; break;
-				case _MessageContainer::FLAG::WARNING:
+				case MessageContainer::FLAG::WARNING:
 					_os << "Warnging: "; break;
-				case _MessageContainer::FLAG::ERROR:
+				case MessageContainer::FLAG::ERROR:
 					_os << "Error: "; break;
 				}
 				if (_msg.loc.line > -1)
@@ -192,7 +193,6 @@ namespace halang
 			{
 				unsigned long uni;
 				size_t todo;
-				bool error = false;
 				unsigned char ch = utf8[i++];
 				if (ch <= 0x7F)
 				{
@@ -263,15 +263,15 @@ namespace halang
 namespace std
 {
 	inline std::ostream& operator<<(std::ostream& _os,
-		const typename halang::utils::_MessageContainer::Message& _msg)
+		const typename halang::utils::MessageContainer::Message& _msg)
 		{
 			switch (_msg.flag)
 			{
-			case halang::utils::_MessageContainer::FLAG::NORMAL:
+			case halang::utils::MessageContainer::FLAG::NORMAL:
 				_os << "Normal: "; break;
-			case halang::utils::_MessageContainer::FLAG::WARNING:
+			case halang::utils::MessageContainer::FLAG::WARNING:
 				_os << "Warnging: "; break;
-			case halang::utils::_MessageContainer::FLAG::ERROR:
+			case halang::utils::MessageContainer::FLAG::ERROR:
 				_os << "Error: "; break;
 			}
 			if (_msg.loc.line > -1)

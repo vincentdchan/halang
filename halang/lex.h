@@ -1,70 +1,64 @@
 #pragma once
 #include <queue>
-#include <istream>
-#include <sstream>
 #include <memory>
-#include <list>
+#include <vector>
 #include "token.h"
 #include "util.h"
+#include "StringBuffer.h"
 
 namespace halang
 {
 	using namespace std;
 
-	class Lexer final: public utils::_MessageContainer
+	class Lexer final: 
+		public StringBuffer, 
+		public utils::MessageContainer
 	{
 	public:
 		typedef shared_ptr<string> pString;
-		Lexer(istream& s);
+		// Lexer();
+		// void buffer(U16String _buf);
+		Lexer();
+
+		Token* NextToken();
+		bool Match(Token::TYPE _type);
+		Token* Eat(Token::TYPE _type);
+		Token* PeekToken();
+		// void GoBackToken();
+
+		bool IsFinished() const {
+			return is_finished;
+		}
+
+		// Disable
 		Lexer(const Lexer&) = delete;
 		Lexer& operator=(const Lexer&) = delete;
-		Token read();
-		inline void finish();
-		bool isFinish()
-		{
-			return _end;
-		}
-		static bool isDigit(char16_t t);
-		static bool isAlphabet(char16_t t);
-		~Lexer()
-		{
-			for (auto i = _literal_list.begin(); i != _literal_list.end(); ++i)
-			{
-				delete *i;
-			}
-		}
+
+		void StartToken();
+
 	private:
-		Lexer();
-		bool readline();
 
-		bool scanString();
-		bool scanLiteral();
-		bool scanIdentifier();
-		bool scanNumber();
-		bool swallowComment();
-		bool swallow(const char16_t* _str);
 
-		queue<Token> token_q;
-		// queue<string> literal_q;
-		bool _end;
-		unsigned int linenumber, _beginpos, _endpos;
-		// stream
-		istream &ist;
+		Token* current_tok;
+		bool is_finished;
 
-		std::u16string buffer;
-		std::size_t iter;
-		Location loc;
+		Token* scanLiteral();
+		Token* scanNumber();
+		Token* scanString();
+		void SwallowComment();
 
-		std::list<std::u16string*> _literal_list;
+		Token* ReadToken();
 
-		template<typename... _Types>
-		inline std::u16string* make_literal(_Types... Args)
-		{
-			auto _str = new std::u16string(std::forward<_Types>(Args)...);
-			_literal_list.push_back(_str);
-			return _str;
-		}
+		Token* MakeToken(Token::TYPE _type);
+		Token* MakeToken(
+			Token::TYPE _type,
+			const U16String&
+		);
+		Token* MakeToken(double val);
 
+		Location _start_location;
+
+		std::vector<std::unique_ptr<Token>> token_buffer;
 	};
 
 }

@@ -1,5 +1,8 @@
 #pragma once
 #include <cinttypes>
+#include <string>
+
+typedef std::basic_string<char16_t> U16String;
 
 namespace halang
 {
@@ -50,10 +53,10 @@ namespace halang
 	V(STRING) \
 	V(OPEN_PAREN) \
 	V(CLOSE_PAREN) \
-	V(OPEN_BRAKET) \
-	V(CLOSE_BRAKET) \
-	V(OPEN_SQUARE_BRAKET) \
-	V(CLOSE_SQUARE_BRAKET) \
+	V(OPEN_BRACKET) \
+	V(CLOSE_BRACKET) \
+	V(OPEN_SQUARE_BRACKET) \
+	V(CLOSE_SQUARE_BRACKET) \
 	V(NUMBER) \
 	V(VAR) \
 	V(CLASS) \
