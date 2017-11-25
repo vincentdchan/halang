@@ -93,7 +93,7 @@ int main(int argc, char** argv)
 	CHECK_ERROR(lexer);
 
 	parser = new Parser(*lexer);
-	parser->parse();
+	parser->Parse();
 	fs.close();
 
 	CHECK_ERROR(parser);

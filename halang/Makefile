@@ -1,13 +1,21 @@
 CC=g++
+CPPVER=--std=c++14
 CFLAGS=-Wall -g -c --std=c++14
 
 halang: token.o ast.o codegen.o context.o Dict.o GC.o \
 		lex.o object.o parser.o ScriptContext.o \
 		String.o svm.o function.o StringBuffer.o
-	$(CC) --std=c++11 -o halang halang.cpp \
+	$(CC) $(CPPVER) -o halang halang.cpp \
 		ast.o codegen.o context.o Dict.o GC.o \
 		lex.o object.o parser.o ScriptContext.o \
 		String.o svm.o function.o StringBuffer.o
+
+test: testlex
+	./testlex
+
+testlex: token.o StringBuffer.o lex.o testlex.cpp
+	$(CC) $(CPPVER) -o testlex testlex.cpp \
+		token.o StringBuffer.o lex.o
 
 token.o: token.h token.cpp
 	$(CC) $(CFLAGS) token.cpp
@@ -54,3 +62,4 @@ svm.o: svm.h svm.cpp
 clean:
 	rm ./*.o;
 	rm halang;
+	rm testexec;

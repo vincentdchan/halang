@@ -22,12 +22,10 @@ namespace halang
 			WARNING,
 			ERROR
 		};
-		Parser(Lexer& _lex);
-		Parser(Parser&& _parser);
-		Token nextToken();
-		Token lookahead;
-		void parse();
-		bool isOk() const { return ok; }
+		Parser();
+
+		void Parse();
+		bool IsOK() const { return ok; }
 		inline Node* getRoot() { return ast_root; }
 
 		~Parser();
@@ -55,32 +53,29 @@ namespace halang
 		FuncDefParamNode*	parseFuncDefParam();
 		Node*				parseFuncCall(Node* _exp = nullptr);
 		Node*				parseReturnStmt();
-		Parser() = delete;
 		Parser(const Parser&) = delete;
 		Parser& operator=(const Parser&) = delete;
-		Lexer& lexer;
 
-		inline void add_error(Token t, char* msg)
+		inline void AddError(Token t, char* msg)
 		{
 			stringstream ss;
 			ss << "Line: " << t.location.line << ": " << msg;
 			ReportError(ss.str());
 		}
 
-		inline void add_error(Token t, const string& msg)
+		inline void AddError(Token t, const string& msg)
 		{
 			stringstream ss;
 			ss << "Line: " << t.location.line << ": " << msg;
 			ReportError(ss.str());
 		}
 
-		inline bool match(Token::TYPE t) { return lookahead.type == t; } // just judge
-		inline bool expect(Token::TYPE t)
+		inline bool Expect(Token::TYPE t)
 		{
-			return expect(lookahead, t);
+			return Expect(lookahead, t);
 		}
 
-		inline bool expect(Token _c, Token::TYPE t)
+		inline bool Expect(Token _c, Token::TYPE t)
 		{
 			if (_c.type == t)
 				return true;
@@ -88,7 +83,7 @@ namespace halang
 			{
 				auto num = static_cast<int>(_c.type);
 				// warning: here may cause crash if num is not in range
-				this->add_error(_c, string("Unexpected token: ") + TokenName[num]);
+				this->AddError(_c, string("UnExpected token: ") + TokenName[num]);
 				ok = false;
 				return false;
 			}
