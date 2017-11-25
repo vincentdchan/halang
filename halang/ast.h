@@ -9,26 +9,25 @@ namespace halang
 {
 
 #define NODE_LIST(V) \
-	V(Assignment) \
+	V(Program) \
 	V(Number) \
 	V(Identifier) \
 	V(String) \
-	V(InvokeExpr) \
-	V(ListExpr) \
-	V(BinaryExpr) \
-	V(UnaryExpr) \
-	V(BlockExpr) \
-	V(VarStmt) \
-	V(VarSubExpr) \
-	V(IfStmt) \
-	V(WhileStmt) \
-	V(BreakStmt) \
-	V(ContinueStmt) \
-	V(ReturnStmt) \
-	V(ClassDef) \
-	V(FuncDef) \
-	V(FuncDefParam)\
-	V(FuncCall) \
+	V(LetStatement) \
+	V(IfStatement) \
+	V(WhileStatement) \
+	V(BreakStatement) \
+	V(ContinueStatement) \
+	V(ReturnStatement) \
+	V(DefStatement) \
+	V(MemberExpression) \
+	V(CallExpression) \
+	V(AssignExpression) \
+	V(ListExpression) \
+	V(UnaryExpression) \
+	V(BinaryExpression) \
+	V(DoExpression) \
+	V(FunExpression) \
 
 	class CodePack;
 	class CodeGen;
@@ -56,55 +55,64 @@ namespace halang
 		Location begin_location;
 		Location end_location;
 
-		virtual StringNode* asString() { return nullptr; }
-		virtual IdentifierNode* asIdentifier() { return nullptr; }
-		virtual NumberNode* asNumber() { return nullptr; }
-		virtual AssignmentNode* asAssignment() { return nullptr; }
-		virtual InvokeExprNode* asInvokeExpr() { return nullptr; }
-		virtual ListExprNode* asListExpr() { return nullptr; }
-		virtual UnaryExprNode* asUnaryExpression() { return nullptr; }
-		virtual BlockExprNode* asBlockExpression() { return nullptr; }
-		virtual BinaryExprNode* asBinaryExpression() { return nullptr; }
-		virtual VarStmtNode* asVarStmt() { return nullptr; }
-		virtual VarSubExprNode* asVarSubExpr() { return nullptr; }
-		virtual IfStmtNode* asIfStmt() { return nullptr; }
-		virtual WhileStmtNode* asWhileStmt() { return nullptr; }
-		virtual BreakStmtNode* asBreakStmt() { return nullptr; }
-		virtual ContinueStmtNode* asContinueStmtNode() { return nullptr; }
-		virtual ReturnStmtNode* asReturnStmt() { return nullptr; }
-		virtual ClassDefNode* asClassDef() { return nullptr; }
-		virtual FuncDefNode* asFuncDef() { return nullptr; }
-		virtual FuncDefParamNode* asFuncDefParam() { return nullptr; }
-		virtual FuncCallNode* asFuncCall() { return nullptr; }
+		virtual ProgramNode* AsProgram() { return nullptr; }
+		virtual StringNode* AsString() { return nullptr; }
+		virtual IdentifierNode* AsIdentifier() { return nullptr; }
+		virtual NumberNode* AsNumber() { return nullptr; }
+		virtual LetStatementNode* AsLetStatement() { return nullptr; }
+		virtual IfStatementNode* AsIfStatement() { return nullptr; }
+		virtual WhileStatementNode* AsWhileStatement() { return nullptr; }
+		virtual BreakStatementNode* AsBreakStatement() { return nullptr; }
+		virtual ContinueStatementNode* AsContinueStatement() { return nullptr; }
+		virtual ReturnStatementNode* AsReturnStatement() { return nullptr; }
+		virtual MemberExpressionNode* AsMemberExpression() { return nullptr; }
+		virtual DefStatementNode* AsDefStatement() { return nullptr; }
+		virtual CallExpressionNode* AsCallExpression() { return nullptr; }
+		virtual AssignExpressionNode* AsAssignExpression() { return nullptr; }
+		virtual ListExpressionNode* AsListExpression() { return nullptr; }
+		virtual UnaryExpressionNode* AsUnaryExpression() { return nullptr; }
+		virtual BinaryExpressionNode* AsBinaryExpression() { return nullptr; }
+		virtual DoExpressionNode* AsDoExpression() { return nullptr; }
+		virtual FunExpressionNode* AsFunExpression() { return nullptr; }
 
 		virtual void visit(Visitor*) = 0;
 	};
 
-	/// <summary>
-	/// Represent the characters in the quotes
-	/// </summary>
+	class ProgramNode : public Node {
+	public:
+
+		virtual ProgramNode* 
+		AsProgram() override { 
+			return this; 
+		}
+
+		std::vector<Node*> statements;
+
+		VISIT_OVERRIDE
+	};
+
 	class StringNode : public Node
 	{
 	public:
+		StringNode() {
+		}
+
 		StringNode(const std::u16string& _content) : content(_content)
 		{}
 
-		virtual StringNode* asString() override { return this; }
+		virtual StringNode* AsString() override { return this; }
 		std::u16string content;
 
 		VISIT_OVERRIDE
 	};
 
-	/// <summary>
-	/// Represent a number, integer or double.
-	/// </summary>
 	class NumberNode : public Node
 	{
 	public:
 		NumberNode(double _num = 0, bool _mi = false) :
 			number(_num), maybeInt(_mi)
 		{ }
-		virtual NumberNode* asNumber() override { return this; }
+		virtual NumberNode* AsNumber() override { return this; }
 		double number;
 		bool maybeInt;
 
@@ -117,287 +125,225 @@ namespace halang
 	class IdentifierNode : public Node
 	{
 	public:
-		IdentifierNode(const std::u16string& _str) : name(_str)
-		{}
-		virtual IdentifierNode* asIdentifier() override { return this; }
+		IdentifierNode() { }
+		IdentifierNode(const U16String& _str) : name(_str)
+		{ }
+		virtual IdentifierNode* AsIdentifier() override { return this; }
 
-		std::u16string name;
-
-		VISIT_OVERRIDE
-	};
-
-	/// <summary>
-	/// InvokeExpression ::= InvokeExpression ID | ID
-	/// </summary>
-	class InvokeExprNode : public Node
-	{
-	public:
-		InvokeExprNode(Node* src = nullptr, IdentifierNode* _id = nullptr):
-			source(src), id(_id)
-		{}
-
-		virtual InvokeExprNode* asInvokeExpr() { return this; }
-
-		Node* source;
-		IdentifierNode* id;
+		U16String name;
 
 		VISIT_OVERRIDE
 	};
 
-	/// <summary>
-	/// Assignment ::= Identifier '=' Expression
-	/// </summary>
-	class AssignmentNode : public Node
-	{
+	class LetStatementNode : public Node {
 	public:
-		AssignmentNode() {}
-		AssignmentNode(IdentifierNode* _id, Node* _exp = nullptr) :
-			identifier(_id), expression(_exp)
-		{}
-		virtual AssignmentNode* asAssignment() override { return this; }
 
-		IdentifierNode* identifier;
-		Node* expression;
+		std::vector<Node*> assignments;
+
+		virtual 
+		LetStatementNode* AsLetStatement() override {
+			return this;
+		}
 
 		VISIT_OVERRIDE
 	};
 
-	/// <summary>
-	/// ListExpression ::= '[' ListExpressionChildren ']'
-	/// ListExpressionChildren ::= NULL | Expression ListExpressionChildren
-	/// </summary>
-	class ListExprNode : public Node
+	class IfStatementNode : public Node
 	{
 	public:
-		ListExprNode() {}
+		virtual IfStatementNode* AsIfStatement() override { return this; }
+
+		Node* condition = nullptr;
+
+		std::vector<Node*> children;
+		std::vector<Node*> else_children;
+
+		VISIT_OVERRIDE
+	};
+
+	class WhileStatementNode : public Node
+	{
+	public:
+
+		virtual 
+		WhileStatementNode* AsWhileStatement() override { 
+			return this; 
+		}
+
+		Node* condition = nullptr;
+
 		std::vector<Node*> children;
 
-		virtual ListExprNode* asListExpr() override { return this; }
+		VISIT_OVERRIDE
+	};
+
+	class BreakStatementNode : public Node
+	{
+	public:
+		virtual 
+		BreakStatementNode* 
+		AsBreakStatement() override { 
+			return this; 
+		}
 
 		VISIT_OVERRIDE
 	};
 
-	/// <summary>
-	/// Block ::= '{' {Expression} '}'
-	/// </summary>
-	class BlockExprNode : public Node
+	class ContinueStatementNode : public Node
 	{
 	public:
-		BlockExprNode() {}
-		std::vector<Node*> children;
-		virtual BlockExprNode* asBlockExpression() override { return this; }
+		virtual 
+		ContinueStatementNode* 
+		AsContinueStatement() override { 
+			return this; 
+		}
 
 		VISIT_OVERRIDE
 	};
 
-	/// <summary>
-	/// UnaryExpression ::=  '+' | '-' | '!' ,  Identifier | Number | '(' Expression ')'
-	/// </summary>
-	class UnaryExprNode : public Node
+	class ReturnStatementNode : public Node
 	{
 	public:
-		UnaryExprNode(OperatorType _op = OperatorType::ILLEGAL_OP,
-			Node* _after = nullptr) :
-			op(_op), child(_after)
-		{}
-		virtual UnaryExprNode* asUnaryExpression() override { return this; }
-		OperatorType op;
-		Node* child;
-
-		VISIT_OVERRIDE
-	};
-
-	/// <summary>
-	/// BinaryExpression ::= BinaryExpression' OP BinaryExpression' 
-	/// BinaryExpression' ::= UnaryExpression | Number | Identifier | '(' BinaryExpression ')'
-	/// </summary>
-	class BinaryExprNode : public Node
-	{
-	public:
-		BinaryExprNode(OperatorType _op = OperatorType::ILLEGAL_OP,
-			Node* _left = nullptr,
-			Node* _right = nullptr) :
-			op(_op), left(_left), right(_right)
-		{}
-		virtual BinaryExprNode* asBinaryExpression() override { return this; }
-
-		OperatorType op;
-		Node* left;
-		Node* right;
-
-		VISIT_OVERRIDE
-	};
-
-
-	/// <summary>
-	/// VarStatement ::= "var" VarSubExpression {',' VarSubExpression} 
-	/// VarSubExpression ::= Identifier VarInitExpression
-	/// VarInitExpression ::= ':' Identifier |  '=' Expression | ':' Identifier '=' Expression
-	/// </summary>
-	class VarStmtNode : public Node
-	{
-	public:
-		virtual VarStmtNode* asVarStmt() override { return this; }
-		std::vector<VarSubExprNode*> children;
-
-		VISIT_OVERRIDE
-	};
-
-	/// <summary>
-	/// VarSubExpression ::= Identifier VarInitExpression
-	/// VarInitExpression ::= ':' Identifier |  '=' Expression | ':' Identifier '=' Expression
-	/// </summary>
-	class VarSubExprNode : public Node
-	{
-	public:
-		VarSubExprNode() :
-			varName(nullptr), expression(nullptr)
-		{}
-		virtual VarSubExprNode* asVarSubExpr() override { return this; }
-		IdentifierNode* varName;
-		Node* expression;
-
-		VISIT_OVERRIDE
-	};
-
-	/// <summary>
-	/// IfStatement ::= 'if' '(' Expression ')' TrueBranch { FalseBranch }
-	/// TrueBranch ::= Branch
-	/// FalseBranch ::= 'else' ( IfStatement | Branch ) 
-	/// Branch ::= Expression | Block
-	/// </summary>
-	class IfStmtNode : public Node
-	{
-	public:
-		IfStmtNode(Node* _cond = nullptr,
-			Node* _true = nullptr,
-			Node* _false = nullptr) :
-			condition(_cond),
-			true_branch(_true),
-			false_branch(_false)
-		{}
-		virtual IfStmtNode* asIfStmt() override { return this; }
-
-		Node* condition;
-		Node* true_branch;
-		Node* false_branch;
-
-		VISIT_OVERRIDE
-	};
-
-	/// <summary>
-	/// WhileStatement ::= 'while' '(' Expression ')' (Expression | Block)
-	/// </summary>
-	class WhileStmtNode : public Node
-	{
-	public:
-		WhileStmtNode(Node* _con = nullptr,
-			Node* _cont = nullptr) :
-			condition(_con), child(_cont)
-		{}
-		virtual WhileStmtNode* asWhileStmt() override { return this; }
-
-		Node* condition;
-		Node* child;
-
-		VISIT_OVERRIDE
-	};
-
-	/// <summary>
-	/// Break ::= 'break'
-	/// </summary>
-	class BreakStmtNode : public Node
-	{
-	public:
-		virtual BreakStmtNode* asBreakStmt() override { return this; }
-
-		VISIT_OVERRIDE
-	};
-
-	/// <summary>
-	/// Continue ::= 'continue'
-	/// </summary>
-	class ContinueStmtNode : public Node
-	{
-	public:
-		virtual ContinueStmtNode * asContinueStmtNode() override { return this; }
-
-		VISIT_OVERRIDE
-	};
-
-	/// <summary>
-	/// Return ::= 'return'
-	/// </summary>
-	class ReturnStmtNode : public Node
-	{
-	public:
-		ReturnStmtNode(Node * exp = nullptr) : expression(exp)
-		{}
-		virtual ReturnStmtNode* asReturnStmt() override { return this; }
-		Node* expression;
-
-		VISIT_OVERRIDE
-	};
-
-	class ClassDefNode : public Node
-	{
-	public:
-		ClassDefNode(IdentifierNode* _name = nullptr, IdentifierNode* _ed = nullptr) :
-			name(_name), extendName(_ed)
+		ReturnStatementNode(Node * exp = nullptr) : expression(exp)
 		{}
 
-		virtual ClassDefNode* asClassDef() override { return this; }
-		IdentifierNode* name;
-		IdentifierNode* extendName;
-		std::vector<Node*> members;
+		virtual 
+		ReturnStatementNode* 
+		AsReturnStatement() override { 
+			return this; 
+		}
+
+		Node* expression = nullptr;
 
 		VISIT_OVERRIDE
 	};
 
-	/// <summary>
-	/// FuncDefinition ::= 'func' '(' ParamList ')' '{' { Expression } '}
-	/// ParamList ::=  Identifier ':' Identifier { ',' Identifier ':' Identifier }
-	/// </summary>
-	class FuncDefNode : public Node
+	class DefStatementNode : public Node
 	{
 	public:
-		FuncDefNode() {}
-		virtual FuncDefNode* asFuncDef() override { return this; }
-		IdentifierNode* name;
-		std::vector<FuncDefParamNode*> parameters;
 
-		BlockExprNode* block;
+		virtual DefStatementNode* 
+		AsDefStatement() override { 
+			return this; 
+		}
+
+		IdentifierNode* name = nullptr;
+		std::vector<Node*> params;
+		std::vector<Node*> body;
 
 		VISIT_OVERRIDE
 	};
 
-	/// <summary>
-	/// ParamList ::=  Identifier ':' Identifier { ',' Identifier ':' Identifier }
-	/// </summary>
-	class FuncDefParamNode : public Node
+	class MemberExpressionNode : public Node
 	{
 	public:
-		FuncDefParamNode()
-		{}
-		virtual FuncDefParamNode* asFuncDefParam() override { return this; }
-		std::u16string name;
+
+		virtual MemberExpressionNode* 
+		AsMemberExpression() override { 
+			return this; 
+		}
+
+		Node* left = nullptr;
+		Node* right = nullptr;
 
 		VISIT_OVERRIDE
 	};
 
-	/// <summary>
-	/// FunctionCall ::= Expression  '(' FunctionCallParams ')'
-	/// FunctionCallParams ::= Identifier { ',' Identifier }
-	/// </summary>
-	class FuncCallNode : public Node
+	class CallExpressionNode : public Node
 	{
 	public:
-		FuncCallNode(Node* _exp = nullptr) :
-			exp(_exp)
-		{}
-		virtual FuncCallNode* asFuncCall() override { return this; }
-		Node* exp; // maybe identifier, maybe another func  foo(a) foo(a)(b)(b)
+
+		virtual CallExpressionNode* 
+		AsCallExpression() override { 
+			return this; 
+		}
+
+		Node* callee = nullptr;
 		std::vector<Node*> parameters;
+
+		VISIT_OVERRIDE
+	};
+
+	class AssignExpressionNode : public Node
+	{
+	public:
+
+		virtual AssignExpressionNode* 
+		AsAssignExpression() override { 
+			return this; 
+		}
+
+		IdentifierNode* identifier = nullptr;
+		Node* expression = nullptr;
+
+		VISIT_OVERRIDE
+	};
+
+	class ListExpressionNode : public Node
+	{
+	public:
+
+		std::vector<Node*> children;
+
+		virtual ListExpressionNode* 
+		AsListExpression() override { 
+			return this; 
+		}
+
+		VISIT_OVERRIDE
+	};
+
+	class UnaryExpressionNode : public Node
+	{
+	public:
+
+		virtual UnaryExpressionNode* 
+		AsUnaryExpression() override { return this; }
+
+		OperatorType op = OperatorType::ILLEGAL_OP;
+		Node* child = nullptr;;
+
+		VISIT_OVERRIDE
+	};
+
+	class BinaryExpressionNode : public Node
+	{
+	public:
+
+		virtual BinaryExpressionNode* 
+		AsBinaryExpression() override { return this; }
+
+		OperatorType op;
+		Node* left = nullptr;
+		Node* right = nullptr;
+
+		VISIT_OVERRIDE
+	};
+
+	class DoExpressionNode : public Node {
+	public:
+
+		virtual DoExpressionNode*
+		AsDoExpression() override {
+			return this;
+		}
+
+		std::vector<Node*> children;
+
+		VISIT_OVERRIDE
+	};
+
+	class FunExpressionNode : public Node
+	{
+	public:
+
+		virtual FunExpressionNode* 
+		AsFunExpression() override { 
+			return this;
+		}
+
+		std::vector<Node*> params;
+		Node* expression = nullptr;
 
 		VISIT_OVERRIDE
 	};

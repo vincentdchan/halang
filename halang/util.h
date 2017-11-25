@@ -36,7 +36,7 @@ namespace halang
 			/// </summary>
 			/// <returns>The pointer of the object.</returns>
 			template<typename _Ty, typename... _Types>
-			_Ty* make_object(_Types&&... args)
+			_Ty* MakeObject(_Types&&... args)
 			{
 				_Ty* _node = new _Ty(std::forward<_Types>(args)...);
 				_node_list.push_back(_node);

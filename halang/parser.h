@@ -24,7 +24,8 @@ namespace halang
 		};
 		Parser();
 
-		void Parse();
+		void ParseProgram();
+
 		bool IsOK() const { return ok; }
 		inline Node* getRoot() { return ast_root; }
 
@@ -35,30 +36,29 @@ namespace halang
 
 	private:
 		bool ok;
-		Node* ast_root;
+
+		ProgramNode* ast_root;
 
 		std::stack<Location> locations_stack;
 
-		Node*				ParseChunk();
-		Node*				ParseBlock();
+		Node*				ParseIdentifier();
 		Node*				ParseStatement();
-		Node*				ParseAssignment(IdentifierNode* = nullptr);
+		Node*				ParseLetStatement();
+		Node*				ParseIfStatement();
+		Node*				ParseWhileStatement();
+		Node*				ParseReturnStatement();
+		Node*				ParseDefStatement();
 		Node*				ParseExpression();
-		Node*				ParseInvokeExpression(Node* src = nullptr);
-		Node*				ParseVarStmt();
-		VarSubExprNode*		ParseVarSubExpr();
-		ListExprNode*		ParseListExpr();
-		Node*				ParseUnaryExpr(OperatorType _op = OperatorType::ILLEGAL_OP);
-		Node*				ParseBinaryExpr(Node* left_exp = nullptr, Token left_tk*);
-		Node*				ParseIfStmt();
-		Node*				ParseElseStmt();
-		Node*				ParseWhileStmt();
-		ClassDefNode*		ParseClassDef();
-		Node*				ParseClassMember();
-		Node*				ParseFuncDef();
-		FuncDefParamNode*	ParseFuncDefParam();
-		Node*				ParseFuncCall(Node* _exp = nullptr);
-		Node*				ParseReturnStmt();
+		Node*				ParseCallExpression(Node* src = nullptr);
+		Node*				ParseMemberExpression(Node* src = nullptr);
+		Node*				ParseAssignExpression(IdentifierNode* = nullptr);
+		Node*				ParseListExpression();
+		Node*				ParseMaybeUnary();
+		Node*				ParseExpressionUnit();
+		Node*				ParseMaybeCallExpression();
+
+		Node*				ParseBinaryExpr(Node* left_exp = nullptr, Token* left_tk = nullptr);
+
 		Parser(const Parser&) = delete;
 		Parser& operator=(const Parser&) = delete;
 
