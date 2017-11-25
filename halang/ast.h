@@ -52,6 +52,10 @@ namespace halang
 	{
 	public:
 		Node() {}
+
+		Location begin_location;
+		Location end_location;
+
 		virtual StringNode* asString() { return nullptr; }
 		virtual IdentifierNode* asIdentifier() { return nullptr; }
 		virtual NumberNode* asNumber() { return nullptr; }

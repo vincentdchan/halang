@@ -10,12 +10,18 @@ halang: token.o ast.o codegen.o context.o Dict.o GC.o \
 		lex.o object.o parser.o ScriptContext.o \
 		String.o svm.o function.o StringBuffer.o
 
-test: testlex
-	./testlex
+test: testlex testparser
+	./testlex;
+	./testparser
 
 testlex: token.o StringBuffer.o lex.o testlex.cpp
 	$(CC) $(CPPVER) -o testlex testlex.cpp \
 		token.o StringBuffer.o lex.o
+
+testparser: testlex ast.o String.o parser.o
+	$(CC) $(CPPVER) -o testparser testparser.cpp \
+		token.o StringBuffer.o lex.o \
+		ast.o String.o parer.o
 
 token.o: token.h token.cpp
 	$(CC) $(CFLAGS) token.cpp
@@ -62,4 +68,5 @@ svm.o: svm.h svm.cpp
 clean:
 	rm ./*.o;
 	rm halang;
-	rm testexec;
+	rm testlex;
+	rm testparser

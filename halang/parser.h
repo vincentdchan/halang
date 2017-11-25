@@ -12,8 +12,8 @@
 namespace halang
 {
 
-	class Parser final : 
-		public utils::MessageContainer, private utils::PointerContainer<Node>
+	class Parser : 
+		public Lexer, private utils::PointerContainer<Node>
 	{
 	public:
 		enum struct MESSAGE_TYPE
@@ -29,62 +29,63 @@ namespace halang
 		inline Node* getRoot() { return ast_root; }
 
 		~Parser();
+	protected:
+		void StartNode();
+		Node* FinishNode(Node* node);
+
 	private:
 		bool ok;
 		Node* ast_root;
 
-		Node*				parseChunk();
-		Node*				parseBlock();
-		Node*				parseStatement();
-		Node*				parseAssignment(IdentifierNode* = nullptr);
-		Node*				parseExpression();
-		Node*				parseInvokeExpression(Node* src = nullptr);
-		Node*				parseVarStmt();
-		VarSubExprNode*		parseVarSubExpr();
-		ListExprNode*		parseListExpr();
-		Node*				parseUnaryExpr(OperatorType _op = OperatorType::ILLEGAL_OP);
-		Node*				parseBinaryExpr(Node* left_exp = nullptr, Token left_tk = Token());
-		Node*				parseIfStmt();
-		Node*				parseElseStmt();
-		Node*				parseWhileStmt();
-		ClassDefNode*		parseClassDef();
-		Node*				parseClassMember();
-		Node*				parseFuncDef();
-		FuncDefParamNode*	parseFuncDefParam();
-		Node*				parseFuncCall(Node* _exp = nullptr);
-		Node*				parseReturnStmt();
+		std::stack<Location> locations_stack;
+
+		Node*				ParseChunk();
+		Node*				ParseBlock();
+		Node*				ParseStatement();
+		Node*				ParseAssignment(IdentifierNode* = nullptr);
+		Node*				ParseExpression();
+		Node*				ParseInvokeExpression(Node* src = nullptr);
+		Node*				ParseVarStmt();
+		VarSubExprNode*		ParseVarSubExpr();
+		ListExprNode*		ParseListExpr();
+		Node*				ParseUnaryExpr(OperatorType _op = OperatorType::ILLEGAL_OP);
+		Node*				ParseBinaryExpr(Node* left_exp = nullptr, Token left_tk*);
+		Node*				ParseIfStmt();
+		Node*				ParseElseStmt();
+		Node*				ParseWhileStmt();
+		ClassDefNode*		ParseClassDef();
+		Node*				ParseClassMember();
+		Node*				ParseFuncDef();
+		FuncDefParamNode*	ParseFuncDefParam();
+		Node*				ParseFuncCall(Node* _exp = nullptr);
+		Node*				ParseReturnStmt();
 		Parser(const Parser&) = delete;
 		Parser& operator=(const Parser&) = delete;
 
-		inline void AddError(Token t, char* msg)
+		inline void AddError(const string& msg)
 		{
+			ok = false;
 			stringstream ss;
-			ss << "Line: " << t.location.line << ": " << msg;
-			ReportError(ss.str());
-		}
-
-		inline void AddError(Token t, const string& msg)
-		{
-			stringstream ss;
-			ss << "Line: " << t.location.line << ": " << msg;
+			Location loc = locations_stack.top();
+			ss << "Line: " << loc.line 
+				<< ":" << loc.column << ": " << msg;
 			ReportError(ss.str());
 		}
 
 		inline bool Expect(Token::TYPE t)
 		{
-			return Expect(lookahead, t);
-		}
 
-		inline bool Expect(Token _c, Token::TYPE t)
-		{
-			if (_c.type == t)
+			if (current_tok->type == t)
 				return true;
 			else
 			{
-				auto num = static_cast<int>(_c.type);
+				auto num = static_cast<int>(current_tok->type);
+				auto expected_num = static_cast<int>(t);
 				// warning: here may cause crash if num is not in range
-				this->AddError(_c, string("UnExpected token: ") + TokenName[num]);
-				ok = false;
+				AddError(
+					string("Unexpected token: ") + TokenName[num] +
+					string(" Expected: ") + TokenName[expected_num]
+				);
 				return false;
 			}
 		}

@@ -66,10 +66,9 @@ TEST_CASE( "Lexer", "[Lexer]" ) {
     Lexer lexer;
 
     const char* codes[3] = {
-        "fun a, b -> do\n",
-        "   foo();\n"
-        "   a + b * 1\n",
-        "end"
+        "func(a, b){\n",
+        "   return a + b * 1;\n",
+        "}"
     };
 
     for (int i = 0; i < 3; i++) {
@@ -79,22 +78,21 @@ TEST_CASE( "Lexer", "[Lexer]" ) {
     }
 
     std::vector<Token::TYPE> token_list;
-    token_list.push_back(Token::TYPE::FUN);
+    token_list.push_back(Token::TYPE::FUNC);
+    token_list.push_back(Token::TYPE::OPEN_PAREN);
     token_list.push_back(Token::TYPE::IDENTIFIER);
     token_list.push_back(Token::TYPE::COMMA);
     token_list.push_back(Token::TYPE::IDENTIFIER);
-    token_list.push_back(Token::TYPE::ARROW);
-    token_list.push_back(Token::TYPE::DO);
-    token_list.push_back(Token::TYPE::IDENTIFIER);
-    token_list.push_back(Token::TYPE::OPEN_PAREN);
     token_list.push_back(Token::TYPE::CLOSE_PAREN);
-    token_list.push_back(Token::TYPE::SEMICOLON);
+    token_list.push_back(Token::TYPE::OPEN_BRACKET);
+    token_list.push_back(Token::TYPE::RETURN);
     token_list.push_back(Token::TYPE::IDENTIFIER);
     token_list.push_back(Token::TYPE::ADD);
     token_list.push_back(Token::TYPE::IDENTIFIER);
     token_list.push_back(Token::TYPE::MUL);
     token_list.push_back(Token::TYPE::NUMBER);
-    token_list.push_back(Token::TYPE::END);
+    token_list.push_back(Token::TYPE::SEMICOLON);
+    token_list.push_back(Token::TYPE::CLOSE_BRACKET);
 
     for (int i = 0; i < Token::TYPE::TOKEN_NUMBER; i++) {
         std::cout << i << ": " << TokenName[i] << std::endl;

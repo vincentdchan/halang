@@ -10,7 +10,7 @@ namespace halang
 {
 	using namespace std;
 
-	class Lexer final: 
+	class Lexer: 
 		public StringBuffer, 
 		public utils::MessageContainer
 	{
@@ -36,10 +36,10 @@ namespace halang
 
 		void StartToken();
 
-	private:
-
-
+	protected:
 		Token* current_tok;
+
+	private:
 		bool is_finished;
 
 		Token* scanLiteral();

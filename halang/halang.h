@@ -28,8 +28,8 @@ namespace halang
 	V(LT, "<", 8) \
 	V(GTEQ, ">=", 8) \
 	V(LTEQ, "<=", 8) \
-	V(AND, "&&", 5) \
-	V(OR, "||", 5) \
+	V(LG_AND, "&", 5) \
+	V(LG_OR, "|", 5) \
 	V(ILLEGAL_OP, "", 0)
 
 #define TOKEN_LIST(V) \
@@ -40,6 +40,7 @@ namespace halang
 	V(ACCESSOR) \
 	V(DOT) \
 	V(AT) \
+	V(ARROW) \
 	V(COMMA) \
 	V(SEMICOLON) \
 	V(ILLEGAL) \
@@ -58,10 +59,16 @@ namespace halang
 	V(OPEN_SQUARE_BRACKET) \
 	V(CLOSE_SQUARE_BRACKET) \
 	V(NUMBER) \
-	V(VAR) \
+	V(LET) \
 	V(CLASS) \
-	V(FUNC) \
+	V(FUN) \
+	V(DEF) \
+	V(AND) \
+	V(OR) \
 	V(RETURN) \
+	V(DO) \
+	V(END) \
+	V(THEN) \
 	V(ENDFILE) 
 
 

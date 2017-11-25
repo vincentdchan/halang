@@ -68,12 +68,12 @@ namespace halang
 			return double_value;
 		}
 
-		static bool isOperator(const Token& t)
+		static bool IsOperator(const Token& t)
 		{
 			return t.type >= ADD && t.type < ILLEGAL_OP;
 		}
 
-		static OperatorType toOperator(const Token& t)
+		static OperatorType ToOperator(const Token& t)
 		{
 			if (t.type >= Token::ADD && t.type <= Token::ILLEGAL_OP)
 				return static_cast<OperatorType>(t.type);

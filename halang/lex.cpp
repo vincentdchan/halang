@@ -89,6 +89,10 @@ namespace halang
 			return MakeToken(Token::TYPE::ADD);
 		case u'-':
 			NextChar();
+			if (GetChar() == u'>') {
+				NextChar();
+				return MakeToken(Token::TYPE::ARROW);
+			}
 			return MakeToken(Token::TYPE::SUB);
 		case u'*':
 			NextChar();
@@ -146,22 +150,10 @@ namespace halang
 			return MakeToken(Token::TYPE::ASSIGN);
 		case u'&':
 			NextChar();
-			if (GetChar() == u'&')
-			{
-				NextChar();
-				return MakeToken(Token::TYPE::AND);
-			}
-			ReportError("Invalid Token &");
-			return ReadToken();
+			return MakeToken(Token::TYPE::LG_AND);
 		case u'|':
 			NextChar();
-			if (GetChar() == u'|')
-			{
-				NextChar();
-				return MakeToken(Token::TYPE::OR);
-			}
-			ReportError("Invalid Token |");
-			return ReadToken();
+			return MakeToken(Token::TYPE::LG_OR);
 		default:
 			return MakeToken(Token::TYPE::ENDFILE);
 		}
@@ -231,9 +223,9 @@ namespace halang
 		{
 			return MakeToken(Token::TYPE::CONTINUE);
 		}
-		else if (buffer == u"var")
+		else if (buffer == u"let")
 		{
-			return MakeToken(Token::TYPE::VAR);
+			return MakeToken(Token::TYPE::LET);
 		}
 		else if (buffer == u"if")
 		{
@@ -247,9 +239,33 @@ namespace halang
 		{
 			return MakeToken(Token::TYPE::WHILE);
 		}
-		else if (buffer == u"func")
+		else if (buffer == u"fun")
 		{
-			return MakeToken(Token::TYPE::FUNC);
+			return MakeToken(Token::TYPE::FUN);
+		}
+		else if (buffer == u"def")
+		{
+			return MakeToken(Token::TYPE::DEF);
+		}
+		else if (buffer == u"and")
+		{
+			return MakeToken(Token::TYPE::AND);
+		}
+		else if (buffer == u"or")
+		{
+			return MakeToken(Token::TYPE::OR);
+		}
+		else if (buffer == u"do")
+		{
+			return MakeToken(Token::TYPE::DO);
+		}
+		else if (buffer == u"end")
+		{
+			return MakeToken(Token::TYPE::END);
+		}
+		else if (buffer == u"then")
+		{
+			return MakeToken(Token::TYPE::THEN);
 		}
 		else if (buffer == u"return")
 		{
