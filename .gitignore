@@ -278,5 +278,5 @@ ModelManifest.xml
 
 # exe
 /halang/halang
-/halang/testlex
-/halang/testparser
+testlex
+testparser
