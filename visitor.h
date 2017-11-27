@@ -27,7 +27,7 @@ namespace halang
 
 	protected:
 
-		int depth;
+		int depth = 0;
 
 	};
 

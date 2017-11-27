@@ -280,3 +280,4 @@ ModelManifest.xml
 /halang/halang
 testlex
 testparser
+astprinter

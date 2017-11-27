@@ -1,0 +1,32 @@
+Program
+  DefStatement:
+    name:
+      Identifier: main
+    params:
+      Identifier: a
+      Identifier: b
+    body:
+      LetStatement:
+        AssignExpression:
+          identifier:
+            Identifier: c
+          expression:
+            BinaryExpression:
+              operator: +
+              left:
+                Identifier: a
+              right:
+                BinaryExpression:
+                  operator: *
+                  left:
+                    Identifier: b
+                  right:
+                    Number: 1
+      NullStatement
+      ExpressionStatement:
+        expression:
+          CallExpression:
+            callee:
+              Identifier: foo
+            params:
+      NullStatement
