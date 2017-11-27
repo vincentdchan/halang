@@ -38,7 +38,7 @@ namespace halang
 	NODE_LIST(E)
 #undef E
 
-#define VISIT_OVERRIDE virtual void visit(Visitor*) override;
+#define VISIT_OVERRIDE virtual void Visit(Visitor*) override;
 
 
 	/// <summary>
@@ -75,7 +75,7 @@ namespace halang
 		virtual DoExpressionNode* AsDoExpression() { return nullptr; }
 		virtual FunExpressionNode* AsFunExpression() { return nullptr; }
 
-		virtual void visit(Visitor*) = 0;
+		virtual void Visit(Visitor*) = 0;
 	};
 
 	class ProgramNode : public Node {

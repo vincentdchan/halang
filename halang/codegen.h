@@ -33,8 +33,8 @@ namespace halang
 
 		static VarType FindVar(GenState*, const std::u16string&);
 
-		virtual void visit(Node*) override;
-#define VISIT_METHOD(NAME) void visit(NAME##Node*);
+		virtual void Visit(Node*) override;
+#define VISIT_METHOD(NAME) void Visit(NAME##Node*);
 		NODE_LIST(VISIT_METHOD)
 #undef VISIT_METHOD
 

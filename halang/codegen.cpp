@@ -257,22 +257,22 @@ namespace halang
 	{
 		parser = p;
 
-		visit(parser->getRoot());
+		Visit(parser->getRoot());
 		AddInst(Instruction(VM_CODE::STOP, 0));
 
 		return Context::GetGC()->New<Function>(GenState::GenerateCodePack(state));
 	}
 
-	void CodeGen::visit(Node* _node)
+	void CodeGen::Visit(Node* _node)
 	{
-		_node->visit(this);
+		_node->Visit(this);
 	}
 
-	void CodeGen::visit(BlockExprNode* _node)
+	void CodeGen::Visit(BlockExprNode* _node)
 	{
 		for (auto i = _node->children.begin(); i != _node->children.end(); ++i)
 		{
-			(*i)->visit(this);
+			(*i)->Visit(this);
 
 			// TODO: debug
 			if ((*i)->asUnaryExpression() ||
@@ -283,23 +283,23 @@ namespace halang
 		}
 	}
 
-	void CodeGen::visit(ListExprNode* _node)
+	void CodeGen::Visit(ListExprNode* _node)
 	{
 
 	}
 
-	void CodeGen::visit(InvokeExprNode* _node)
+	void CodeGen::Visit(InvokeExprNode* _node)
 	{
-		visit(_node->source);
+		Visit(_node->source);
 		auto _name_id = state->AddConstant(
 			String::FromU16String(_node->id->name)->toValue());
 		AddInst(Instruction(VM_CODE::LOAD_C, _name_id));
 		AddInst(Instruction(VM_CODE::DOT, 0));
 	}
 
-	void CodeGen::visit(UnaryExprNode* _node)
+	void CodeGen::Visit(UnaryExprNode* _node)
 	{
-		visit(_node->child);
+		Visit(_node->child);
 		unsigned int id;
 		switch (_node->op)
 		{
@@ -318,10 +318,10 @@ namespace halang
 		}
 	}
 
-	void CodeGen::visit(BinaryExprNode* _node)
+	void CodeGen::Visit(BinaryExprNode* _node)
 	{
-		visit(_node->right);
-		visit(_node->left);
+		Visit(_node->right);
+		Visit(_node->left);
 
 		unsigned int id;
 		switch (_node->op)
@@ -411,7 +411,7 @@ namespace halang
 		}
 	}
 
-	void CodeGen::visit(NumberNode* _node)
+	void CodeGen::Visit(NumberNode* _node)
 	{
 		unsigned int index;
 
@@ -423,7 +423,7 @@ namespace halang
 		AddInst(Instruction(VM_CODE::LOAD_C, index));
 	}
 
-	void CodeGen::visit(StringNode* _node)
+	void CodeGen::Visit(StringNode* _node)
 	{
 		auto index = state->AddConstant(
 			Value(String::FromU16String(_node->content), TypeId::String));
@@ -431,7 +431,7 @@ namespace halang
 		AddInst(Instruction(VM_CODE::LOAD_C, index));
 	}
 
-	void CodeGen::visit(IdentifierNode* _node)
+	void CodeGen::Visit(IdentifierNode* _node)
 	{
 		auto _var = FindVar(state, _node->name);
 
@@ -452,7 +452,7 @@ namespace halang
 		}
 	}
 
-	void CodeGen::visit(AssignmentNode* _node)
+	void CodeGen::Visit(AssignmentNode* _node)
 	{
 		// find if the var is exisits
 		// if not exisits add a possition for it
@@ -464,17 +464,17 @@ namespace halang
 		switch(_var.type())
 		{
 		case VarType::TYPE::GLOBAL:
-			visit(_node->expression);
+			Visit(_node->expression);
 			AddInst(Instruction(VM_CODE::STORE_G, _var.id()));
 			AddInst(Instruction(VM_CODE::LOAD_G, _var.id()));
 			break;
 		case VarType::TYPE::LOCAL:
-			visit(_node->expression);
+			Visit(_node->expression);
 			AddInst(Instruction(VM_CODE::STORE_V, _var.id()));
 			AddInst(Instruction(VM_CODE::LOAD_V, _var.id()));
 			break;
 		case VarType::TYPE::UPVAL:
-			visit(_node->expression);
+			Visit(_node->expression);
 			AddInst(Instruction(VM_CODE::STORE_UPVAL, _var.id()));
 			AddInst(Instruction(VM_CODE::LOAD_UPVAL, _var.id()));
 			break;
@@ -483,9 +483,9 @@ namespace halang
 			{
 				_id = state->AddVariable(_id_node->name);
 
-				// you must add the name first and then visit the expression.
+				// you must add the name first and then Visit the expression.
 				// to generate the next code
-				visit(_node->expression);
+				Visit(_node->expression);
 				AddInst(Instruction(VM_CODE::STORE_V, _id));
 				AddInst(Instruction(VM_CODE::LOAD_V, _id));
 			}
@@ -499,45 +499,45 @@ namespace halang
 
 	}
 
-	void CodeGen::visit(VarStmtNode* _node)
+	void CodeGen::Visit(VarStmtNode* _node)
 	{
 		_var_statement = true;
 		for (auto i = _node->children.begin(); i != _node->children.end(); ++i)
-			visit(*i);
+			Visit(*i);
 		_var_statement = false;
 	}
 
-	void CodeGen::visit(VarSubExprNode* _node)
+	void CodeGen::Visit(VarSubExprNode* _node)
 	{
 		auto _id_node = _node->varName;
 		int _id = state->AddVariable(_id_node->name);
 
-		// you must add the name first and then visit the expression.
+		// you must add the name first and then Visit the expression.
 		// to generate the next code
 		if (_node->expression)
 		{
-			visit(_node->expression);
+			Visit(_node->expression);
 			AddInst(Instruction(VM_CODE::STORE_V, _id));
 		}
 
 	}
 
-	void CodeGen::visit(IfStmtNode* _node)
+	void CodeGen::Visit(IfStmtNode* _node)
 	{
 		auto new_state = GenState::CreateEqualState(state);
 		state = new_state;
 
 		int jmp_val;
-		visit(_node->condition);
+		Visit(_node->condition);
 		auto jmp_loc = state->AddInstruction(VM_CODE::IFNO, 1);
-		visit(_node->true_branch);
+		Visit(_node->true_branch);
 		auto true_finish_loc = state->AddInstruction(VM_CODE::JMP, 1);
 		// if condition not ture, jmp to the right location
 		jmp_val = state->GetInstructionVector()->size() - jmp_loc;
 		(*state->GetInstructionVector())[jmp_loc] = Instruction(VM_CODE::IFNO, jmp_val); 
 		if (_node->false_branch)
 		{
-			visit(_node->false_branch);
+			Visit(_node->false_branch);
 			jmp_val = state->GetInstructionVector()->size() - true_finish_loc;
 			(*state->GetInstructionVector())[true_finish_loc] = 
 				Instruction(VM_CODE::JMP, jmp_val);
@@ -547,7 +547,7 @@ namespace halang
 		delete new_state;
 	}
 
-	void CodeGen::visit(WhileStmtNode* _node)
+	void CodeGen::Visit(WhileStmtNode* _node)
 	{
 		auto new_state = GenState::CreateEqualState(state);
 		state = new_state;
@@ -560,10 +560,10 @@ namespace halang
 		this->_continue_loc = -1;
 
 		auto _begin_loc = state->GetInstructionVector()->size();
-		visit(_node->condition);
+		Visit(_node->condition);
 		auto _condition_loc = state->GetInstructionVector()->size();
 		state->AddInstruction(VM_CODE::IFNO, 0);
-		visit(_node->child);
+		Visit(_node->child);
 		state->AddInstruction(VM_CODE::JMP, -1 * 
 			(state->GetInstructionVector()->size() - _begin_loc));
 		(*state->GetInstructionVector())[_condition_loc] = 
@@ -587,37 +587,37 @@ namespace halang
 		delete new_state;
 	}
 
-	void CodeGen::visit(BreakStmtNode* _node)
+	void CodeGen::Visit(BreakStmtNode* _node)
 	{
 		if (!_while_statement)
 			throw std::logic_error("You should place \"break\" in while statment.");
 		_break_loc = state->AddInstruction(VM_CODE::JMP, 0);
 	}
 
-	void CodeGen::visit(ContinueStmtNode * _node) 
+	void CodeGen::Visit(ContinueStmtNode * _node) 
 	{
 		if (!_while_statement)
 			throw std::logic_error("You should place \"continue\" in while statment.");
 		_continue_loc = state->AddInstruction(VM_CODE::JMP, 0);
 	}
 
-	void CodeGen::visit(ReturnStmtNode* _node)
+	void CodeGen::Visit(ReturnStmtNode* _node)
 	{
 		if (_node->expression)
 		{
-			visit(_node->expression);
+			Visit(_node->expression);
 			AddInst(Instruction(VM_CODE::RETURN, 1));
 		}
 		else
 			AddInst(Instruction(VM_CODE::RETURN, 0));
 	}
 
-	void CodeGen::visit(ClassDefNode* _node)
+	void CodeGen::Visit(ClassDefNode* _node)
 	{
 
 	}
 
-	void CodeGen::visit(FuncDefNode* _node)
+	void CodeGen::Visit(FuncDefNode* _node)
 	{
 		auto c_state = state;
 		int var_id = -1;
@@ -630,9 +630,9 @@ namespace halang
 
 		for (auto i = _node->parameters.begin();
 			i != _node->parameters.end(); ++i)
-			visit(*i);
+			Visit(*i);
 
-		visit(_node->block);
+		Visit(_node->block);
 		AddInst(Instruction(VM_CODE::RETURN, 0));
 
 		state = new_state->GetPrevState();
@@ -649,19 +649,19 @@ namespace halang
 			AddInst(Instruction(VM_CODE::STORE_V, var_id));
 	}
 
-	void CodeGen::visit(FuncDefParamNode* _node)
+	void CodeGen::Visit(FuncDefParamNode* _node)
 	{
 		state->AddVariable(_node->name);
 	}
 
-	void CodeGen::visit(FuncCallNode* _node)
+	void CodeGen::Visit(FuncCallNode* _node)
 	{
 		for (auto i = _node->parameters.begin(); 
 			i != _node->parameters.end(); ++i)
-			visit(*i);
+			Visit(*i);
 
 		AddInst(Instruction(VM_CODE::PUSH_NULL, 0)); // Push This
-		visit(_node->exp);
+		Visit(_node->exp);
 		AddInst(Instruction(VM_CODE::CALL, _node->parameters.size()));
 	}
 
