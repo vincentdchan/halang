@@ -18,10 +18,14 @@ testlex: token.o StringBuffer.o lex.o testlex.cpp
 	$(CC) $(CPPVER) -o testlex testlex.cpp \
 		token.o StringBuffer.o lex.o
 
-testparser: testlex ast.o parser.o testparser.cpp
+testparser: testlex ast.o parser.o testparser.cpp \
+	ASTVisitor.o
 	$(CC) $(CPPVER) -o testparser testparser.cpp \
 		token.o StringBuffer.o lex.o \
-		ast.o parser.o
+		ast.o parser.o ASTVisitor.o
+
+ASTVisitor.o: ast.o ASTVisitor.cpp
+	$(CC) $(CFLAGS) ASTVisitor.cpp
 
 token.o: token.h token.cpp
 	$(CC) $(CFLAGS) token.cpp

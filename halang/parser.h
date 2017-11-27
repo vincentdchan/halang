@@ -27,7 +27,7 @@ namespace halang
 		void ParseProgram();
 
 		bool IsOK() const { return ok; }
-		inline Node* getRoot() { return ast_root; }
+		inline ProgramNode* GetRoot() { return ast_root; }
 
 		~Parser();
 	protected:
@@ -48,14 +48,15 @@ namespace halang
 		Node*				ParseWhileStatement();
 		Node*				ParseReturnStatement();
 		Node*				ParseDefStatement();
+		Node*				ParseExpressionStatement();
 		Node*				ParseExpression();
 		Node*				ParseCallExpression(Node* src = nullptr);
 		Node*				ParseMemberExpression(Node* src = nullptr);
-		Node*				ParseAssignExpression(IdentifierNode* = nullptr);
+		Node*				ParseAssignExpression(Node* = nullptr);
 		Node*				ParseListExpression();
 		Node*				ParseMaybeUnary();
 		Node*				ParseExpressionUnit();
-		Node*				ParseMaybeCallExpression();
+		Node*				ParseAssignOrCallExpression();
 
 		Node*				ParseBinaryExpr(Node* left_exp = nullptr, Token* left_tk = nullptr);
 
@@ -66,8 +67,8 @@ namespace halang
 		{
 			ok = false;
 			stringstream ss;
-			Location loc = locations_stack.top();
-			ss << "Line: " << loc.line 
+			// Location loc = locations_stack.top();
+			ss << "Error: " << loc.line 
 				<< ":" << loc.column << ": " << msg;
 			ReportError(ss.str());
 		}

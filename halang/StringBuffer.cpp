@@ -4,6 +4,9 @@ namespace halang {
 
     StringBuffer::StringBuffer():
     char_ptr(0), back_ptr(-1), is_finished(false) {
+        loc.line = 1;
+        loc.column = 0;
+        loc.pos = 0;
     }
 
     void StringBuffer::AddBuffer(

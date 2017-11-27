@@ -31,6 +31,8 @@ namespace halang
 	// Program -> [ Statement ]
 	void Parser::ParseProgram()
 	{
+		NextToken();
+
 		StartNode();
 		auto _node = MakeObject<ProgramNode>();
 
@@ -52,7 +54,7 @@ namespace halang
 		{
 		case Token::TYPE::SEMICOLON:
 			NextToken();
-			return nullptr;
+			return MakeObject<NullStatementNode>();
 		case Token::TYPE::LET:
 			return ParseLetStatement();
 		case Token::TYPE::WHILE:
@@ -76,7 +78,7 @@ namespace halang
 		case Token::TYPE::DEF:
 			return ParseDefStatement();
 		case Token::TYPE::IDENTIFIER:
-			return ParseCallExpression();
+			return ParseExpressionStatement();
 		default:
 			AddError("Unexpected token");
 		}
@@ -120,6 +122,12 @@ namespace halang
 		}
 
 		return FinishNode(_node);
+	}
+
+	Node* Parser::ParseExpressionStatement() {
+		return MakeObject<ExpressionStatementNode>(
+			ParseExpression()
+		);
 	}
 
 	Node* Parser::ParseIfStatement() {
@@ -243,7 +251,7 @@ namespace halang
 		NextToken();
 
 		while (!Match(Token::TYPE::CLOSE_PAREN)) {
-			auto param = ParseExpression();
+			auto param = ParseIdentifier();
 			CHECK_OK
 
 			_node->params.push_back(param);
@@ -271,10 +279,32 @@ namespace halang
 		return FinishNode(_node);
 	}
 
+	// Expression:
+	// BinaryExpression
+	// 
+	// UnaryExpression:
+	// 	OP UnaryExpression | ExpressionUnit
+	// 
+	// ExpressionUnit:
+	//  '(' Expression ')' |
+	// 	MemberExpression |
+	// 	CallExpression |
+	// 	AssignExpression |
+	// 	ListExpression |
+	// 	DoExpression |
+	// 	FunExpression |
+	// 	ID | StringLiteral | Number
 	Node* Parser::ParseExpression()
 	{
-		auto _left = ParseMaybeUnary();
-		return _left;
+		auto left = ParseMaybeUnary();
+
+		if (Token::IsOperator(*current_tok)) {
+			Token* next = NextToken();
+
+			return ParseBinaryExpr(left, next);
+		}
+
+		return left;
 	}
 
 	Node* Parser::ParseMaybeUnary()
@@ -288,9 +318,20 @@ namespace halang
 			_node->child = ParseMaybeUnary();
 
 			return FinishNode(_node);
+		} else {
+			return ParseExpressionUnit();
 		}
 	}
 
+	// ExpressionUnit:
+	//  '(' Expression ')' |
+	// 	MemberExpression |
+	// 	CallExpression |
+	// 	AssignExpression |
+	// 	ListExpression |
+	// 	DoExpression |
+	// 	FunExpression |
+	// 	ID | StringLiteral | Number
 	Node* Parser::ParseExpressionUnit() {
 		if (Match(Token::TYPE::OPEN_PAREN)) {
 			NextToken();
@@ -301,7 +342,7 @@ namespace halang
 			CHECK_OK
 			return _node;
 		} else if (Match(Token::TYPE::IDENTIFIER)) {
-			return ParseMaybeCallExpression();
+			return ParseAssignOrCallExpression();
 		} else if (Match(Token::TYPE::OPEN_SQUARE_BRACKET)) {
 			return ParseListExpression();
 		} else if (Match(Token::TYPE::NUMBER)) {
@@ -322,26 +363,19 @@ namespace halang
 		}
 	}
 
-	Node* Parser::ParseAssignExpression(IdentifierNode* _id)
+	Node* Parser::ParseAssignExpression(Node* id)
 	{
-		// StartNode();
-		// if (!_id)
-		// {
-		// 	Expect(Token::TYPE::IDENTIFIER);
-		// 	std::u16string _str = *lookahead._literal;
-		// 	NextToken();
-		// 	_id = MakeObject<IdentifierNode>(_str);
-		// }
+		StartNode();
+		Expect(Token::TYPE::ASSIGN);
+		NextToken();
 
-		// Expect(NextToken(), Token::TYPE::ASSIGN);
-		// Node* _exp = parseExpression();
+		Node* exp = ParseExpression();
 
-		// CHECK_OK
+		CHECK_OK
 
-		// return FinishNode(
-		// 	MakeObject<AssignmentNode>(_id, _exp)
-		// );
-		return nullptr;
+		return FinishNode(
+			MakeObject<AssignExpressionNode>(id, exp)
+		);
 	}
 
 	Node* Parser::ParseListExpression()
@@ -379,135 +413,43 @@ namespace halang
 
 	Node* Parser::ParseBinaryExpr(Node* left_exp, Token* left_tk)
 	{
-		// StartNode();
+		StartNode();
 
-		// Node* exp = ParseUnaryExpr();
-		// CHECK_NULL(exp);
-		// CHECK_OK
-		// OperatorType left_op = Token::ToOperator(*left_tk);
-		// while (true)
-		// {
-		// 	Token* right_tk = current_tok;
-		// 	OperatorType right_op = Token::ToOperator(*right_tk);
-		// 	if (getPrecedence(left_op) < getPrecedence(right_op))
-		// 	{
-		// 		NextToken();
-		// 		exp = ParseBinaryExpr(exp, right_tk);
-		// 		CHECK_OK
-		// 	}
-		// 	else if (getPrecedence(left_op) == getPrecedence(right_op))
-		// 	{
-		// 		if (getPrecedence(left_op) == 0)
-		// 			return exp;
-		// 		CHECK_NULL(left_exp);
-		// 		if (left_exp->AsNumber() && exp->AsNumber())
-		// 		{
-		// 			auto num1_exp = left_exp->AsNumber();
-		// 			auto num2_exp = exp->AsNumber();
-		// 			auto num1 = num1_exp->number;
-		// 			auto num2 = num2_exp->number;
-
-		// 			double result = 0;
-		// 			auto _maybeInt = num1_exp->maybeInt && num2_exp->maybeInt;
-
-		// 			bool quit = false;
-		// 			switch (left_op)
-		// 			{
-		// 			case OperatorType::ADD:
-		// 				result = num1 + num2;
-		// 				break;
-		// 			case OperatorType::SUB:
-		// 				result = num1 - num2;
-		// 				break;
-		// 			case OperatorType::MUL:
-		// 				result = num1 * num2;
-		// 				break;
-		// 			case OperatorType::DIV:
-		// 				result = num1 / num2;
-		// 				break;
-		// 			case OperatorType::MOD:
-		// 				result = static_cast<int>(num1) & static_cast<int>(num2);
-		// 				break;
-		// 			case OperatorType::POW:
-		// 				result = pow(num1, num2);
-		// 				break;
-		// 			default:
-		// 				exp = MakeObject<BinaryExpressionNode>(
-		// 					left_op, 
-		// 					left_exp, 
-		// 					exp
-		// 				);
-		// 				quit = true;
-		// 			}
-
-		// 			if (!quit)
-		// 				exp = MakeObject<NumberNode>(result, _maybeInt);
-		// 		}
-		// 		else
-		// 			exp = MakeObject<BinaryExpressionNode>(
-		// 				left_op, 
-		// 				left_exp, 
-		// 				exp
-		// 			);
-		// 		NextToken();
-		// 		return FinishNode(ParseBinaryExpr(exp, right_tk));
-		// 	}
-		// 	else // left_op > right_op
-		// 	{
-		// 		if (left_exp)
-		// 			exp = MakeObject<BinaryExpressionNode>(left_op, left_exp, exp);
-		// 		return FinishNode(exp);
-		// 	}
-		// }
+		Node* exp = ParseMaybeUnary();
+		CHECK_OK
+		OperatorType left_op = Token::ToOperator(*left_tk);
+		while (true)
+		{
+			Token* right_tk = current_tok;
+			OperatorType right_op = Token::ToOperator(*right_tk);
+			if (GetPrecedence(left_op) < GetPrecedence(right_op))
+			{
+				NextToken();
+				exp = ParseBinaryExpr(exp, right_tk);
+				CHECK_OK
+			}
+			else if (GetPrecedence(left_op) == GetPrecedence(right_op))
+			{
+				if (GetPrecedence(left_op) == 0)
+					return exp;
+				CHECK_NULL(left_exp);
+				exp = MakeObject<BinaryExpressionNode>(
+					left_op, 
+					left_exp, 
+					exp
+				);
+				NextToken();
+				return FinishNode(ParseBinaryExpr(exp, right_tk));
+			}
+			else // left_op > right_op
+			{
+				if (left_exp)
+					exp = MakeObject<BinaryExpressionNode>(left_op, left_exp, exp);
+				return FinishNode(exp);
+			}
+		}
 		return nullptr;
 	}
-
-	// Node* Parser::ParseFuncCall(Node* exp)
-	// {
-	// 	StartNode();
-	// 	FuncCallNode* _node = MakeObject<FuncCallNode>(exp);
-	// 	// FuncCallParamNode* _params = nullptr;
-
-	// 	Expect(, Token::TYPE::OPEN_PAREN);
-	// 	NextToken();
-	// 	while (!Match(Token::TYPE::CLOSE_PAREN))
-	// 	{
-	// 		auto node = ParseExpression();
-	// 		CHECK_OK
-
-	// 		_node->parameters.push_back(node);
-	// 		if (Match(Token::TYPE::COMMA))
-	// 			NextToken();
-	// 		else if (Match(Token::TYPE::CLOSE_PAREN))
-	// 			break;
-	// 		else
-	// 			AddError("Expect identifier or comma.");
-	// 	}
-	// 	Expect(NextToken(), Token::TYPE::CLOSE_PAREN);
-
-	// 	while (Match(Token::TYPE::OPEN_PAREN))
-	// 	{
-	// 		NextToken();
-	// 		_node = MakeObject<FuncCallNode>(_node);
-
-	// 		while (!Expect(Token::TYPE::CLOSE_PAREN))
-	// 		{
-	// 			auto node = ParseExpression();
-	// 			CHECK_OK
-
-	// 			_node->parameters.push_back(node);
-	// 			if (Match(Token::TYPE::COMMA))
-	// 				continue;
-	// 			else if (Match(Token::TYPE::CLOSE_PAREN))
-	// 				break;
-	// 			else
-	// 				ReportError("Expect identifier or comma.");
-	// 		}
-
-	// 		Expect(NextToken(), Token::TYPE::CLOSE_PAREN);
-	// 	}
-	// 	return FinishNode(_node);
-	// }
 
 	Node* Parser::ParseCallExpression(Node* src) {
 		Expect(Token::TYPE::OPEN_PAREN);
@@ -568,8 +510,21 @@ namespace halang
 		return FinishNode(_node);
 	}
 
-	Node* Parser::ParseMaybeCallExpression() {
-		return nullptr;
+	Node* Parser::ParseAssignOrCallExpression() {
+		Expect(Token::TYPE::IDENTIFIER);
+
+		auto id = ParseIdentifier();
+
+		if (Match(Token::TYPE::OPEN_SQUARE_BRACKET)) {
+			return ParseMemberExpression(id);
+		} else if (Match(Token::TYPE::OPEN_PAREN)) {
+			return ParseCallExpression(id);
+		} else if (Match(Token::TYPE::ASSIGN)) {
+			return ParseAssignExpression(id);
+		} else {
+			return id;
+		}
+
 	}
 
 	Parser::~Parser()

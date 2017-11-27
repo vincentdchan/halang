@@ -98,7 +98,7 @@ namespace halang
 #undef E
 #undef ET
 
-	inline int getPrecedence(OperatorType ot)
+	inline int GetPrecedence(OperatorType ot)
 	{
 		if (ot >= OperatorType::OP_NUM || ot < 0) return 0;
 		return OpreatorPrecedence[ot];

@@ -5,52 +5,44 @@
 #include <string>
 #include "catch.hpp"
 #include "StringBuffer.h"
-#include "lex.h"
+#include "parser.h"
 #include "util.h"
+#include "ASTVisitor.h"
 
 using namespace halang;
 
 TEST_CASE( "Lexer", "[Lexer]" ) {
 
-    Lexer lexer;
+    Parser parser;
 
     const char* codes[3] = {
-        "fun a, b -> do\n",
+        "def main(a, b)\n",
+        "   let c = a + b * 1\n",
         "   foo();\n"
-        "   a + b * 1\n",
         "end"
     };
 
     for (int i = 0; i < 3; i++) {
-        lexer.AddBuffer(
+        parser.AddBuffer(
             std::make_shared<std::string>(codes[i])
         );
     }
 
-    std::vector<Token::TYPE> token_list;
-    token_list.push_back(Token::TYPE::FUN);
-    token_list.push_back(Token::TYPE::IDENTIFIER);
-    token_list.push_back(Token::TYPE::COMMA);
-    token_list.push_back(Token::TYPE::IDENTIFIER);
-    token_list.push_back(Token::TYPE::ARROW);
-    token_list.push_back(Token::TYPE::DO);
-    token_list.push_back(Token::TYPE::IDENTIFIER);
-    token_list.push_back(Token::TYPE::OPEN_PAREN);
-    token_list.push_back(Token::TYPE::CLOSE_PAREN);
-    token_list.push_back(Token::TYPE::SEMICOLON);
-    token_list.push_back(Token::TYPE::IDENTIFIER);
-    token_list.push_back(Token::TYPE::ADD);
-    token_list.push_back(Token::TYPE::IDENTIFIER);
-    token_list.push_back(Token::TYPE::MUL);
-    token_list.push_back(Token::TYPE::NUMBER);
-    token_list.push_back(Token::TYPE::END);
+    parser.ParseProgram();
 
-    lexer.NextToken();
-    for (auto i = token_list.begin();
-    i != token_list.end(); i++) {
-        REQUIRE( lexer.NextToken()->type == *i );
+    if (parser.IsOK()) {
+        auto root = parser.GetRoot();
+
+        ASTVisitor astVisitor;
+        astVisitor.Visit(root);
+    } else {
+        std::cout << "not ok" << std::endl;
+        for (auto i = parser.getMessages().begin();
+        i != parser.getMessages().end(); i++) {
+            std::cout << i->msg << std::endl;
+        }
     }
 
-    REQUIRE( lexer.NextToken()->type == Token::TYPE::ENDFILE );
+    
 
 }

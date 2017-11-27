@@ -13,7 +13,9 @@ namespace halang
 	V(Number) \
 	V(Identifier) \
 	V(String) \
+	V(NullStatement) \
 	V(LetStatement) \
+	V(ExpressionStatement) \
 	V(IfStatement) \
 	V(WhileStatement) \
 	V(BreakStatement) \
@@ -41,12 +43,6 @@ namespace halang
 #define VISIT_OVERRIDE virtual void Visit(Visitor*) override;
 
 
-	/// <summary>
-	/// A node that is the basic class of all ast node,
-	/// providing visiter for codegen and store the type infomation.
-	/// 
-	/// The sub class MUST override the virtual function for the class
-	/// </summary>
 	class Node
 	{
 	public:
@@ -59,7 +55,9 @@ namespace halang
 		virtual StringNode* AsString() { return nullptr; }
 		virtual IdentifierNode* AsIdentifier() { return nullptr; }
 		virtual NumberNode* AsNumber() { return nullptr; }
+		virtual NullStatementNode* AsNullStatement() { return nullptr; }
 		virtual LetStatementNode* AsLetStatement() { return nullptr; }
+		virtual ExpressionStatementNode* AsExpressionStatement() { return nullptr; }
 		virtual IfStatementNode* AsIfStatement() { return nullptr; }
 		virtual WhileStatementNode* AsWhileStatement() { return nullptr; }
 		virtual BreakStatementNode* AsBreakStatement() { return nullptr; }
@@ -119,9 +117,13 @@ namespace halang
 		VISIT_OVERRIDE
 	};
 
-	/// <summary>
-	/// identifier
-	/// </summary>
+	class NullStatementNode : public Node {
+	public:
+		virtual NullStatementNode* AsNullStatement() override { return this; }
+
+		VISIT_OVERRIDE
+	};
+
 	class IdentifierNode : public Node
 	{
 	public:
@@ -144,6 +146,24 @@ namespace halang
 		LetStatementNode* AsLetStatement() override {
 			return this;
 		}
+
+		VISIT_OVERRIDE
+	};
+
+	class ExpressionStatementNode : public Node {
+	public:
+
+		ExpressionStatementNode() { }
+		ExpressionStatementNode(Node* expr):
+		expression(expr) { }
+
+
+		virtual ExpressionStatementNode*
+		AsExpressionStatement() override {
+			return this;
+		}
+
+		Node* expression;
 
 		VISIT_OVERRIDE
 	};
@@ -259,7 +279,7 @@ namespace halang
 		}
 
 		Node* callee = nullptr;
-		std::vector<Node*> parameters;
+		std::vector<Node*> params;
 
 		VISIT_OVERRIDE
 	};
@@ -268,12 +288,16 @@ namespace halang
 	{
 	public:
 
+		AssignExpressionNode(Node* id, Node* expr):
+		identifier(id), expression(expr)
+		{ }
+
 		virtual AssignExpressionNode* 
 		AsAssignExpression() override { 
 			return this; 
 		}
 
-		IdentifierNode* identifier = nullptr;
+		Node* identifier = nullptr;
 		Node* expression = nullptr;
 
 		VISIT_OVERRIDE
@@ -309,6 +333,10 @@ namespace halang
 	class BinaryExpressionNode : public Node
 	{
 	public:
+		BinaryExpressionNode() {}
+		BinaryExpressionNode(OperatorType _op, Node* _left, Node* _right):
+		op(_op), left(_left), right(_right)
+		{ }
 
 		virtual BinaryExpressionNode* 
 		AsBinaryExpression() override { return this; }

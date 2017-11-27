@@ -103,7 +103,8 @@ TEST_CASE( "Lexer", "[Lexer]" ) {
     lexer.NextToken();
     for (auto i = token_list.begin();
     i != token_list.end(); i++) {
-        REQUIRE( lexer.NextToken()->type == *i );
+        auto tok = lexer.NextToken();
+        REQUIRE( tok->type == *i );
     }
 
     REQUIRE( lexer.NextToken()->type == Token::TYPE::ENDFILE );
