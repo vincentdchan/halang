@@ -9,7 +9,7 @@ do
     ./astprinter < ./tests/parser/$i/actual.ha > ./tests/parser/$i/result.txt
     RE=$(diff -c ./tests/parser/$i/ast.txt ./tests/parser/$i/result.txt)
     if [ "$RE" = "" ]; then
-        echo "ALL PASS"
+        echo "PASS"
     else
         diff -c ./tests/parser/$i/ast.txt ./tests/parser/$i/result.txt
         echo "./tests/parser/$i/result.txt"
