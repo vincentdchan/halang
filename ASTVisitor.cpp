@@ -68,6 +68,13 @@ namespace halang {
     void ASTVisitor::Visit(IfStatementNode *node) {
         Out() << "IfStatement:" << std::endl;
         depth++;
+        Out() << "condition:" << std::endl;
+        depth++;
+        Visit(node->condition);
+        depth--;
+        depth--;
+
+        depth++;
         Out() << "children:" << std::endl;
 
         depth++;

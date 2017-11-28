@@ -1,0 +1,27 @@
+Program
+  IfStatement:
+    condition:
+      BinaryExpression:
+        operator: ==
+        left:
+          Identifier: name
+        right:
+          String: "chen"
+    children:
+      ExpressionStatement:
+        expression:
+          CallExpression:
+            callee:
+              Identifier: print
+            params:
+              Number: 2
+      NullStatement
+    else children:
+      ExpressionStatement:
+        expression:
+          CallExpression:
+            callee:
+              Identifier: print
+            params:
+              Number: 3
+      NullStatement

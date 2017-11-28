@@ -61,7 +61,11 @@ TEST_CASE( "StringBuffer GobackChar()", "[StringBuffer]" ) {
 
 }
 
-TEST_CASE( "Lexer", "[Lexer]" ) {
+TEST_CASE( "Lexer1", "[Lexer]" ) {
+
+    for (int i = 0; i < Token::TYPE::TOKEN_NUMBER; i++) {
+        std::cout << i << ": " << TokenName[i] << std::endl;
+    }
 
     Lexer lexer;
 
@@ -96,9 +100,36 @@ TEST_CASE( "Lexer", "[Lexer]" ) {
     token_list.push_back(Token::TYPE::NUMBER);
     token_list.push_back(Token::TYPE::END);
 
-    for (int i = 0; i < Token::TYPE::TOKEN_NUMBER; i++) {
-        std::cout << i << ": " << TokenName[i] << std::endl;
+    lexer.NextToken();
+    for (auto i = token_list.begin();
+    i != token_list.end(); i++) {
+        auto tok = lexer.NextToken();
+        REQUIRE( tok->type == *i );
     }
+
+    REQUIRE( lexer.NextToken()->type == Token::TYPE::ENDFILE );
+
+}
+
+TEST_CASE( "Lexer2", "[Lexer]" ) {
+
+    Lexer lexer;
+
+    const char* codes[1] = {
+        "foo(\"hello\")\n",
+    };
+
+    for (int i = 0; i < 1; i++) {
+        lexer.AddBuffer(
+            std::make_shared<std::string>(codes[i])
+        );
+    }
+
+    std::vector<Token::TYPE> token_list;
+    token_list.push_back(Token::TYPE::IDENTIFIER);
+    token_list.push_back(Token::TYPE::OPEN_PAREN);
+    token_list.push_back(Token::TYPE::STRING);
+    token_list.push_back(Token::TYPE::CLOSE_PAREN);
 
     lexer.NextToken();
     for (auto i = token_list.begin();

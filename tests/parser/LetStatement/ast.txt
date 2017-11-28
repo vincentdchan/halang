@@ -1,0 +1,18 @@
+Program
+  LetStatement:
+    AssignExpression:
+      identifier:
+        Identifier: name
+      expression:
+        String: "chen"
+  NullStatement
+  LetStatement:
+    Identifier: ok
+  NullStatement
+  LetStatement:
+    AssignExpression:
+      identifier:
+        Identifier: hisname
+      expression:
+        Identifier: name
+  NullStatement

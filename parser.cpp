@@ -459,7 +459,18 @@ namespace halang
 		auto* _node = MakeObject<CallExpressionNode>();
 		_node->callee = src;
 
-		// parse params
+		while (!Match(Token::TYPE::CLOSE_PAREN)) {
+			auto param = ParseExpression();
+			CHECK_OK
+
+			_node->params.push_back(param);
+
+			if (Match(Token::TYPE::COMMA)) {
+				NextToken();
+			} else if (!Match(Token::TYPE::CLOSE_PAREN)) {
+				AddError("Expected COMMA or CLOSE_PAREN");
+			}
+		}
 
 		Expect(Token::TYPE::CLOSE_PAREN);
 		NextToken();

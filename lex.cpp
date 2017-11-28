@@ -173,6 +173,7 @@ namespace halang
 				NextChar();
 			}
 		}
+		buffer.push_back(NextChar());
 
 		return MakeToken(Token::TYPE::STRING, buffer);
 	}
