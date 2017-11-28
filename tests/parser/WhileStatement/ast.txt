@@ -1,0 +1,35 @@
+Program
+  LetStatement:
+    AssignExpression:
+      identifier:
+        Identifier: i
+      expression:
+        Number: 0
+  WhileStatement:
+    condition:
+      BinaryExpression:
+        operator: <
+        left:
+          Identifier: i
+        right:
+          Number: 1000
+    children:
+      IfStatement:
+        condition:
+          BinaryExpression:
+            operator: ==
+            left:
+              Identifier: i
+            right:
+              Number: 100
+        children:
+          BreakStatement
+          NullStatement
+        else children:
+      ExpressionStatement:
+        expression:
+          CallExpression:
+            callee:
+              Identifier: print
+            params:
+              Identifier: i
