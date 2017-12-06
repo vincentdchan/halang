@@ -28,6 +28,12 @@ astprinter: testlex ast.o parser.o ASTVisitor.o  \
 		token.o StringBuffer.o lex.o \
 		ast.o parser.o ASTVisitor.o
 
+midprog: testlex ast.o parser.o MidProg.h  \
+	MidProg.cpp
+	$(CC) $(CPPVER) -o midprog MidProg.cpp \
+		token.o StringBuffer.o lex.o \
+		ast.o parser.o ASTVisitor.o
+
 ASTVisitor.o: ast.o ASTVisitor.cpp
 	$(CC) $(CFLAGS) ASTVisitor.cpp
 
