@@ -19,7 +19,18 @@ namespace halang {
     }
 
     void MidProg::Visit(NumberNode * node) {
-        U16String str = utils::utf8_to_utf16(std::to_string(node->number));
+        U16String str;
+
+        if (node->maybeInt) {
+            str = utils::utf8_to_utf16(
+                std::to_string(static_cast<int>(node->number))
+            );
+        } else {
+            str = utils::utf8_to_utf16(
+                std::to_string(node->number)
+            );
+        }
+
         names_stack.push(str);
     }
 
@@ -184,7 +195,7 @@ namespace halang {
 
     U16String MidProg::GetTmpVariableName() {
         U16String name;
-        U16String tmp = utils::utf8_to_utf16("tmp_");
+        U16String tmp = utils::utf8_to_utf16("tmp");
 
         do {
             name = tmp + utils::utf8_to_utf16(std::to_string(tmp_name_counter++));
@@ -192,6 +203,26 @@ namespace halang {
 
         var_names_set.insert(name);
         return name;
+    }
+
+    void Opt(const MidProg& midProg, std::vector<Code>& result) {
+
+        for (int i = 0; i < midProg.GetCodes().size(); i++) {
+            auto item = midProg.GetCodes()[i];
+
+            if (item.code != u"MOV" && 
+                i < midProg.GetCodes().size() - 1 &&
+                midProg.GetCodes()[i + 1].code == u"MOV" &&
+                item.op1 == midProg.GetCodes()[i+1].op2) {
+
+                    item.op1 = midProg.GetCodes()[i+1].op1;
+                    i++;
+
+                }
+
+            result.push_back(item);
+        }
+
     }
 
 }
@@ -216,8 +247,11 @@ int main(int argc, char * argv[]) {
         MidProg midProg;
         midProg.Visit(root);
 
-        for (auto i = midProg.GetCodes().begin();
-            i != midProg.GetCodes().end(); i++) {
+        std::vector<Code> result;
+        Opt(midProg, result);
+
+        for (auto i = result.begin();
+            i != result.end(); i++) {
                 std::cout << utils::utf16_to_utf8(i->code) 
                 << "\t"
                 << utils::utf16_to_utf8(i->op1) 
