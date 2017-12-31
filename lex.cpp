@@ -314,6 +314,9 @@ namespace halang
 		token_buffer.push_back(
 			std::make_unique<Token>(_type, _start_location)
 		);
+
+		int tokId = static_cast<int>(_type);
+		std::cout << tokId << "\t" << TokenName[tokId] << std::endl;
 		return (token_buffer.end() - 1)->get();
 	}
 

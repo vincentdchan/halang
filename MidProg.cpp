@@ -60,11 +60,48 @@ namespace halang {
     }
 
     void MidProg::Visit(IfStatementNode * node) {
-        // wait to finish
+        Visit(node->condition);
+        int pos = codes.size();
+
+        Code code;
+        codes.push_back(code);
+
+        codes[pos].op1 = names_stack.top();
+        for (auto i = node->children.begin(); 
+            i != node->children.end(); i++) {
+                Visit(*i);
+            }
+        
+        codes[pos].code = u"j!";
+        codes[pos].op3 = utils::utf8_to_utf16(
+                std::to_string(static_cast<int>(codes.size()))
+            );
     }
 
     void MidProg::Visit(WhileStatementNode * node) {
-        // wait to finish
+        int beginPos = codes.size();
+        Visit(node->condition);
+        int condPos = codes.size();
+        codes.push_back(Code());
+        codes[condPos].code = u"j!";
+        codes[condPos].op1 = names_stack.top();
+
+        for (auto i = node->children.begin(); 
+            i != node->children.end(); i++) {
+                Visit(*i);
+            }
+        codes[condPos].op3 = utils::utf8_to_utf16(
+                std::to_string(static_cast<int>(codes.size()))
+            );
+        
+        Code code;
+        code.code = u"j";
+        code.op3 = utils::utf8_to_utf16(
+                std::to_string(static_cast<int>(beginPos))
+            );
+        
+        codes.push_back(code);
+
     }
 
     void MidProg::Visit(BreakStatementNode * node) {
@@ -93,7 +130,7 @@ namespace halang {
 
     void MidProg::Visit(AssignExpressionNode * node) {
         Code code;
-        code.code = u"MOV";
+        code.code = u"=";
 
         Visit(node->identifier);
         code.op1 = names_stack.top();
@@ -116,7 +153,7 @@ namespace halang {
         Visit(node->child);
 
         auto tmp = GetTmpVariableName();
-        code.code = u"MUL";
+        code.code = u"*";
         code.op1 = tmp;
         code.op3 = names_stack.top();
         names_stack.pop();
@@ -150,22 +187,30 @@ namespace halang {
 
         switch(node->op) {
             case OperatorType::ADD:
-                code.code = u"ADD";
+                code.code = u"+";
                 break;
             case OperatorType::SUB:
-                code.code = u"SUB";
+                code.code = u"-";
                 break;
             case OperatorType::MUL:
-                code.code = u"MUL";
+                code.code = u"*";
                 break;
             case OperatorType::DIV:
-                code.code = u"DIV";
+                code.code = u"/";
                 break;
             case OperatorType::MOD:
-                code.code = u"MOD";
+                code.code = u"%";
                 break;
             case OperatorType::POW:
-                code.code = u"POW";
+                code.code = u"**";
+            case OperatorType::GT:
+                code.code = u">";
+            case OperatorType::GTEQ:
+                code.code = u">";
+            case OperatorType::LT:
+                code.code = u"<";
+            case OperatorType::LTEQ:
+                code.code = u"<";
         }
 
         names_stack.push(tmp);
@@ -195,7 +240,7 @@ namespace halang {
 
     U16String MidProg::GetTmpVariableName() {
         U16String name;
-        U16String tmp = utils::utf8_to_utf16("tmp");
+        U16String tmp = utils::utf8_to_utf16("T");
 
         do {
             name = tmp + utils::utf8_to_utf16(std::to_string(tmp_name_counter++));
@@ -210,9 +255,9 @@ namespace halang {
         for (int i = 0; i < midProg.GetCodes().size(); i++) {
             auto item = midProg.GetCodes()[i];
 
-            if (item.code != u"MOV" && 
+            if (item.code != u"=" && 
                 i < midProg.GetCodes().size() - 1 &&
-                midProg.GetCodes()[i + 1].code == u"MOV" &&
+                midProg.GetCodes()[i + 1].code == u"=" &&
                 item.op1 == midProg.GetCodes()[i+1].op2) {
 
                     item.op1 = midProg.GetCodes()[i+1].op1;
@@ -252,7 +297,8 @@ int main(int argc, char * argv[]) {
 
         for (auto i = result.begin();
             i != result.end(); i++) {
-                std::cout << utils::utf16_to_utf8(i->code) 
+                std::cout << (i - result.begin()) << ": "
+                << utils::utf16_to_utf8(i->code) 
                 << "\t"
                 << utils::utf16_to_utf8(i->op1) 
                 << "\t" 
